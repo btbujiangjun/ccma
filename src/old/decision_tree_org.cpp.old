@@ -1,0 +1,179 @@
+#include <map>
+#include <cmath>
+#include <stdio.h>
+#include <stdlib.h>
+
+struct DataSet{
+    int* features;
+    unsigned int rows;
+    unsigned int cols;
+    int* labels;
+    char* fea_labels;
+};
+
+void calc_unique_cnt(int* data,
+                     unsigned int size,
+                     std::map<int, unsigned int>* result){
+    for(int i = 0; i < size; i++){
+        std::map<int, unsigned int>::iterator it;
+        it = result->find(data[i]);
+        if(it == result->end()){
+            result->insert(std::make_pair(data[i], 1));
+        }else{
+            it->second += 1;
+        }
+    }
+}
+
+
+float calc_shannon_entropy(DataSet* ds){
+    float ent = 0;
+    std::map<int, unsigned int> result;
+    calc_unique_cnt(ds->labels, ds->rows, &result);
+
+    for(std::map<int, unsigned int>::iterator it = result.begin(); it != result.end(); it++){
+        float prob = (float)it->second/ds->rows;
+        ent -= prob * (log(prob)/log(2));
+    }
+    result.clear();
+
+    return ent;
+}
+
+void split_dataset(DataSet* ds,
+                   int feature_idx,
+                   int split_value,
+                   DataSet* sub_ds){
+    int split_value_cnt = 0;
+    int sub_label_idx = 0;
+    for(int i = 0; i < ds->rows; i++){
+        if(ds->features[i*ds->cols + feature_idx] == split_value){
+            split_value_cnt++;
+            sub_label_idx = i;
+        }
+    }
+
+    sub_ds->cols = ds->cols - 1;
+    sub_ds->rows = split_value_cnt;
+    sub_ds->labels = (int*)malloc(sizeof(int)*split_value_cnt);
+    sub_ds->fea_labels = (char*)malloc(sizeof(char)*split_value_cnt);
+    sub_ds->features = (int*)malloc(sizeof(int)*(sub_ds->rows * sub_ds->cols));
+    int idx = 0;
+    int row_idx = 0;
+    for(int i = 0; i < ds->rows; i++){
+        if(ds->features[i * ds->cols + feature_idx] == split_value){
+            for(int j = 0; j < ds->cols; j++){
+                if(j != feature_idx){
+                    sub_ds->features[idx++] = ds->features[i * ds->cols + j];
+                }
+            }
+            sub_ds->labels[row_idx++] = ds->labels[i];
+        }
+    }
+
+    int cols_idx = 0;
+    for(int i = 0; i < ds->cols; i++){
+        if(i != feature_idx){
+            sub_ds->fea_labels[cols_idx++] = ds->fea_labels[i];
+        }
+    }
+}
+
+void unique_feature_value(DataSet* ds, int feature_idx, std::map<int, int>* result){
+    for(int i = 0; i < ds->rows; i++){
+        int key = ds->features[i * ds->cols + feature_idx];
+        if(result->count(key) == 0){
+            result->insert(std::make_pair(key, 1));
+        }
+    }
+}
+
+int find_best_feature_idx(DataSet* ds){
+    float best_ig = 0.0;
+    int idx = -1;
+    float base_entropy = calc_shannon_entropy(ds);
+    for(int i = 0; i < ds->cols; i++){//iterator each feature
+        float ent = 0;
+        //calc unique value of feature[i] and iterator it
+        std::map<int, int> unique_map;
+        for(int j = 0; j < ds->rows; j++){
+            if(unique_map.count(ds->features[j * ds->cols + i]) == 0){
+                unique_map[ds->features[j * ds->cols + i]] = 1;
+                DataSet* sub_ds = (DataSet*)malloc(sizeof(DataSet));
+                split_dataset(ds, i, ds->features[j * ds->cols + i], sub_ds);
+                float prob = (float)sub_ds->rows/ds->rows;
+                ent += prob * calc_shannon_entropy(sub_ds);
+                free(sub_ds->features);
+                free(sub_ds->labels);
+                free(sub_ds->fea_labels);
+                free(sub_ds);
+            }
+        }
+        unique_map.clear();
+        float ig = base_entropy - ent;
+        if(ig > best_ig){
+            best_ig = ig;
+            idx = i;
+        }
+    }
+    return idx;
+}
+
+void create_tree(DataSet* ds){
+    std::map<int, unsigned int> cnt_map;
+    calc_unique_cnt(ds->labels, ds->rows, &cnt_map);
+
+    //only one unique label, return label and exit
+    if(cnt_map.size() == 1){
+        cnt_map.clear();
+        printf("\t\tleaf tree[%c][%d]\n", ds->labels[0], ds->rows);
+    }else if(ds->cols == 0){ //no feature，返回max cnt label，结束
+
+        int label;
+        unsigned int cnt = 0;
+
+        for(std::map<int, unsigned int>::iterator it = cnt_map.begin(); it != cnt_map.end(); it++){
+            if(it->second >= cnt){
+                label = it->first;
+                cnt = it->second;
+            }
+        }
+        cnt_map.clear();
+        printf("\t\tleaf tree[%c][%c][%d]\n", ds->fea_labels[0], label, ds->rows);
+    }else{
+        cnt_map.clear();
+
+        int n_best_feature = find_best_feature_idx(ds);
+        printf("best feature:[%c]\n", ds->fea_labels[n_best_feature]);
+
+        std::map<int, int> unique_feature_map;
+        unique_feature_value(ds, n_best_feature, &unique_feature_map);
+
+        for(std::map<int, int>::iterator it = unique_feature_map.begin(); it != unique_feature_map.end(); it++){
+            DataSet* sub_ds = (DataSet*)malloc(sizeof(DataSet));
+            split_dataset(ds, n_best_feature, it->first, sub_ds);
+            printf("\ttree[%c][%d]\n", ds->fea_labels[n_best_feature], it->first);
+            create_tree(sub_ds);
+            free(sub_ds->features);
+            free(sub_ds->labels);
+            free(sub_ds->fea_labels);
+            free(sub_ds);
+        }
+        unique_feature_map.clear();
+    }
+}
+
+int main(int argc, char** argv){
+    DataSet* ds = (DataSet*)malloc(sizeof(DataSet));
+    int a[15]=  {1, 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 2, 1, 0};
+    ds->features = a;
+    ds->cols = 3;
+    ds->rows = 5;
+    int b[5] = {'y', 'y', 'n', 'n', 'n'};
+    ds->labels = b;
+    char c[3] = {'a', 'b', 'c'};
+    ds->fea_labels = c;
+    create_tree(ds);
+    free(ds);
+    return 0;
+}
