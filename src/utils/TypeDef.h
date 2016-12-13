@@ -21,6 +21,23 @@ namespace utils{
 
 typedef size_t uint;
 
+template<class T>
+T ccma_cast(const char* data){
+    if(typeid(T) == typeid(int)){
+        return atoi(data);
+    }else if(typeid(T) == typeid(real)){
+        return atof(data);
+    }else{
+        return (T)*data;
+    }
+}
+
+template<class T1, class T2>
+bool ccma_type_compare(){
+    return sizeof(T1) > sizeof(T2);
+}
+
+
 }//namespace utils
 }//namespace ccma
 

@@ -181,15 +181,15 @@ public:
 
         T* data = new T[_rows * _rows];
         for(int i = 0; i < _rows; i++){
-            for(int j = 0; j < _rows; j++){
-                T value = static_cast<T>(0);
+            for(int j = 0; j < mat->get_rows(); j++){
+                T value = (T)0;
                 for(int k = 0; k < _cols; k++){
                     value += get_data(i, k) * mat->get_data(k, j);
                 }
                 data[i * _rows + j] = value;
             }
         }
-        result->set_data(data, _rows, _rows);
+        result->set_data(data, _cols, _cols);
         delete[] data;
 
         return 1;
@@ -270,9 +270,9 @@ private:
 
 
 template<class T>
-class MatrixMNT : public BaseMatrixT<T>{
+class MatrixMN : public BaseMatrixT<T>{
 public:
-    MatrixMNT(uint rows, uint cols, T value){
+    MatrixMN(uint rows, uint cols, T value){
         T* data = new T[rows * cols];
         for(int i = 0; i < rows * cols; i++){
             data[i] = value;
@@ -283,33 +283,33 @@ public:
 };
 
 template<class T>
-class ColMatrixT : public MatrixMNT<T>{
+class ColMatrix : public MatrixMN<T>{
 public:
-    ColMatrixT(uint rows, T value):MatrixMNT<T>(rows, 1, value){}
+    ColMatrix(uint rows, T value):MatrixMN<T>(rows, 1, value){}
 };
 
 template<class T>
-class RowMatrixT : public MatrixMNT<T>{
+class RowMatrix : public MatrixMN<T>{
 public:
-    RowMatrixT(uint cols, T value):MatrixMNT<T>(1, cols, value){}
+    RowMatrix(uint cols, T value):MatrixMN<T>(1, cols, value){}
 };
 
 template<class T>
-class OneMatrixT : public MatrixMNT<T>{
+class OneMatrix : public MatrixMN<T>{
 public:
-    OneMatrixT(uint rows):MatrixMNT<T>(rows, 1, 1){}
+    OneMatrix(uint rows):MatrixMN<T>(rows, 1, 1){}
 };
 
 template<class T>
-class ZeroMatrixT : public MatrixMNT<T>{
+class ZeroMatrix : public MatrixMN<T>{
 public:
-    ZeroMatrixT(uint rows):MatrixMNT<T>(rows, 1, 0){}
+    ZeroMatrix(uint rows):MatrixMN<T>(rows, 1, 0){}
 };
 
 template<class T>
-class EyeMatrixT : public BaseMatrixT<T>{
+class EyeMatrix : public BaseMatrixT<T>{
 public:
-    explicit EyeMatrixT(uint size){
+    explicit EyeMatrix(uint size){
         T* data = new T[size * size];
         uint data_idx = 0;
 
@@ -877,7 +877,7 @@ bool BaseMatrixT<T>::inverse(BaseMatrixT<real>* result){
     delete[] data;
 
     //extend eye matrix
-    EyeMatrixT<real>* eye_mat = new EyeMatrixT<real>(_rows);
+    EyeMatrix<real>* eye_mat = new EyeMatrix<real>(_rows);
     extend_mat->extend(eye_mat);
     delete eye_mat;
 
