@@ -7,9 +7,11 @@
 **********************************************/
 #include <stdio.h>
 #include <string.h>
-#include "algebra/BaseMatrix.h"
+#include "utils/FileOp.h"
+#include "LinearRegress.h"
 
 int main(int argc, char** argv){
+    /*
     //int a[16] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
     real a[9] = {1,2,3,2,2,1,3,4,3};
 //    real a[4] = {1,2,3,2};
@@ -27,5 +29,19 @@ int main(int argc, char** argv){
     ccma::algebra::BaseMatrixT<real>* product_mat = new ccma::algebra::BaseMatrixT<real>();
     bm.inner_product(res_mat, product_mat);
     product_mat->display();
+    */
+
+    ccma::algebra::LabeledMatrixT<real, real, char>* lmat = new ccma::algebra::LabeledMatrixT<real, real, char>();
+    ccma::utils::DenseFileOp* fo = new ccma::utils::DenseFileOp();
+    if(fo->read_data("./data/ex0.txt", lmat)){
+        ccma::algorithm::regression::LinearRegression<real, real, char>* regression = new ccma::algorithm::regression::LinearRegression<real, real, char>(lmat);
+        if(regression->standard_regression()){
+            ccma::algebra::ColMatrixT<real>* weights = regression->get_weights();
+            weights->display();
+        }
+        delete regression;
+    }
+    delete fo;
+    delete lmat;
 
 }

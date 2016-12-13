@@ -18,8 +18,11 @@ template<class T, class LT, class FT>
 class LinearRegression{
 public:
     explicit LinearRegression(ccma::algebra::LabeledMatrixT<T, LT, FT>* train_data);
+    ~LinearRegression();
 
-    int standard_regression();
+    bool standard_regression();
+
+    ccma::algebra::ColMatrixT<T>* get_weights();
 
 private:
     ccma::algebra::LabeledMatrixT<T, LT, FT>* _train_data = nullptr;
@@ -32,11 +35,19 @@ private:
 template<class T, class LT, class FT>
 LinearRegression<T, LT, FT>::LinearRegression(ccma::algebra::LabeledMatrixT<T, LT, FT>* train_data){
     _train_data = train_data;
-    _weight = new ccma::algebra::ColMatrix<real>(train_data->get_cols(), (real)0);
+    _weights = new ccma::algebra::ColMatrixT<real>(train_data->get_cols(), 0.0);
 }
 
 template<class T, class LT, class FT>
-int LinearRegression<T, LT, FT>::standard_regression(){
+LinearRegression<T, LT, FT>::~LinearRegression(){
+    if(_weights){
+        delete _weights;
+        _weights = nullptr;
+    }
+}
+
+template<class T, class LT, class FT>
+bool LinearRegression<T, LT, FT>::standard_regression(){
     ccma::algebra::BaseMatrixT<T>* x = new ccma::algebra::BaseMatrixT<T>();
     _train_data->copy_data(x);
 
@@ -47,11 +58,13 @@ int LinearRegression<T, LT, FT>::standard_regression(){
     x->transpose(xT);
 
     ccma::algebra::BaseMatrixT<T>* xTx = new ccma::algebra::BaseMatrixT<T>();
-    xT->dot_product(x, xTx);
+    xT->inner_product(x, xTx);
 
     ccma::algebra::BaseMatrixT<T>* xTxI = new ccma::algebra::BaseMatrixT<T>();
     if(xTx->inverse(xTxI) < 0){
-        return -1;
+        delete x, y, xT, xTx, xTxI;
+
+        return false;
     }
 
     ccma::algebra::BaseMatrixT<T>* xTy = new ccma::algebra::BaseMatrixT<T>();
@@ -59,9 +72,15 @@ int LinearRegression<T, LT, FT>::standard_regression(){
 
     xTxI->dot_product(xTy, _weights);
 
-    _weights->display();
+    delete x, y, xT, xTx, xTy, xTxI;
+
+    return true;
 }
 
+template<class T, class LT, class FT>
+ccma::algebra::ColMatrixT<T>* LinearRegression<T, LT, FT>::get_weights(){
+    return _weights;
+}
 }//regression
 }//namespace
 }//namespace ccma
