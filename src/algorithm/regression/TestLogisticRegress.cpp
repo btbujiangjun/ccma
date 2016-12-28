@@ -19,7 +19,7 @@ int main(int argc, char** argv){
     real* b = new real[100];
 
     std::ifstream in_file;
-    in_file.open("testSet.txt");
+    in_file.open("data/testSet.txt");
 
     uint k = 0;
     if(in_file.is_open()){
@@ -38,11 +38,12 @@ int main(int argc, char** argv){
         }
         in_file.close();
     }
-    char c[3] = {'A', 'B', 'C'};
-    ccma::algebra::LabeledMatrixT<real, real, char> lm(100, 3, a, b, c);
-    ccma::algorithm::regression::LogisticRegress<real, real, char> ls(&lm);
+    ccma::algebra::LabeledDenseMatrixT<real> lm(a, b, 100, 3);
+    ccma::algorithm::regression::LogisticRegress ls;
 
-    ls.batch_grad_desc(150);
-    ls.stoc_grad_desc(150);
-    ls.smooth_stoc_grad_desc(150);
+    lm.display();
+
+    ls.batch_grad_desc(&lm, 150);
+    ls.stoc_grad_desc(&lm, 150);
+    ls.smooth_stoc_grad_desc(&lm, 150);
 }

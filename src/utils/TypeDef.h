@@ -10,6 +10,8 @@
 #define _CCMA_UTILS_TYPEDEF_H_
 
 #include <cstddef>
+#include <typeinfo>
+#include <stdlib.h>
 
 namespace ccma{
 namespace utils{
@@ -22,13 +24,13 @@ namespace utils{
 typedef size_t uint;
 
 template<class T>
-T ccma_cast(const char* data){
+T type_cast(const char* data){
     if(typeid(T) == typeid(int)){
         return atoi(data);
     }else if(typeid(T) == typeid(real)){
         return atof(data);
     }else{
-        return (T)*data;
+        return static_cast<T>(*data);
     }
 }
 
@@ -44,4 +46,4 @@ bool ccma_type_compare(){
 using ccma::utils::real;
 using ccma::utils::uint;
 
-#endif
+#endif //_CCMA_UTILS_TYPEDEF_H_

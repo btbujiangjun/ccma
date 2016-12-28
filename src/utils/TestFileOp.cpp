@@ -10,12 +10,12 @@
 
 int main(int argc, char** argv){
     ccma::utils::DenseFileOp* fo = new ccma::utils::DenseFileOp();
-    ccma::algebra::BaseMatrixT<float>* mat = new ccma::algebra::BaseMatrixT<float>();
+    ccma::algebra::DenseMatrixT<float>* mat = new ccma::algebra::DenseMatrixT<float>();
     if(fo->read_data<float>("./data/ex0.txt", mat)){
         mat->display();
     }
-    ccma::algebra::LabeledMatrixT<float, float, char>* lmat = new ccma::algebra::LabeledMatrixT<float, float, char>();
-    if(fo->read_data<float, float>("./data/ex0.txt", lmat)){
+    ccma::algebra::LabeledDenseMatrixT<float>* lmat = new ccma::algebra::LabeledDenseMatrixT<float>();
+    if(fo->read_data<float>("./data/ex0.txt", lmat)){
         lmat->display();
     }
     delete mat;

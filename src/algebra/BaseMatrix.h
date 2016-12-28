@@ -10,324 +10,260 @@
 #define _CCMA_ALGEBRA_BASEMATRIX_H_
 
 #include <cmath>
-#include <typeinfo>
+#include <string.h>
 #include <limits.h>
-#include <unordered_map>
 #include "utils/TypeDef.h"
 
 namespace ccma{
 namespace algebra{
 
 template<class T>
-class CCMap : public std::unordered_map<T, uint>{
-public:
-    CCMap():std::unordered_map<T, uint>(), _value(0){}
-
-    uint get_max_value(){
-        if(_value == 0){
-            calc();
-        }
-        return _value;
-    }
-    T get_max_key(){
-        if(_value == 0){
-            calc();
-        }
-        return _key;
-    }
-private:
-    uint _value;
-    T _key;
-
-    void calc(){
-        typename std::unordered_map<T, uint>::const_iterator it;
-        for(it = this->begin(); it != this->end(); it++){
-            if(it->second > _value){
-                _value = it->second;
-                _key = it->first;
-            }
-        }
-    }
-};//class CCMap
-
-template<class T>
 class BaseMatrixT{
 public:
-    BaseMatrixT();
-
-    BaseMatrixT(uint rows,
-                uint cols,
-                const T* data);
-
-    ~BaseMatrixT();
-
-    CCMap<T>* get_feature_map(uint feature_id) const;
-
-    uint get_rows() const{
-        return _rows;
-    }
-    uint get_cols() const{
-        return _cols;
-    }
-
-    void set_data(T* data, uint rows, uint cols){
-        if(_data != nullptr){
-            delete[] _data;
-            _data = nullptr;
-            clear_cache();
-        }
-        _data = new T[rows*cols];
-        for(int i = 0; i < rows * cols; i++){
-            _data[i] = data[i];
-        }
+    BaseMatrixT(){}
+    BaseMatrixT(const uint rows, const uint cols){
         _rows = rows;
         _cols = cols;
     }
-    T get_data(uint idx) const{
-        return _data[idx];
-    }
 
-    int set_data(T value, uint idx){
-        if( idx >= _rows * _cols){
-            return -1;
-        }
-        _data[idx] = value;
-        return 1;
-    }
+    virtual ~BaseMatrixT() = default;
 
-    T get_data(uint row, uint col){
-        //todo range check
-        return _data[row * _cols + col];
-    }
+    inline uint get_rows() const { return _rows;}
+    inline uint get_cols() const { return _cols;}
 
-    int set_data(T value, uint row, uint col){
-        if(row >= _rows || col >= _cols){
-            return -1;
-        }
-        _data[row * _cols + col] = value;
-        return 1;
-    }
+    virtual BaseMatrixT<T>* copy_data() = 0;
 
-    int get_row_data(uint row, BaseMatrixT<T>* result){
-        if(row >= _rows){
-            return -1;
-        }
+    virtual T* get_data() const = 0;
+    virtual void set_data(const T* data,
+                          const uint rows,
+                          const uint cols) = 0;
+    virtual void set_shallow_data(T* data,
+                                  const uint rows,
+                                  const uint cols) = 0;
 
-        T* data = new T[_cols];
-        for(int i = 0; i < _cols; i++){
-            data[i] = get_data(row, i);
-        }
-        result->set_data(data, 1, _cols);
-        delete[] data;
+    virtual T get_data(const uint idx) const = 0;
+    virtual bool set_data(const T& value, const uint idx) = 0;
 
-        return 1;
-    }
+    virtual T get_data(const uint row, const uint col) const = 0;
+    virtual bool set_data(const T& data,
+                          const uint row,
+                          const uint col) = 0;
 
-    int set_row_data(const BaseMatrixT<T>* mat, uint row){
-        if(row >= _rows || mat->get_rows() != 1 || mat->get_cols() != _cols){
-            return -1;
-        }
-        for(int i = 0; i < _cols; i++){
-            set_data(row * _cols + i);
-        }
-        return 1;
-    }
+    virtual BaseMatrixT<T>* get_row_data(const uint row) const = 0;
+    virtual bool set_row_data(BaseMatrixT<T>* mat, const int row) = 0;
 
-    int extend(BaseMatrixT<T>* mat){
-        if(_rows != mat->get_rows()){
-            return false;
-        }
+    virtual bool extend(const BaseMatrixT<T>* mat) = 0;
 
-        int new_data_idx = 0;
-        T value;
-        uint new_cols = _cols + mat->get_cols();
-        T* data = new T[new_cols * _rows];
-        for(int i = 0; i < _rows; i++){
-            for(int j = 0; j < new_cols; j++){
-                if(j < _cols){
-                    value = get_data(i, j);
-                }else{
-                    value = mat->get_data(i, (j - _cols));
-                }
-                data[new_data_idx++] = value;
-            }
-        }
-        set_data(data, _rows, new_cols);
-        delete[] data;
+    virtual bool add(const BaseMatrixT<T>* mat) = 0;
+    virtual bool add(const BaseMatrixT<T>* mat, BaseMatrixT<T>* result) = 0;
 
-        return true;
-    }
+    virtual bool subtract(const BaseMatrixT<T>* mat) = 0;
+    virtual bool subtract(const BaseMatrixT<T>* mat, BaseMatrixT<T>* result) = 0;
 
-    int add(BaseMatrixT<T>* mat);
-    int add(BaseMatrixT<T>* mat, BaseMatrixT<T>* result);
 
-    int sum(BaseMatrixT<T>* data);
+    virtual bool product(const T value) = 0;
+    virtual bool product(const T value, BaseMatrixT<T>* result) = 0;
+    virtual bool product(const BaseMatrixT<T>* mat, BaseMatrixT<T>* result) = 0;
+    virtual bool product(const BaseMatrixT<int>* mat, BaseMatrixT<real>* result) = 0;
 
-    int subtract(BaseMatrixT<T>* mat);
-    int subtract(BaseMatrixT<T>* mat, BaseMatrixT<T>* result);
+    virtual bool swap(const uint a_row,
+                      const uint a_col,
+                      const uint b_row,
+                      const uint b_col) = 0;
+    virtual bool swap_row(const uint a, const uint b) = 0;
+    virtual bool swap_col(const uint a, const uint b) = 0;
 
-    int product(BaseMatrixT<T>* mat, BaseMatrixT<T>* result);
-    int product(int value);
-    int product(int value, BaseMatrixT<T>* result);
-    int product(uint value);
-    int product(uint value, BaseMatrixT<T>* result);
-    int product(real value);
-    int product(real value, BaseMatrixT<real>* result);
+    virtual void transpose() = 0;
+    virtual void transpose(BaseMatrixT<T>* result) = 0;
 
-    int inner_product(BaseMatrixT<T>* mat, BaseMatrixT<T>* result){
-        if(mat->get_rows() != _cols || mat->get_cols() != _rows){
-            return -1;
-        }
+    virtual bool det(T* result) = 0;
 
-        T* data = new T[_rows * _rows];
-        for(int i = 0; i < _rows; i++){
-            for(int j = 0; j < _rows; j++){
-                T value = static_cast<T>(0);
-                for(int k = 0; k < _cols; k++){
-                    value += get_data(i, k) * mat->get_data(k, j);
-                }
-                data[i * _rows + j] = value;
-            }
-        }
-        result->set_data(data, _rows, _rows);
-        delete[] data;
+    virtual bool inverse(BaseMatrixT<real>* result) = 0;
 
-        return 1;
-    }
-
-    int dot_product(BaseMatrixT<T>* mat, BaseMatrixT<T>* result){
-        if(mat->get_rows() != _cols || mat->get_cols() != 1){
-            return -1;
-        }
-
-        T* data = new T[_rows];
-        for(int i = 0; i < _rows; i++){
-            T value = (T)0;
-            for(int j = 0; j < _cols; j++){
-                value += get_data(i, j) * mat->get_data(0, j);
-            }
-            data[i] = value;
-        }
-        result->set_data(data, _rows, 1);
-        delete[] data;
-
-        return 1;
-    }
-
-    bool swap(uint a_row, uint a_col, uint b_row, uint b_col);
-    bool swap_row(uint a, uint b);
-    bool swap_col(uint a, uint b);
-
-    void transpose(BaseMatrixT<T>* result);
-
-    bool det(T* result);
-
-    bool inverse(BaseMatrixT<real>* result);
-    //bool inverse2(BaseMatrixT<real>* result);
-
-    void copy_data(BaseMatrixT<T>* result);
-
-    void display(){
-        printf("[%d*%d][\n", _rows, _cols);
-        for(int i = 0; i < _rows; i++){
-            for(int j = 0; j < _cols; j++){
-                if(typeid(T) == typeid(real)){
-                    printf("%f\t", get_data(i, j));
-                }else{
-                    printf("%d\t", get_data(i, j));
-                }
-            }
-            printf("\n");
-        }
-        printf("]\n");
-    }
-
+    virtual void display() = 0;
 protected:
     uint _rows;
     uint _cols;
-    T* _data;
-
-private:
-    std::unordered_map<uint, CCMap<T>* >* _cache_feature_map;
-    T _cache_matrix_det = (T)INT_MAX;
-
-    void clear_cache(){
-        CCMap<T>* item;
-        typename std::unordered_map<uint, CCMap<T>*>::iterator it;
-        it = _cache_feature_map->begin();
-
-        while(it != _cache_feature_map->end()){
-            item = it->second;
-            it = _cache_feature_map->erase(it);
-            delete item;
-        }
-        _cache_feature_map->clear();
-
-        _cache_matrix_det = (T)INT_MAX;
-    }
 
 };//class BaseMatrixT
 
 
 template<class T>
-class MatrixMNT : public BaseMatrixT<T>{
+class DenseMatrixT : public BaseMatrixT<T>{
 public:
-    MatrixMNT(uint rows, uint cols, T value){
-        T* data = new T[rows * cols];
-        for(int i = 0; i < rows * cols; i++){
-            data[i] = value;
-        }
-        this->set_data(data, rows, cols);
-        delete[] data;
+    DenseMatrixT();
+    DenseMatrixT(const T* data,
+                 const uint rows,
+                 const uint cols);
+    ~DenseMatrixT();
+
+    DenseMatrixT<T>* copy_data();
+
+    T* get_data() const;
+    void set_data(const T* data,
+                  const uint rows,
+                  const uint cols);
+
+    T get_data(const uint idx) const;
+    bool set_data(const T& value, const uint idx);
+
+    T get_data(const uint row, const uint col) const;
+    bool set_data(const T& data,
+                  const uint row,
+                  const uint col);
+    void set_shallow_data(T* data,
+                          const uint rows,
+                          const uint cols);
+
+
+    DenseMatrixT<T>* get_row_data(const uint row) const;
+    bool set_row_data(BaseMatrixT<T>* mat, const int row);
+
+    bool extend(const BaseMatrixT<T>* mat);
+
+    bool add(const BaseMatrixT<T>* mat);
+    bool add(const BaseMatrixT<T>* mat, BaseMatrixT<T>* result);
+
+    bool subtract(const BaseMatrixT<T>* mat);
+    bool subtract(const BaseMatrixT<T>* mat, BaseMatrixT<T>* result);
+
+
+    bool product(const T value);
+    bool product(const T value, BaseMatrixT<T>* result);
+    bool product(const BaseMatrixT<T>* mat, BaseMatrixT<T>* result);
+    bool product(const BaseMatrixT<int>* mat, BaseMatrixT<real>* result);
+
+    bool swap(const uint a_row,
+              const uint a_col,
+              const uint b_row,
+              const uint b_col);
+    bool swap_row(const uint a, const uint b);
+    bool swap_col(const uint a, const uint b);
+
+    void transpose();
+    void transpose(BaseMatrixT<T>* result);
+
+    bool det(T* result);
+
+    bool inverse(BaseMatrixT<real>* result);
+
+    void display();
+protected:
+    T* _data;
+
+    inline bool check_range(const uint idx){
+        return idx < this->_rows * this->_cols;
+    }
+    inline bool check_range(const uint row, const uint col){
+        return row < this->_rows && col < this->_cols;
+    }
+
+private:
+    T _cache_matrix_det;
+
+    inline void clear_cache(){
+        T _cache_matrix_det = static_cast<T>(INT_MAX);
     }
 };
 
-template<class T>
-class ColMatrixT : public MatrixMNT<T>{
-public:
-    ColMatrixT(uint rows, T value):MatrixMNT<T>(rows, 1, value){}
-};
 
 template<class T>
-class RowMatrixT : public MatrixMNT<T>{
+class DenseMatrixMNT : public DenseMatrixT<T>{
 public:
-    RowMatrixT(uint cols, T value):MatrixMNT<T>(1, cols, value){}
-};
+    DenseMatrixMNT(const T* data, uint rows, uint cols):DenseMatrixT<T>(data, rows, cols){}
 
-template<class T>
-class OneMatrixT : public MatrixMNT<T>{
-public:
-    OneMatrixT(uint rows):MatrixMNT<T>(rows, 1, 1){}
-};
+    DenseMatrixMNT(uint rows, uint cols, T value){
+        this->_data = new T[rows * cols];
 
-template<class T>
-class ZeroMatrixT : public MatrixMNT<T>{
-public:
-    ZeroMatrixT(uint rows):MatrixMNT<T>(rows, 1, 0){}
-};
-
-template<class T>
-class EyeMatrixT : public BaseMatrixT<T>{
-public:
-    explicit EyeMatrixT(uint size){
-        T* data = new T[size * size];
-        uint data_idx = 0;
-
-        for(int i = 0; i < size; i++){
-            for(int j = 0; j < size; j++){
-                if(i == j){
-                    data[data_idx++] = (T)1;
-                }else{
-                    data[data_idx++] = (T)0;
-                }
+        //memset only support 0 or -1.
+        if(value == static_cast<T>(0) || value == static_cast<T>(-1)){
+            memset(this->_data, value, sizeof(T) * rows * cols);
+        }else{
+            for(uint i = 0; i < rows * cols; i++){
+                this->_data[i] = value;
             }
         }
-
-        this->set_data(data, size, size);
-        delete[] data;
+        this->_rows = rows;
+        this->_cols = cols;
     }
 };
 
+template<class T>
+class DenseColMatrixT : public DenseMatrixMNT<T>{
+public:
+    DenseColMatrixT(uint rows, T value):DenseMatrixMNT<T>(rows, 1, value){}
+    DenseColMatrixT(const T* data, uint rows):DenseMatrixMNT<T>(data, rows, 1){}
+};
+
+template<class T>
+class DenseRowMatrixT : public DenseMatrixMNT<T>{
+public:
+    DenseRowMatrixT(uint cols, T value):DenseMatrixMNT<T>(1, cols, value){}
+    DenseRowMatrixT(const T* data, uint cols):DenseMatrixMNT<T>(data, 1, cols){}
+};
+
+template<class T>
+class DenseOneMatrixT : public DenseMatrixMNT<T>{
+public:
+    explicit DenseOneMatrixT(uint rows):DenseMatrixMNT<T>(rows, 1, 1){}
+};
+
+template<class T>
+class DenseZeroMatrixT : public DenseMatrixMNT<T>{
+public:
+    explicit DenseZeroMatrixT(uint rows):DenseMatrixMNT<T>(rows, 1, 0){}
+};
+
+template<class T>
+class DenseEyeMatrixT : public DenseMatrixT<T>{
+public:
+    explicit DenseEyeMatrixT(uint size){
+
+        T* data = new T[size * size];
+        memset(data, 0, sizeof(T) * size * size);
+
+        for(uint i = 0; i < size; i++){
+            data[i * size + i] = static_cast<T>(1);
+        }
+
+        this->set_shallow_data(data, size, size);
+    }
+};
+
+
+template<class T>
+class LabeledDenseMatrixT : public DenseMatrixT<T>{
+public:
+    LabeledDenseMatrixT();
+    LabeledDenseMatrixT(const T* data,
+                        const T* labels,
+                        const uint rows,
+                        const uint cols);
+
+    ~LabeledDenseMatrixT();
+
+    inline T get_label(uint idx) const{
+        return _labels[idx];
+    }
+
+    DenseColMatrixT<T>* get_labels();
+
+    void set_data(const T* data,
+                  const T* labels,
+                  const uint rows,
+                  const uint cols);
+
+    void set_shallow_data(T* data,
+                          T* labels,
+                          const uint rows,
+                          const uint cols);
+
+    void display();
+protected:
+    T* _labels = nullptr;
+};
+
+/*
 template<class T, class LT, class FT>
 class LabeledMatrixT : public BaseMatrixT<T>{
 public:
@@ -535,28 +471,6 @@ int BaseMatrixT<T>::sum(BaseMatrixT<T>* data){
 
     return 1;
 }
-
-/*
-
-template<class T>
-int BaseMatrixT<T>::col_sum(BaseMatrixT<T>* result){
-    T* data = new T[_rows];
-
-    for(int i = 0; i < _rows; i++){
-        T value = (T)0;
-        for(int j = 0; j < _cols; j++){
-            value += get_data(i, j);
-        }
-        data[i] = value;
-    }
-
-    result->set_data(data, _rows, 1);
-    delete[] data;
-
-    return 1;
-}
-
-*/
 
 
 template<class T>
@@ -773,88 +687,6 @@ bool BaseMatrixT<T>::det(T* result){
     return true;
 }
 
-/*
-template<class T>
-bool BaseMatrixT<T>::inverse2(BaseMatrixT<real>* result){
-    if(_rows != _cols){
-        return false;
-    }
-
-    //copy src matrix
-    real* data = new real[_rows * _cols];
-    if(typeid(T) == typeid(real)){
-        memcpy(data, _data, sizeof(T)*(_rows * _cols));
-    }else{
-        for(int i = 0; i < _rows * _cols ; i++){
-            data[i] = (real)_data[i];
-        }
-    }
-    result->set_data(data, _rows, _cols);
-
-    uint* swaped_rows = new uint[_rows];
-    uint* swaped_cols = new uint[_cols];
-
-    //iterator every row
-    for(int i = 0; i < _rows; i++){
-        //step 1: find max of lower right corner,全选主元
-        T max_value = (T)0, value;
-        for(int j = i; j< _rows; j++){
-            for(int k = i; k < _cols; k++){
-                value = abs(result->get_data(j, k));
-                if(value > max_value){
-                    max_value = value;
-                    swaped_rows[i] = j;
-                    swaped_cols[i] = k;
-                }
-            }
-        }
-
-        //step 2: move max_value to i*i
-        result->swap_row(i, swaped_rows[i]);
-        result->swap_col(i, swaped_cols[i]);
-
-        //step 3: calc inverse matrix m(i, i) = 1 / m(i, i)
-        real mii = (real)1/result->get_data(i, i);
-        result->set_data(mii, i, i);
-        //step 4: m(i, j) = m(i, j)* m(i, i)，j = 0, 1, ..., n-1；j != i
-        for(int j = 0; j < _cols; j++){// row i multiply mii
-            if(i != j){
-                result->set_data(result->get_data(i, j) * mii, i, j);
-            }
-        }
-
-        //step 5: m(j, k) -= m(j, i) * m(i, k)，j, k = 0, 1, ..., n-1；k, k != i
-        for(int j = 0; j < _rows; j++){
-            if(i == j ){
-                continue;
-            }
-            for(int k = 0; k < _cols; k++){
-                if(i != k){
-                    result->set_data(result->get_data(j, k) - result->get_data(j, i) * result->get_data(i, k), j, k);
-                }
-            }
-        }
-
-        //step 6: m(j, i) = -m(j, i) * m(i, i)，j = 0, 1, ..., n-1；i != j
-        for(int j = 0; j < _rows; j++){
-            if(i != j){
-                result->set_data(-result->get_data(j, i) * result->get_data(i, i) , j, i);
-            }
-        }
-    }
-
-    //step 7: recovery swap rows
-    for(int i = _rows -1 ; i >= 0; i--){
-        result->swap_col(i, swaped_rows[i]);
-        result->swap_row(i, swaped_cols[i]);
-    }
-    delete[] swaped_rows;
-    delete[] swaped_cols;
-
-    return true;
-}
-*/
-
 
 template<class T>
 bool BaseMatrixT<T>::inverse(BaseMatrixT<real>* result){
@@ -877,7 +709,7 @@ bool BaseMatrixT<T>::inverse(BaseMatrixT<real>* result){
     delete[] data;
 
     //extend eye matrix
-    EyeMatrixT<real>* eye_mat = new EyeMatrixT<real>(_rows);
+    DenseEyeMatrixT<real>* eye_mat = new DenseEyeMatrixT<real>(_rows);
     extend_mat->extend(eye_mat);
     delete eye_mat;
 
@@ -1088,6 +920,8 @@ int LabeledMatrixT<T, LT, FT>::subtract_label(LT value, uint row){
     }
     return set_label(get_label(row) - value, row);
 }
+
+*/
 
 }//namespace algebra
 }//namespace ccma

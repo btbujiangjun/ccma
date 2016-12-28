@@ -15,19 +15,15 @@
 #include <stdio.h>
 #include <stdexcept>
 #include <iostream>
+#include "TypeDef.h"
 #include "algebra/BaseMatrix.h"
 
 namespace ccma{
 namespace utils{
 
 class BaseFileOp{
-public:
-    BaseFileOp(){
-        BUFF_SIZE = 102400;
-    }
-
 protected:
-    uint32_t BUFF_SIZE;
+    static const uint BUFF_SIZE = 102400;
 
     inline FILE* open_file(const std::string& path,  const std::string& open_mode);
 
@@ -37,46 +33,46 @@ protected:
                const int size,
                T* result);
 
-    template<class T, class LT>
+    template<class T>
     bool split(char** data,
                const char* delim,
                const int size,
-               uint32_t label_idx,
+               uint label_idx,
                T* result,
-               LT* label_value);
+               T* label_value);
 };//class BaseFileOp
 
 class DenseFileOp : public BaseFileOp{
 public:
     template<class T>
-    bool read_data(const std::string& path, ccma::algebra::BaseMatrixT<T>* mat);
+    bool read_data(const std::string& path, ccma::algebra::DenseMatrixT<T>* mat);
 
     template<class T>
     bool read_data(const std::string& path,
                    const int col_size,
-                   ccma::algebra::BaseMatrixT<T>* mat);
+                   ccma::algebra::DenseMatrixT<T>* mat);
 
-    template<class T, class LT, class FT>
-    bool read_data(const std::string& path, ccma::algebra::LabeledMatrixT<T, LT, FT>* mat);
+    template<class T>
+    bool read_data(const std::string& path, ccma::algebra::LabeledDenseMatrixT<T>* mat);
 
-    template<class T, class LT, class FT>
+    template<class T>
     bool read_data(const std::string& path,
                    int col_size,
                    int label_idx,
-                   ccma::algebra::LabeledMatrixT<T, LT, FT>* mat);
+                   ccma::algebra::LabeledDenseMatrixT<T>* mat);
 
 private:
-    uint32_t get_file_rows(const std::string& path);
-    uint32_t get_file_fields(const std::string& path);
+    uint get_file_rows(const std::string& path);
+    uint get_file_fields(const std::string& path);
 };//class DenseFileOp
 
 
 inline FILE* BaseFileOp::open_file(const std::string& path, const std::string& open_mode){
-    FILE* f = fopen(path.c_str(), open_mode.c_str());
-    if(!f){
+    FILE* file = fopen(path.c_str(), open_mode.c_str());
+    if(!file){
         throw std::runtime_error(std::string("Cannot open file:") + path);
     }
-    return f;
+    return file;
 }
 
 template<class T>
@@ -84,32 +80,32 @@ bool BaseFileOp::split(char** data,
                         const char* delim,
                         const int size,
                         T* result){
-    uint32_t read_size = 0;
+    uint read_size = 0;
     char* p;
     while((p = strsep(data, "\t")) != nullptr && *p != '\n' && *p != '\r'){
         if(*p != '\t' && *p != ' ' && *p != '\0'){
-            result[read_size++] = ccma::utils::ccma_cast<T>(p);
+            result[read_size++] = ccma::utils::type_cast<T>(p);
         }
     }
     return (read_size == size);
 }
 
-template<class T, class LT>
+template<class T>
 bool BaseFileOp::split(char** data,
                         const char* delim,
                         const int size,
-                        uint32_t label_idx,
+                        uint label_idx,
                         T* result,
-                        LT* label_value){
-    uint32_t read_size = 0;
+                        T* label_value){
+    uint read_size = 0;
     char* p;
 
     while((p = strsep(data, "\t")) != nullptr){
         if(*p != '\t' && *p != ' ' && *p != '\0' && *p != '\n' && *p != '\r'){
             if(read_size == label_idx){
-                *label_value = ccma::utils::ccma_cast<LT>(p);
+                *label_value = ccma::utils::type_cast<T>(p);
             }else{
-                result[read_size++] = ccma::utils::ccma_cast<T>(p);
+                result[read_size++] = ccma::utils::type_cast<T>(p);
             }
         }
     }
@@ -117,75 +113,84 @@ bool BaseFileOp::split(char** data,
 }
 
 template<class T>
-bool DenseFileOp::read_data(const std::string& path, ccma::algebra::BaseMatrixT<T>* mat){
+bool DenseFileOp::read_data(const std::string& path, ccma::algebra::DenseMatrixT<T>* mat){
     return read_data<T>(path, -1, mat);
 }
 
 template<class T>
 bool DenseFileOp::read_data(const std::string& path,
                             int col_size,
-                            ccma::algebra::BaseMatrixT<T>* mat){
-    uint32_t rows = get_file_rows(path);
-    uint32_t cols = get_file_fields(path);
+                            ccma::algebra::DenseMatrixT<T>* mat){
+    uint rows = get_file_rows(path);
+    uint cols = get_file_fields(path);
+
+    //range check
     if(rows <= 1 || cols <= 1 ||(col_size != -1 && cols != col_size)){
         return false;
     }
 
-    char* buff = new char[this->BUFF_SIZE];
-    bool read_flag = true;
-    uint32_t row, col;
-    T* raw_data = new T[rows * cols];
+    T* data = new T[rows * cols];
     T* row_data = new T[cols];
+
+    char* buff = new char[this->BUFF_SIZE];
+    //split function will be change the pointer of buff, so stored.
     char* buff_start = buff;
 
-    FILE* f = this->open_file(path, "r");
-    for(row = 0; fgets(buff, this->BUFF_SIZE, f) != nullptr;){
+    bool read_flag = true;
+    uint row_cursor;
+
+    FILE* file = this->open_file(path, "r");
+    for(row_cursor = 0; fgets(buff, this->BUFF_SIZE, file) != nullptr;){
         if(!this->split<T>(&buff, "\t", cols, row_data)){
             read_flag = false;
             break;
         }
-        buff = buff_start;
-        memcpy(&raw_data[row * cols], row_data, sizeof(T) * cols);
+        buff = buff_start;//re-point the start position.
+        memcpy(&data[row_cursor * cols], row_data, sizeof(T) * cols);
         memset((void*)buff, 0, sizeof(char)*this->BUFF_SIZE);
-        row++;
+        row_cursor++;
     }
-    fclose(f);
+    fclose(file);
 
     delete[] row_data;
     delete[] buff_start;
 
-    if(!read_flag){
-        delete[] raw_data;
+    if(mat == nullptr){
+        mat = new ccma::algebra::DenseMatrixT<T>();
+    }
 
+    if(!read_flag){
+        delete[] data;
         return false;
     }
-    if(row < rows){
-        T* data = new T[row * cols];
-        memcpy(data, raw_data, sizeof(T) * row * cols);
-        mat->set_data(data, row, cols);
+    if(row_cursor < rows){
+        T* new_data = new T[row_cursor * cols];
+        memcpy(new_data, data, sizeof(T) * row_cursor * cols);
+        mat->set_shallow_data(new_data, row_cursor, cols);
         delete[] data;
     }else{
-        mat->set_data(raw_data, rows, cols);
+        mat->set_shallow_data(data, rows, cols);
     }
-    delete[] raw_data;
 
     return true;
 }
 
 
-template<class T, class LT, class FT>
-bool DenseFileOp::read_data(const std::string& path, ccma::algebra::LabeledMatrixT<T, LT, FT>* mat){
-    return read_data<T, LT, FT>(path, -1, -1, mat);
+template<class T>
+bool DenseFileOp::read_data(const std::string& path, ccma::algebra::LabeledDenseMatrixT<T>* mat){
+    return read_data<T>(path, -1, -1, mat);
 }
 
 
-template<class T, class LT, class FT>
+template<class T>
 bool DenseFileOp::read_data(const std::string& path,
                             int col_size,
                             int label_idx,
-                            ccma::algebra::LabeledMatrixT<T, LT, FT>* mat){
-    uint32_t rows = get_file_rows(path);
-    uint32_t cols = get_file_fields(path);
+                            ccma::algebra::LabeledDenseMatrixT<T>* mat){
+    uint rows = get_file_rows(path);
+    uint cols = get_file_fields(path);
+
+    //range check
     if(col_size < 0){
         col_size = cols - 1;
     }
@@ -196,68 +201,64 @@ bool DenseFileOp::read_data(const std::string& path,
         return false;
     }
 
-    char* buff = new char[this->BUFF_SIZE];
-    T* raw_data = new T[rows * (cols - 1)];
-    T* row_data = new T[cols - 1];
-    LT* label_data = new LT[rows];
-    FT* fea_data = new FT[cols - 1];
+    T* data = new T[rows * (cols - 1)];
+    T* label_data = new T[rows];
 
-    bool read_flag = true;
-    uint32_t row, col;
-    LT label_value;
+    char* buff = new char[this->BUFF_SIZE];
+    T* row_data = new T[cols - 1];
+
+    T label_value;
     char* buff_start = buff;
 
-    FILE* f = this->open_file(path,"r");
-    for(row = 0; fgets(buff, this->BUFF_SIZE, f) != nullptr;){
-        if(!this->split<T, LT>(&buff, "\t", col_size, label_idx, row_data, &label_value )){
+    bool read_flag = true;
+    uint row_cursor;
+
+    FILE* file = this->open_file(path,"r");
+    for(row_cursor = 0; fgets(buff, this->BUFF_SIZE, file) != nullptr;){
+        if(!this->split<T>(&buff, "\t", col_size, label_idx, row_data, &label_value )){
             read_flag = false;
             break;
         }
 
-        memcpy(&raw_data[row * col_size], row_data, sizeof(T) * col_size);
-        label_data[row] = label_value;
+        memcpy(&data[row_cursor * col_size], row_data, sizeof(T) * col_size);
+        label_data[row_cursor] = label_value;
 
-        buff = buff_start;//pointer be changed by strsep
+        buff = buff_start;//pointer be changed by strsep, re-point to the start addr.
         memset((void*)buff, 0, sizeof(char) * this->BUFF_SIZE);
-        row++;
+        row_cursor++;
     }
-    fclose(f);
+    fclose(file);
 
     delete[] buff_start;
     delete[] row_data;
 
     if(!read_flag){
-        delete[] raw_data;
+        delete[] data;
         delete[] label_data;
-        delete[] fea_data;
         return false;
     }
 
-    for(int i = 0; i < col_size; i++){
-        fea_data[i++] = (FT)('A'+1);
+    if(mat == nullptr){
+        mat = new ccma::algebra::LabeledDenseMatrixT<T>();
     }
 
-    if(row < rows){
-        T* data = new T[row * col_size];
-        LT* l_data = new LT[row];
-        memcpy(data, raw_data, sizeof(T) * row * col_size);
-        memcpy(l_data, label_data, sizeof(LT) * row);
+    if(row_cursor < rows){
+        T* new_data = new T[row_cursor * col_size];
+        T* new_label_data = new T[row_cursor];
+        memcpy(new_data, data, sizeof(T) * row_cursor * col_size);
+        memcpy(new_label_data, label_data, sizeof(T) * row_cursor);
 
-        mat->set_data(data, l_data, fea_data, row, col_size);
-        delete[] l_data;
+        mat->set_shallow_data(new_data, new_label_data, row_cursor, col_size);
+        delete[] data, label_data;
     }else{
-        mat->set_data(raw_data, label_data, fea_data, row, col_size);
+        mat->set_shallow_data(data, label_data, row_cursor, col_size);
     }
-
-    delete[] raw_data;
-    delete[] label_data;
-    delete[] fea_data;
 
     return true;
 }
 
-uint32_t DenseFileOp::get_file_rows(const std::string& path){
-    uint32_t rows = 0;
+uint DenseFileOp::get_file_rows(const std::string& path){
+    uint rows = 0;
     char* buff = new char[this->BUFF_SIZE];
 
     FILE* f = this->open_file(path, "r");
@@ -271,8 +272,8 @@ uint32_t DenseFileOp::get_file_rows(const std::string& path){
     return rows;
 }
 
-uint32_t DenseFileOp::get_file_fields(const std::string& path){
-    uint32_t fields = 0;
+uint DenseFileOp::get_file_fields(const std::string& path){
+    uint fields = 0;
     char* buff = new char[this->BUFF_SIZE];
     char* buff_start = buff;
 
