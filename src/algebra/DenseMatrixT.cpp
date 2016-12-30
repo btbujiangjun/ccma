@@ -15,6 +15,8 @@ namespace algebra{
 
 template<class T>
 DenseMatrixT<T>::DenseMatrixT(){
+    this->_rows = 0;
+    this->_cols = 0;
     _data = nullptr;
     _cache_matrix_det = static_cast<T>(INT_MAX);
 }
@@ -532,6 +534,11 @@ void DenseMatrixT<T>::display(){
 template<class T>
 LabeledDenseMatrixT<T>::LabeledDenseMatrixT(){
     _labels = nullptr;
+    _feature_names = nullptr;
+
+    _cache_shannon_entropy = 0.0;
+    _cache_label_cnt_map = new CCMap<T>();
+    _cache_feature_cnt_map = new std::unordered_map<uint, CCMap<T>* >();
 }
 
 template<class T>
@@ -541,7 +548,34 @@ LabeledDenseMatrixT<T>::LabeledDenseMatrixT(const T* data,
                                             const uint cols) : DenseMatrixT<T>(data, rows, cols){
     _labels = new T[rows];
     memcpy(_labels, labels, sizeof(T) * rows);
+
+    _feature_names = new uint[cols];
+    for(uint i = 0; i < cols; i++){
+        _feature_names[i] = i;
+    }
+
+    _cache_shannon_entropy = 0.0;
+    _cache_label_cnt_map = new CCMap<T>();
+    _cache_feature_cnt_map = new std::unordered_map<uint, CCMap<T>* >();
 }
+
+template<class T>
+LabeledDenseMatrixT<T>::LabeledDenseMatrixT(const T* data,
+                                            const T* labels,
+                                            const uint* feature_names,
+                                            const uint rows,
+                                            const uint cols) : DenseMatrixT<T>(data, rows, cols){
+    _labels = new T[rows];
+    memcpy(_labels, labels, sizeof(T) * rows);
+
+    _feature_names = new uint[cols];
+    memcpy(_feature_names, feature_names, sizeof(uint) * cols);
+
+    _cache_shannon_entropy = 0.0;
+    _cache_label_cnt_map = new CCMap<T>();
+    _cache_feature_cnt_map = new std::unordered_map<uint, CCMap<T>* >();
+}
+
 
 
 template<class T>
@@ -549,6 +583,21 @@ LabeledDenseMatrixT<T>::~LabeledDenseMatrixT(){
     if(_labels != nullptr){
         delete[] _labels;
         _labels = nullptr;
+    }
+
+    if(_feature_names != nullptr){
+        delete[] _feature_names;
+        _feature_names = nullptr;
+    }
+
+    clear_cache();
+
+    if(_cache_label_cnt_map != nullptr){
+        delete _cache_label_cnt_map;
+    }
+
+    if(_cache_feature_cnt_map != nullptr){
+        delete _cache_feature_cnt_map;
     }
 }
 
@@ -562,6 +611,22 @@ void LabeledDenseMatrixT<T>::set_data(const T* data,
                                       const T* labels,
                                       const uint rows,
                                       const uint cols){
+    uint* feature_names = new uint[cols];
+    for(uint i = 0; i < cols; i++){
+        feature_names[i] = i;
+    }
+
+    set_data(data, labels, feature_names, rows, cols);
+
+    delete[] feature_names;
+}
+
+template<class T>
+void LabeledDenseMatrixT<T>::set_data(const T* data,
+                                      const T* labels,
+                                      const uint* feature_names,
+                                      const uint rows,
+                                      const uint cols){
     DenseMatrixT<T>::set_data(data, rows, cols);
 
     if(_labels != nullptr){
@@ -570,6 +635,14 @@ void LabeledDenseMatrixT<T>::set_data(const T* data,
 
     _labels = new T[rows];
     memcpy(_labels, labels, sizeof(T) * rows);
+
+    if(_feature_names != nullptr){
+        delete[] _feature_names;
+    }
+    _feature_names = new uint[cols];
+    memcpy(_feature_names, feature_names, cols);
+
+    clear_cache();
 }
 
 template<class T>
@@ -577,19 +650,175 @@ void LabeledDenseMatrixT<T>::set_shallow_data(T* data,
                                               T* labels,
                                               const uint rows,
                                               const uint cols){
+    uint* feature_names = new uint[cols];
+    for(uint i = 0; i < cols; i++){
+        feature_names[i] = i;
+    }
+
+    set_shallow_data(data, labels, feature_names, rows, cols);
+}
+
+template<class T>
+void LabeledDenseMatrixT<T>::set_shallow_data(T* data,
+                                              T* labels,
+                                              uint* feature_names,
+                                              const uint rows,
+                                              const uint cols){
     DenseMatrixT<T>::set_shallow_data(data, rows, cols);
 
     if(_labels != nullptr){
         delete[] _labels;
     }
-
     _labels = labels;
+
+    if(_feature_names != nullptr){
+        delete[] _feature_names;
+    }
+    _feature_names = feature_names;
+
+    clear_cache();
+}
+
+template<class T>
+real LabeledDenseMatrixT<T>::get_shannon_entropy(){
+    if(_cache_shannon_entropy != 0.0){
+        return _cache_shannon_entropy;
+    }
+
+    real ent = 0.0;
+    CCMap<T>* vm = get_label_cnt_map();
+    typename CCMap<T>::const_iterator it;
+    for(it = vm->begin(); it != vm->end(); it++){
+        real prob = (real)it->second/this->get_rows();
+        ent -= prob * (log(prob)/log(2));
+    }
+    _cache_shannon_entropy = ent;
+    return ent;
+}
+
+template<class T>
+bool LabeledDenseMatrixT<T>::split(uint feature_idx,
+                                   T split_value,
+                                   LabeledDenseMatrixT<T>* sub_mat){
+    CCMap<T>* feature_cnt_map = get_feature_cnt_map(feature_idx);
+
+    typename CCMap<T>::const_iterator it;
+    it = feature_cnt_map->find(split_value);
+    if(it == feature_cnt_map->end()){
+        return false;
+    }
+
+    uint new_rows = it->second;
+    uint new_cols = this->_cols -1;
+
+    T* new_data = new T[new_rows * new_cols];
+    T* new_label = new T[new_rows];
+
+    uint new_data_idx = 0;
+    uint new_label_idx = 0;
+
+    for(uint i = 0; i < this->_rows; i++){
+        if(this->get_data(i, feature_idx) !=  split_value){
+            continue;
+        }
+
+        for(uint j = 0; j < this->_cols; j++){
+            if(j != feature_idx){
+                new_data[new_data_idx++] = this->get_data(i, j);
+            }
+        }
+
+        new_label[new_label_idx++] = _labels[i];
+    }
+
+    uint* new_feature_names = new uint[this->_cols - 1];
+    uint new_feature_name_idx = 0;
+    for(uint i = 0; i < this->_cols; i++){
+        if(i != feature_idx){
+            new_feature_names[new_feature_name_idx++] = i;
+        }
+    }
+
+    if(sub_mat == nullptr){
+        sub_mat = new LabeledDenseMatrixT<T>();
+    }
+    sub_mat->set_shallow_data(new_data, new_label, new_feature_names, new_rows, new_cols);
+
+    return true;
+}
+
+template<class T>
+CCMap<T>* LabeledDenseMatrixT<T>::get_label_cnt_map(){
+    if(_cache_label_cnt_map->size() > 0){
+        return _cache_label_cnt_map;
+    }
+
+    typename CCMap<T>::iterator it;
+    for(uint i = 0; i < this->get_rows(); i++){
+        it = _cache_label_cnt_map->find(_labels[i]);
+        if(it == _cache_label_cnt_map->end()){
+            _cache_label_cnt_map->insert(std::make_pair(_labels[i], 1));
+        }else{
+            it->second += 1;
+        }
+    }
+
+    return _cache_label_cnt_map;
+}
+
+template<class T>
+CCMap<T>* LabeledDenseMatrixT<T>::get_feature_cnt_map(uint feature_idx){
+    typename std::unordered_map<uint, CCMap<T>*>::iterator it;
+    it = _cache_feature_cnt_map->find(feature_idx);
+    if(it != _cache_feature_cnt_map->end()){
+        return it->second;
+    }
+
+    CCMap<T>* feature_cnt_map = new CCMap<T>();
+    if(feature_idx >= this->_cols){
+        return feature_cnt_map;
+    }
+
+    typename CCMap<T>::iterator itv;
+    for(uint i = 0; i < this->_rows; i++){
+        T data = this->get_data(i, feature_idx);
+        itv = feature_cnt_map->find(data);
+        if(itv == feature_cnt_map->end()){
+            feature_cnt_map->insert(std::make_pair(data, 1));
+        }else{
+            itv->second += 1;
+        }
+    }
+    _cache_feature_cnt_map->insert(std::make_pair(feature_idx, feature_cnt_map));
+
+    return feature_cnt_map;
+}
+
+template<class T>
+void LabeledDenseMatrixT<T>::clear_cache(){
+    DenseMatrixT<T>::clear_cache();
+    _cache_shannon_entropy = 0;
+    if(_cache_label_cnt_map != nullptr){
+        _cache_label_cnt_map->clear();
+    }
+
+    if(_cache_feature_cnt_map != nullptr){
+        CCMap<T>* item;
+        typename std::unordered_map<uint, CCMap<T>*>::iterator it;
+        it = _cache_feature_cnt_map->begin();
+        while(it != _cache_feature_cnt_map->end()){
+            item = it->second;
+            it = _cache_feature_cnt_map->erase(it);
+            delete item;
+        }
+        _cache_feature_cnt_map->clear();
+    }
 }
 
 template<class T>
 void LabeledDenseMatrixT<T>::display(){
     for(uint i = 0; i < this->_cols; i++){
-        printf("col:%d\t", i);
+        printf("col:%d\t", get_feature_name(i));
     }
     printf("label\n");
     for(uint i = 0; i < this->_rows; i++){
