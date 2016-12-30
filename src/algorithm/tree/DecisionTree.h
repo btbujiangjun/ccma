@@ -14,42 +14,42 @@ namespace ccma{
 namespace algorithm{
 namespace tree{
 
-template<class T, class LT, class FT>
 class DecisionTree{
 public:
-    explicit DecisionTree(ccma::algebra::LabeledMatrixT<T, LT, FT>* train_data) : _train_data(train_data){}
-
-    void train(){
-        create_tree(_train_data);
+    template<class T>
+    void train(ccma::algebra::LabeledDenseMatrixT<T>* train_data){
+        train_data->display();
+        create_tree(train_data);
     }
 
 private:
-    void create_tree(ccma::algebra::LabeledMatrixT<T, LT, FT>* mat);
-    uint search_best_feature(ccma::algebra::LabeledMatrixT<T, LT, FT>* mat);
+    template<class T>
+    void create_tree(ccma::algebra::LabeledDenseMatrixT<T>* mat);
 
-    ccma::algebra::LabeledMatrixT<T, LT, FT>* _train_data;
+    template<class T>
+    uint search_best_feature(ccma::algebra::LabeledDenseMatrixT<T>* mat);
 };//class DecisionTree
 
 
-template<class T, class LT, class FT>
-void DecisionTree<T, LT, FT>::create_tree(ccma::algebra::LabeledMatrixT<T, LT, FT>* mat){
+template<class T>
+void DecisionTree::create_tree(ccma::algebra::LabeledDenseMatrixT<T>* mat){
 
-    ccma::algebra::CCMap<LT>* label_map = mat->get_label_map();
+    ccma::algebra::CCMap<T>* label_cnt_map = mat->get_label_cnt_map();
 
     //all labels are the same or have no feature
-    if(label_map->size() == 1 || mat->get_cols()== 0){
-        printf("\t\tleaf node [%c][%d]\n", label_map->get_max_key(), label_map->get_max_value());
+    if(label_cnt_map->size() == 1 || mat->get_cols()== 0){
+        printf("\t\tleaf node [%d][%d]\n", label_cnt_map->get_max_key(), label_cnt_map->get_max_value());
     }else{
         uint n_best_feature = search_best_feature(mat);
-        printf("best feature[%c]rows[%d]\n", mat->get_feature_label(n_best_feature), mat->get_rows());
+        printf("best feature[%d]rows[%d]\n", mat->get_feature_name(n_best_feature), mat->get_rows());
 
-        ccma::algebra::CCMap<T>* uvm = mat->get_feature_map(n_best_feature);
+        ccma::algebra::CCMap<T>* uvm = mat->get_feature_cnt_map(n_best_feature);
         typename ccma::algebra::CCMap<T>::iterator it;
         for(it = uvm->begin(); it != uvm->end(); it++){
 
-            ccma::algebra::LabeledMatrixT<T, LT, FT>* sub_matrix = new ccma::algebra::LabeledMatrixT<T, LT, FT>();
+            ccma::algebra::LabeledDenseMatrixT<T>* sub_matrix = new ccma::algebra::LabeledDenseMatrixT<T>();
             mat->split(n_best_feature, it->first, sub_matrix);
-            printf("\ttree[%c][%d]\n", mat->get_feature_label(n_best_feature), it->first);
+            printf("\ttree[%d][%d]\n", mat->get_feature_name(n_best_feature), it->first);
 
             create_tree(sub_matrix);
 
@@ -60,8 +60,8 @@ void DecisionTree<T, LT, FT>::create_tree(ccma::algebra::LabeledMatrixT<T, LT, F
 }
 
 
-template<class T, class LT, class FT>
-uint DecisionTree<T, LT, FT>::search_best_feature(ccma::algebra::LabeledMatrixT<T, LT, FT>* mat){
+template<class T>
+uint DecisionTree::search_best_feature(ccma::algebra::LabeledDenseMatrixT<T>* mat){
 
     real best_info_gain = 0.0;
     uint best_feature_idx = 0;
@@ -70,17 +70,15 @@ uint DecisionTree<T, LT, FT>::search_best_feature(ccma::algebra::LabeledMatrixT<
     for(uint i = 0; i < mat->get_cols(); i++){
 
         real ent = 0;
-        ccma::algebra::CCMap<T>* uvm = mat->get_feature_map(i);
+        ccma::algebra::CCMap<T>* uvm = mat->get_feature_cnt_map(i);
         typename ccma::algebra::CCMap<T>::iterator it;
 
         for(it = uvm->begin(); it != uvm->end(); it++){
-
-            ccma::algebra::LabeledMatrixT<T, LT, FT>* sub_matrix = new ccma::algebra::LabeledMatrixT<T, LT, FT>();
-            mat->split(i, it->first, sub_matrix);
-
-            real prob = (real)sub_matrix->get_rows()/mat->get_rows();
-            ent += prob * sub_matrix->get_shannon_entropy();
-
+            ccma::algebra::LabeledDenseMatrixT<T>* sub_matrix = new ccma::algebra::LabeledDenseMatrixT<T>();
+            if(mat->split(i, it->first, sub_matrix)){
+                real prob = (real)sub_matrix->get_rows()/mat->get_rows();
+                ent += prob * sub_matrix->get_shannon_entropy();
+            }
             delete sub_matrix;
         }
 
