@@ -18,7 +18,6 @@ class DecisionTree{
 public:
     template<class T>
     void train(ccma::algebra::LabeledDenseMatrixT<T>* train_data){
-        train_data->display();
         create_tree(train_data);
     }
 
