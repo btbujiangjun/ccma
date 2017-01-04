@@ -21,7 +21,10 @@ namespace algebra{
 template<class T>
 class BaseMatrixT{
 public:
-    BaseMatrixT(){}
+    BaseMatrixT(){
+        _rows = 0;
+        _cols = 0;
+    }
     BaseMatrixT(const uint rows, const uint cols){
         _rows = rows;
         _cols = cols;
@@ -64,8 +67,9 @@ public:
 
     virtual bool product(const T value) = 0;
     virtual bool product(const T value, BaseMatrixT<T>* result) = 0;
-    virtual bool product(const BaseMatrixT<T>* mat, BaseMatrixT<T>* result) = 0;
+    virtual bool product(const BaseMatrixT<int>* mat, BaseMatrixT<int>* result) = 0;
     virtual bool product(const BaseMatrixT<int>* mat, BaseMatrixT<real>* result) = 0;
+    virtual bool product(const BaseMatrixT<real>* mat, BaseMatrixT<real>* result) = 0;
 
     virtual bool swap(const uint a_row,
                       const uint a_col,
@@ -131,8 +135,9 @@ public:
 
     bool product(const T value);
     bool product(const T value, BaseMatrixT<T>* result);
-    bool product(const BaseMatrixT<T>* mat, BaseMatrixT<T>* result);
+    bool product(const BaseMatrixT<int>* mat, BaseMatrixT<int>* result);
     bool product(const BaseMatrixT<int>* mat, BaseMatrixT<real>* result);
+    bool product(const BaseMatrixT<real>* mat, BaseMatrixT<real>* result);
 
     bool swap(const uint a_row,
               const uint a_col,
@@ -291,6 +296,8 @@ public:
     inline uint get_feature_name(uint idx) const{
         return this->_feature_names[idx];
     }
+
+    DenseMatrixT<T>* get_data_matrix();
 
     DenseColMatrixT<T>* get_labels();
 
