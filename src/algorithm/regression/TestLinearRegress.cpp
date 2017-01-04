@@ -11,30 +11,10 @@
 #include "LinearRegress.h"
 
 int main(int argc, char** argv){
-    /*
-    //int a[16] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
-    real a[9] = {1,2,3,2,2,1,3,4,3};
-//    real a[4] = {1,2,3,2};
-    ccma::algebra::BaseMatrixT<real> bm(3, 3, a);
-    real result = 0;
-    bm.det(&result);
-    printf("det:%f\n", result);
-
-    bm.display();
-
-    ccma::algebra::BaseMatrixT<real>* res_mat = new ccma::algebra::BaseMatrixT<real>();
-    bm.inverse(res_mat);
-    res_mat->display();
-
-    ccma::algebra::BaseMatrixT<real>* product_mat = new ccma::algebra::BaseMatrixT<real>();
-    bm.inner_product(res_mat, product_mat);
-    product_mat->display();
-    */
-
     ccma::algebra::LabeledDenseMatrixT<real>* lmat = new ccma::algebra::LabeledDenseMatrixT<real>();
     ccma::utils::DenseFileOp* fo = new ccma::utils::DenseFileOp();
     if(fo->read_data("./data/ex0.txt", lmat)){
-        lmat->display();
+//        lmat->display();
         ccma::algorithm::regression::LinearRegression* regression = new ccma::algorithm::regression::LinearRegression();
         ccma::algebra::DenseColMatrixT<real>* weights = new ccma::algebra::DenseColMatrixT<real>(lmat->get_cols(), 0.0);
         if(regression->standard_regression<real>(lmat, weights)){
@@ -43,6 +23,15 @@ int main(int argc, char** argv){
         }
         delete weights;
         delete regression;
+
+        ccma::algebra::DenseMatrixT<real>* predict_mat = lmat->get_data_matrix();
+        ccma::algebra::DenseColMatrixT<real>* predict_labels;
+        if(regression->local_weight_logistic_regresion(lmat, predict_mat, 1, predict_labels)){
+            printf("predict_labels:\n");
+            predict_labels->display();
+            delete predict_labels;
+        }
+        delete predict_mat;
     }
     delete fo;
     delete lmat;
