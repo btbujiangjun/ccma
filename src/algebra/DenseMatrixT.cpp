@@ -264,25 +264,25 @@ bool DenseMatrixT<T>::product(const T value, BaseMatrixT<T>* result){
  *
  */
 template<class T>
-bool DenseMatrixT<T>::product(const BaseMatrixT<T>* mat, BaseMatrixT<T>* result){
+bool DenseMatrixT<T>::product(const BaseMatrixT<int>* mat, BaseMatrixT<int>* result){
     if(this->_cols != mat->get_rows()){
         return false;
     }
 
-    T* data = new T[this->_rows * mat->get_cols()];
+    int* data = new int[this->_rows * mat->get_cols()];
     uint row_cursor = 0;
     for(int i = 0; i < this->_rows; i++){
         for(int j = 0; j < mat->get_cols(); j++){
-            T value = static_cast<T>(0);
+            int value = static_cast<int>(0);
             for(int k = 0; k < this->_cols; k++){
-                value += this->get_data(i, k) * mat->get_data(k, j);
+                value += (int)this->get_data(i, k) * mat->get_data(k, j);
             }
             data[row_cursor++] = value;
         }
     }
 
     if(result == nullptr){
-        result = new DenseMatrixT<T>();
+        result = new DenseMatrixT<int>();
     }
     result->set_shallow_data(data, this->_rows, mat->get_cols());
 
@@ -301,6 +301,31 @@ bool DenseMatrixT<T>::product(const BaseMatrixT<int>* mat, BaseMatrixT<real>* re
             real value = static_cast<real>(0);
             for(int k = 0; k < this->_cols; k++){
                 value += (real)this->get_data(i, k) * (real)mat->get_data(k, j);
+            }
+            data[row_cursor++] = value;
+        }
+    }
+
+    if(result == nullptr){
+        result = new DenseMatrixT<real>();
+    }
+    result->set_shallow_data(data, this->_rows, mat->get_cols());
+
+    return true;
+}
+template<class T>
+bool DenseMatrixT<T>::product(const BaseMatrixT<real>* mat, BaseMatrixT<real>* result){
+    if(this->_cols != mat->get_rows()){
+        return false;
+    }
+
+    real* data = new real[this->_rows * mat->get_cols()];
+    uint row_cursor = 0;
+    for(int i = 0; i < this->_rows; i++){
+        for(int j = 0; j < mat->get_cols(); j++){
+            real value = static_cast<real>(0);
+            for(int k = 0; k < this->_cols; k++){
+                value += (real)this->get_data(i, k) * mat->get_data(k, j);
             }
             data[row_cursor++] = value;
         }
@@ -404,6 +429,8 @@ void DenseMatrixT<T>::transpose(BaseMatrixT<T>* result){
 
 template<class T>
 bool DenseMatrixT<T>::det(T* result){
+    *result = 0.0;
+    //must be phalanx N*N
     if(this->_rows != this->_cols){
         return false;
     }
@@ -599,6 +626,15 @@ LabeledDenseMatrixT<T>::~LabeledDenseMatrixT(){
     if(_cache_feature_cnt_map != nullptr){
         delete _cache_feature_cnt_map;
     }
+}
+
+template<class T>
+DenseMatrixT<T>* LabeledDenseMatrixT<T>::get_data_matrix(){
+    T* data = new T[this->_rows * this->_cols];
+    memcpy(data, this->_data, sizeof(T)* this->_rows * this->_cols);
+    DenseMatrixT<T>* data_mat = new DenseMatrixT<T>();
+    data_mat->set_shallow_data(data, this->_rows, this->_cols);
+    return data_mat;
 }
 
 template<class T>
