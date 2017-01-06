@@ -25,11 +25,10 @@ int main(int argc, char** argv){
         delete regression;
 
         ccma::algebra::DenseMatrixT<real>* predict_mat = lmat->get_data_matrix();
-        ccma::algebra::DenseColMatrixT<real>* predict_labels;
-        if(regression->local_weight_logistic_regresion(lmat, predict_mat, 1, predict_labels)){
+        ccma::algebra::DenseColMatrixT<real> predict_labels(1, predict_mat->get_rows());
+        if(regression->local_weight_logistic_regresion(lmat, predict_mat, 1, &predict_labels)){
             printf("predict_labels:\n");
-            predict_labels->display();
-            delete predict_labels;
+            predict_labels.display();
         }
         delete predict_mat;
     }
