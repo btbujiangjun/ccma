@@ -61,9 +61,6 @@ bool LinearRegression::local_weight_logistic_regresion(ccma::algebra::LabeledDen
     ccma::algebra::DenseMatrixT<T>* xT = new ccma::algebra::DenseMatrixT<T>();
     x->transpose(xT);
 
-    ccma::algebra::DenseMatrixT<T>* xTx = new ccma::algebra::DenseMatrixT<T>();
-    xT->product(x, xTx);
-
     for(uint i = 0 ; i < predict_data->get_rows(); i++){
         ccma::algebra::BaseMatrixT<real>* weight = new ccma::algebra::DenseEyeMatrixT<real>(train_data->get_rows());
         ccma::algebra::DenseMatrixT<T>* predict_row_mat = predict_data->get_row_data(i);
@@ -86,12 +83,15 @@ bool LinearRegression::local_weight_logistic_regresion(ccma::algebra::LabeledDen
             delete train_row_mat, diff_mat, diff_mat_t, diff_mat_diff_mat_t;
         }
 
-        ccma::algebra::DenseMatrixT<real>* xTx_weight = new ccma::algebra::DenseMatrixT<real>();
-        xTx->product(weight, xTx_weight);
+        ccma::algebra::DenseMatrixT<real>* weight_x = new ccma::algebra::DenseMatrixT<real>();
+        weight->product(x, weight_x);
+
+        ccma::algebra::DenseMatrixT<real>* xTx = new ccma::algebra::DenseMatrixT<real>();
+        xT->product(weight_x, xTx);
 
         real* det;
-        if(!xTx_weight->det(det) || *det == 0.0){
-            delete x, y, xT, xTx, xTx_weight, predict_row_mat;
+        if(!xTx->det(det) || *det == 0.0){
+            delete x, y, xT, weight_x, xTx, predict_row_mat;
             return false;
         }
 
@@ -101,24 +101,21 @@ bool LinearRegression::local_weight_logistic_regresion(ccma::algebra::LabeledDen
         ccma::algebra::DenseMatrixT<real>* xT_weight_y = new ccma::algebra::DenseMatrixT<real>();
         xT->product(weight_y, xT_weight_y);
 
-        ccma::algebra::DenseMatrixT<real>* xTx_weight_I = new ccma::algebra::DenseMatrixT<real>();
-        xTx_weight->inverse(xTx_weight_I);
+        ccma::algebra::DenseMatrixT<real>* xTxI = new ccma::algebra::DenseMatrixT<real>();
+        xTx->inverse(xTxI);
 
         ccma::algebra::DenseMatrixT<real>* weight_i = new ccma::algebra::DenseMatrixT<real>();
-        xTx_weight_I->product(xT_weight_y, weight_i);
+        xTxI->product(xT_weight_y, weight_i);
 
         ccma::algebra::DenseMatrixT<real>* predict_mat_i = new ccma::algebra::DenseMatrixT<real>();
         predict_row_mat->product(weight_i, predict_mat_i);
 
         labels[i] = predict_mat_i->get_data(0);
 
-        delete  xTx_weight, weight_y, xT_weight_y, xTx_weight_I, weight_i, predict_row_mat, predict_mat_i;
+        delete  weight_x, xTx, weight_y, xT_weight_y, xTxI, weight_i, predict_mat_i, predict_row_mat;
     }
-    delete x, y , xT, xTx;
+    delete x, y , xT;
 
-    if(predict_labels == nullptr){
-        predict_labels = new ccma::algebra::DenseColMatrixT<real>(0.0, predict_data->get_rows());
-    }
     predict_labels->set_shallow_data(labels, predict_data->get_rows(), 1);
 
     return true;
