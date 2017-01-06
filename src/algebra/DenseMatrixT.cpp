@@ -440,8 +440,22 @@ bool DenseMatrixT<T>::det(T* result){
         return true;
     }
 
-    T sum1 = static_cast<T>(0), sum2 = static_cast<T>(0);
+    if(this->_rows == 1){
+        _cache_matrix_det = this->_data[0];
+        *result = _cache_matrix_det;
+        return true;
+    }
 
+    /*
+     *二阶对角,高阶画圈
+     */
+    if(this->_rows == 2){
+        _cache_matrix_det = this->get_data(0, 0) * this->get_data(1, 1) - this->get_data(0, 1) * this->get_data(1, 0);
+        *result = _cache_matrix_det;
+        return true;
+    }
+
+    T sum1 = static_cast<T>(0), sum2 = static_cast<T>(0);
     for(int i = 0; i < this->_cols; i++){
         T s = static_cast<T>(1);
         for(int j = 0; j < this->_rows; j++){
