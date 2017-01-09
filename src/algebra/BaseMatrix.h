@@ -60,6 +60,7 @@ public:
 
     virtual bool add(const BaseMatrixT<T>* mat) = 0;
     virtual bool add(const BaseMatrixT<T>* mat, BaseMatrixT<T>* result) = 0;
+    virtual bool add(const BaseMatrixT<int>* mat, BaseMatrixT<real>* result) = 0;
 
     virtual bool subtract(const BaseMatrixT<T>* mat) = 0;
     virtual bool subtract(const BaseMatrixT<T>* mat, BaseMatrixT<T>* result) = 0;
@@ -128,6 +129,7 @@ public:
 
     bool add(const BaseMatrixT<T>* mat);
     bool add(const BaseMatrixT<T>* mat, BaseMatrixT<T>* result);
+    bool add(const BaseMatrixT<int>* mat, BaseMatrixT<real>* result);
 
     bool subtract(const BaseMatrixT<T>* mat);
     bool subtract(const BaseMatrixT<T>* mat, BaseMatrixT<T>* result);
