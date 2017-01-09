@@ -202,6 +202,26 @@ bool DenseMatrixT<T>::add(const BaseMatrixT<T>* mat, BaseMatrixT<T>* result){
 }
 
 template<class T>
+bool DenseMatrixT<T>::add(const BaseMatrixT<int>* mat, BaseMatrixT<real>* result){
+    if(this->_rows != mat->get_rows() || this->_cols != mat->get_cols()){
+        return false;
+    }
+
+    real* data = new real[this->_rows * this->_cols];
+    for(int i = 0; i < this->_rows * this->_cols; i++){
+        data[i] = (real)_data[i] + (real)mat->get_data(i);
+    }
+
+    if(result == nullptr){
+        result = new DenseMatrixT<real>();
+    }
+    result->set_shallow_data(data, this->_rows, this->_cols);
+
+    return true;
+}
+
+
+template<class T>
 bool DenseMatrixT<T>::subtract(const BaseMatrixT<T>* mat){
     if( this->_rows != mat->get_rows() || this->_cols != mat->get_cols()){
         return false;
