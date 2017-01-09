@@ -45,7 +45,7 @@ bool LinearRegression::standard_regression(ccma::algebra::LabeledDenseMatrixT<T>
 
 
 template<class T>
-bool LinearRegression::local_weight_logistic_regresion(ccma::algebra::LabeledDenseMatrixT<T>* train_data,
+bool LinearRegression::local_weight_logistic_regression(ccma::algebra::LabeledDenseMatrixT<T>* train_data,
                                                      ccma::algebra::DenseMatrixT<T>* predict_data,
                                                      real k,
                                                      ccma::algebra::DenseColMatrixT<real>* predict_labels){
@@ -121,20 +121,51 @@ bool LinearRegression::local_weight_logistic_regresion(ccma::algebra::LabeledDen
     return true;
 }
 
+template<class T>
+bool LinearRegression::ridge_regression(ccma::algebra::LabeledDenseMatrixT<T>* train_data,
+                                        const real lamda,
+                                        ccma::algebra::DenseColMatrixT<real>* weights){
+    ccma::algebra::DenseMatrixT<T>* x = train_data->get_data_matrix();
+    ccma::algebra::DenseColMatrixT<T>* y = train_data->get_labels();
 
+    ccma::algebra::DenseMatrixT<T>* xT = new ccma::algebra::DenseMatrixT<T>();
+    x->transpose(xT);
+
+    ccma::algebra::DenseMatrixT<T>* xTx = new ccma::algebra::DenseMatrixT<T>();
+    xT->product(x, xTx);
+
+    ccma::algebra::DenseEyeMatrixT<real>* eye = new ccma::algebra::DenseEyeMatrixT<real>(x->get_cols());
+    eye->product(lamda);
+    eye->add(xTx, eye);
+
+    real* result;
+    if(!eye->det(result) || *result == 0.0){
+        delete x, y, xT, xTx, eye;
+        return false;
+    }
+
+    ccma::algebra::DenseMatrixT<real>* eyeI = new ccma::algebra::DenseMatrixT<real>();
+    eye->inverse(eyeI);
+
+    ccma::algebra::DenseMatrixT<T>* xTy = new ccma::algebra::DenseMatrixT<T>();
+    xT->product(y, xTy);
+
+    eyeI->product(xTy, weights);
+
+    delete x, y, xT, xTx, eye, eyeI, xTy;
+
+    return true;
+}
 
 
 template bool LinearRegression::standard_regression(ccma::algebra::LabeledDenseMatrixT<int>* train_data, ccma::algebra::DenseColMatrixT<real>* weights);
 template bool LinearRegression::standard_regression(ccma::algebra::LabeledDenseMatrixT<real>* train_data, ccma::algebra::DenseColMatrixT<real>* weights);
 
-template bool LinearRegression::local_weight_logistic_regresion(ccma::algebra::LabeledDenseMatrixT<int>* train_data,
-                                                                ccma::algebra::DenseMatrixT<int>* predict_data,
-                                                                real k,
-                                                                ccma::algebra::DenseColMatrixT<real>* predict_labels);
-template bool LinearRegression::local_weight_logistic_regresion(ccma::algebra::LabeledDenseMatrixT<real>* train_data,
-                                                                ccma::algebra::DenseMatrixT<real>* predict_data,
-                                                                real k,
-                                                                ccma::algebra::DenseColMatrixT<real>* predict_labels);
+template bool LinearRegression::local_weight_logistic_regression(ccma::algebra::LabeledDenseMatrixT<int>* train_data, ccma::algebra::DenseMatrixT<int>* predict_data, real k, ccma::algebra::DenseColMatrixT<real>* predict_labels);
+template bool LinearRegression::local_weight_logistic_regression(ccma::algebra::LabeledDenseMatrixT<real>* train_data, ccma::algebra::DenseMatrixT<real>* predict_data, real k, ccma::algebra::DenseColMatrixT<real>* predict_labels);
+
+template bool LinearRegression::ridge_regression(ccma::algebra::LabeledDenseMatrixT<int>* train_data, const real lamda, ccma::algebra::DenseColMatrixT<real>* weights);
+template bool LinearRegression::ridge_regression(ccma::algebra::LabeledDenseMatrixT<real>* train_data, const real lamda, ccma::algebra::DenseColMatrixT<real>* weights);
 }//regression
 }//namespace
 }//namespace ccma
