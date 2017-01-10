@@ -327,9 +327,17 @@ public:
 
     real get_shannon_entropy();
 
+    //only equal
     bool split(uint feature_idx,
                T split_value,
                LabeledDenseMatrixT<T>* sub_mat);
+    //binary_split
+    //lt_mat --> less than and equal
+    //gt_mat --> greater than
+    bool binary_split(uint feature_idx,
+                      T split_value,
+                      LabeledDenseMatrixT<T>* lt_mat,
+                      LabeledDenseMatrixT<T>* gt_mat);
 
     CCMap<T>* get_label_cnt_map();
 
