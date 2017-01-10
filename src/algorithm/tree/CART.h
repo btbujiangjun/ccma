@@ -16,6 +16,7 @@ namespace algorithm{
 namespace tree{
 
 class CartTree{
+private:
 };//class CartTree
 
 class ClassificationAndRegressionTree{
