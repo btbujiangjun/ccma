@@ -19,6 +19,7 @@ DenseMatrixT<T>::DenseMatrixT(){
     this->_cols = 0;
     _data = nullptr;
     _cache_matrix_det = static_cast<T>(INT_MAX);
+    _cache_to_string = nullptr;
 }
 
 
@@ -32,6 +33,7 @@ DenseMatrixT<T>::DenseMatrixT(const T* data,
     this->_cols = cols;
 
     _cache_matrix_det = static_cast<T>(INT_MAX);
+    _cache_to_string = nullptr;
 }
 
 template<class T>
@@ -39,6 +41,10 @@ DenseMatrixT<T>::~DenseMatrixT(){
     if(_data != nullptr){
         delete[] _data;
         _data = nullptr;
+    }
+    if(_cache_to_string != nullptr){
+        delete _cache_to_string;
+        _cache_to_string = nullptr;
     }
 }
 
@@ -580,17 +586,33 @@ void DenseMatrixT<T>::display(){
     printf("[%d*%d][\n", this->_rows, this->_cols);
     for(int i = 0; i < this->_rows; i++){
         for(int j = 0; j < this->_cols; j++){
-            if(typeid(T) == typeid(real)){
-                printf("%f\t", get_data(i, j));
-            }else{
-                printf("%d\t", get_data(i, j));
-            }
+            printf("%s\t", std::to_string(get_data(i, j)).c_str());
         }
         printf("\n");
     }
     printf("]\n");
 }
 
+template<class T>
+std::string* DenseMatrixT<T>::to_string(){
+    if(_cache_to_string != nullptr){
+        return _cache_to_string;
+    }
+    std::string* str = new std::string("[" + std::to_string(this->_rows) + "*"+std::to_string(this->_cols)+"][");
+    for(int i = 0 ; i < this->_rows; i++){
+        str->append("[");
+        for(int j = 0; j < this->_cols; j++){
+            if(j > 0){
+                str->append(",");
+            }
+            str->append(std::to_string(get_data(i, j)));
+        }
+        str->append("]");
+    }
+    str->append("]");
+    _cache_to_string = str;
+    return _cache_to_string;
+}
 
 template<class T>
 LabeledDenseMatrixT<T>::LabeledDenseMatrixT(){
@@ -939,17 +961,9 @@ void LabeledDenseMatrixT<T>::display(){
     printf("label\n");
     for(uint i = 0; i < this->_rows; i++){
         for(uint j = 0; j < this->_cols; j++){
-            if(typeid(T) == typeid(real)){
-                printf("%f\t", this->get_data(i, j));
-            }else{
-                printf("%d\t", this->get_data(i, j));
-            }
+            printf("%s\t", std::to_string(this->get_data(i, j)).c_str());
         }
-        if(typeid(T) == typeid(real)){
-            printf("%f\n", get_label(i));
-        }else{
-            printf("%d\n", get_label(i));
-        }
+        printf("%s\n", std::to_string(this->get_label(i)).c_str());
     }
 }
 
