@@ -771,7 +771,6 @@ bool LabeledDenseMatrixT<T>::split(uint feature_idx,
                                    T split_value,
                                    LabeledDenseMatrixT<T>* sub_mat){
     CCMap<T>* feature_cnt_map = get_feature_cnt_map(feature_idx);
-
     typename CCMap<T>::const_iterator it;
     it = feature_cnt_map->find(split_value);
     if(it == feature_cnt_map->end()){
@@ -802,17 +801,64 @@ bool LabeledDenseMatrixT<T>::split(uint feature_idx,
     }
 
     uint* new_feature_names = new uint[this->_cols - 1];
-    uint new_feature_name_idx = 0;
-    for(uint i = 0; i < this->_cols; i++){
-        if(i != feature_idx){
-            new_feature_names[new_feature_name_idx++] = i;
-        }
+    if(feature_idx > 0){
+        memcpy(new_feature_names, _feature_names, feature_idx * sizeof(uint));
+    }
+    if(feature_idx < this->_cols - 1){//skip feature_idx
+        memcpy(&new_feature_names[feature_idx], &_feature_names[feature_idx+1], (this->_cols -1 - feature_idx) * sizeof(uint));
     }
 
     if(sub_mat == nullptr){
         sub_mat = new LabeledDenseMatrixT<T>();
     }
     sub_mat->set_shallow_data(new_data, new_label, new_feature_names, new_rows, new_cols);
+
+    return true;
+}
+
+template<class T>
+bool LabeledDenseMatrixT<T>::binary_split(uint feature_idx,
+                                          T split_value,
+                                          LabeledDenseMatrixT<T>* lt_mat,
+                                          LabeledDenseMatrixT<T>* gt_mat){
+    uint lt_rows = 0, gt_rows = 0;
+    for(uint i = 0; i < this->_rows; i++){
+        if(split_value <= this->get_data(i, feature_idx)){
+            lt_rows++;
+        }
+    }
+    gt_rows = this->_rows - lt_rows;
+
+    T* lt_data = new T[lt_rows * this->_cols];
+    T* lt_labels = new T[lt_rows];
+
+    T* gt_data = new T[gt_rows * this->_cols];
+    T* gt_labels = new T[gt_rows];
+
+    uint lt_idx = 0;
+    for(uint i = 0; i < this->_rows; i++){
+        if(this->get_data(i, feature_idx) <=  split_value){
+            memcpy(&lt_data[lt_idx * this->_cols], &this->_data[i * this->_cols], this->_cols * sizeof(T));
+            lt_labels[lt_idx] = this->_labels[i];
+            lt_idx++;
+        }else{
+            memcpy(&gt_data[(i - lt_idx) * this->_cols], &this->_data[i * this->_cols], this->_cols * sizeof(T));
+            gt_labels[i - lt_idx] = this->_labels[i];
+        }
+    }
+
+    if(lt_mat == nullptr){
+        lt_mat = new LabeledDenseMatrixT<T>();
+    }
+    if(gt_mat == nullptr){
+        gt_mat = new LabeledDenseMatrixT<T>();
+    }
+
+    uint* lt_feature_names = new uint[this->_cols];
+    uint* gt_feature_names = new uint[this->_cols];
+
+    lt_mat->set_shallow_data(lt_data, lt_labels, lt_feature_names, lt_rows, this->_cols);
+    gt_mat->set_shallow_data(gt_data, gt_labels, gt_feature_names, gt_rows, this->_cols);
 
     return true;
 }
