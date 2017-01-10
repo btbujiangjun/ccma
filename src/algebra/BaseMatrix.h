@@ -87,6 +87,7 @@ public:
     virtual bool inverse(BaseMatrixT<real>* result) = 0;
 
     virtual void display() = 0;
+    virtual std::string* to_string() = 0;
 protected:
     uint _rows;
     uint _cols;
@@ -156,6 +157,7 @@ public:
     bool inverse(BaseMatrixT<real>* result);
 
     void display();
+    std::string* to_string();
 protected:
     T* _data;
 
@@ -168,10 +170,16 @@ protected:
 
     inline void clear_cache(){
         this->_cache_matrix_det = static_cast<T>(INT_MAX);
+
+        if(_cache_to_string != nullptr){
+            delete _cache_to_string;
+            _cache_to_string = nullptr;
+        }
     }
 
 private:
     T _cache_matrix_det;
+    std::string* _cache_to_string = nullptr;
 };
 
 
