@@ -17,7 +17,10 @@ int main(int argc, char** argv){
 
     ccma::algebra::LabeledDenseMatrixT<int> lm(a, b, 5, 3);
     ccma::algorithm::tree::DecisionTree dt;
-    dt.train(&lm);
+    ccma::algorithm::tree::DecisionTreeModel* model = new ccma::algorithm::tree::DecisionTreeModel("root", std::to_string(lm.get_rows()));
+    dt.train(&lm, model);
+    model->display();
+    delete model;
 
     return 0;
 }
