@@ -197,7 +197,7 @@ bool DenseFileOp::read_data(const std::string& path,
     if(label_idx < 0){
         label_idx = cols - 1;
     }
-    if(rows <= 0 || col_size <= 1 || col_size != (cols - 1) || label_idx >= cols){
+    if(rows <= 0 || col_size < 1 || col_size != (cols - 1) || label_idx >= cols){
         return false;
     }
 

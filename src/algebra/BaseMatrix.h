@@ -11,7 +11,6 @@
 
 #include <cmath>
 #include <string.h>
-#include <limits.h>
 #include <unordered_map>
 #include "utils/TypeDef.h"
 
@@ -82,7 +81,16 @@ public:
     virtual void transpose() = 0;
     virtual void transpose(BaseMatrixT<T>* result) = 0;
 
+    virtual void add_x0() = 0;
+    virtual void add_x0(BaseMatrixT<T>* result) = 0;
+
     virtual bool det(T* result) = 0;
+
+    virtual real mean() = 0;
+    virtual real mean(uint col) = 0;
+
+    virtual real var() = 0;
+    virtual real var(uint col) = 0;
 
     virtual bool inverse(BaseMatrixT<real>* result) = 0;
 
@@ -152,12 +160,23 @@ public:
     void transpose();
     void transpose(BaseMatrixT<T>* result);
 
+    void add_x0();
+    void add_x0(BaseMatrixT<T>* result);
+
     bool det(T* result);
+
+    real mean();
+    real mean(uint col);
+
+    real var();
+    real var(uint col);
 
     bool inverse(BaseMatrixT<real>* result);
 
     void display();
+
     std::string* to_string();
+
 protected:
     T* _data;
 
@@ -169,7 +188,7 @@ protected:
     }
 
     inline void clear_cache(){
-        this->_cache_matrix_det = static_cast<T>(INT_MAX);
+        this->_cache_matrix_det = ccma::utils::get_max_value<T>();
 
         if(_cache_to_string != nullptr){
             delete _cache_to_string;
@@ -180,7 +199,7 @@ protected:
 private:
     T _cache_matrix_det;
     std::string* _cache_to_string = nullptr;
-};
+};//class DenseMatrixT
 
 
 template<class T>
@@ -202,33 +221,33 @@ public:
         this->_rows = rows;
         this->_cols = cols;
     }
-};
+};//class DenseMatrixMNT
 
 template<class T>
 class DenseColMatrixT : public DenseMatrixMNT<T>{
 public:
     DenseColMatrixT(uint rows, T value):DenseMatrixMNT<T>(rows, 1, value){}
     DenseColMatrixT(const T* data, uint rows):DenseMatrixMNT<T>(data, rows, 1){}
-};
+};//class DenseColMatrixT
 
 template<class T>
 class DenseRowMatrixT : public DenseMatrixMNT<T>{
 public:
     DenseRowMatrixT(uint cols, T value):DenseMatrixMNT<T>(1, cols, value){}
     DenseRowMatrixT(const T* data, uint cols):DenseMatrixMNT<T>(data, 1, cols){}
-};
+};//class DenseRowMatrixT
 
 template<class T>
 class DenseOneMatrixT : public DenseMatrixMNT<T>{
 public:
     explicit DenseOneMatrixT(uint rows):DenseMatrixMNT<T>(rows, 1, 1){}
-};
+};//class DenseOneMatrixT
 
 template<class T>
 class DenseZeroMatrixT : public DenseMatrixMNT<T>{
 public:
     explicit DenseZeroMatrixT(uint rows):DenseMatrixMNT<T>(rows, 1, 0){}
-};
+};//class DenseZeroMatrixT
 
 template<class T>
 class DenseEyeMatrixT : public DenseMatrixT<T>{
@@ -280,7 +299,7 @@ private:
         }
     }
 
-};
+};//class CCMap
 
 
 template<class T>
@@ -351,6 +370,11 @@ public:
 
     CCMap<T>* get_feature_cnt_map(uint feature_idx);
 
+    real label_mean();
+    real label_var();
+
+    bool is_unique_label();
+
     void display();
 
 protected:
@@ -363,7 +387,7 @@ private:
     real _cache_shannon_entropy = 0.0;
     CCMap<T>* _cache_label_cnt_map;
     std::unordered_map<uint, CCMap<T>* >* _cache_feature_cnt_map;
-};
+};//class LabeledDenseMatrixT
 
 
 }//namespace algebra
