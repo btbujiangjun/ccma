@@ -453,6 +453,26 @@ void DenseMatrixT<T>::transpose(BaseMatrixT<T>* result){
     result->set_shallow_data(data, this->_cols, this->_rows);
 }
 
+
+template<class T>
+void DenseMatrixT<T>::add_x0(){
+    add_x0(this);
+}
+template<class T>
+void DenseMatrixT<T>::add_x0(BaseMatrixT<T>* result){
+    T* data = new T[this->_rows * (this->_cols)];
+    for(uint i = 0; i < this->_rows; i++){
+        data[i * (this->_cols + 1)] = 1;
+        memcpy(&data[i * (this->_cols + 1) + 1], &this->_data[i * this->_cols], sizeof(T) * this->_cols);
+    }
+
+    if(result == nullptr){
+        result =  new DenseMatrixT<T>();
+    }
+
+    result->set_shallow_data(data, this->_rows, this->_cols + 1);
+}
+
 template<class T>
 bool DenseMatrixT<T>::det(T* result){
     *result = 0.0;
@@ -506,6 +526,61 @@ bool DenseMatrixT<T>::det(T* result){
     *result = _cache_matrix_det;
 
     return true;
+}
+
+template<class T>
+real DenseMatrixT<T>::mean(){
+    if(this->_rows * this->_cols == 0){
+        return 0.0;
+    }
+    real sum = 0.0;
+    for(uint i = 0; i < this->_rows * this->_cols; i++){
+        sum += static_cast<real>(_data[i]);
+    }
+    return sum/(this->_rows * this->_cols);
+}
+
+template<class T>
+real DenseMatrixT<T>::mean(uint col){
+    if(this->_rows == 0 or col >= this->_cols){
+        return 0.0;
+    }
+
+    real sum = 0.0;
+    for(uint i = 0; i < this->_rows; i++){
+        sum += this->get_data(i, col);
+    }
+
+    return sum / this->_rows;
+}
+
+template<class T>
+real DenseMatrixT<T>::var(){
+    if(this->_rows * this->_cols == 0){
+        return 0.0;
+    }
+
+    real mean_value = mean();
+    real var_sum = 0.0;
+    for(uint i = 0; i < this->_rows * this->_cols; i++){
+        var_sum += pow(this->_data[i] - mean_value, 2);
+    }
+
+    return var_sum / (this->_rows * this->_cols);
+}
+template<class T>
+real DenseMatrixT<T>::var(uint col){
+    if(this->_rows == 0 or col >= this->_cols){
+        return 0.0;
+    }
+
+    real mean_value = mean(col);
+    real var_sum = 0.0;
+    for(uint i = 0; i < this->_rows; i++){
+        var_sum += pow(this->get_data(i, col) - mean_value, 2);
+    }
+
+    return (var_sum / this->_rows);
 }
 
 template<class T>
@@ -843,9 +918,10 @@ bool LabeledDenseMatrixT<T>::binary_split(uint feature_idx,
                                           T split_value,
                                           LabeledDenseMatrixT<T>* lt_mat,
                                           LabeledDenseMatrixT<T>* gt_mat){
+
     uint lt_rows = 0, gt_rows = 0;
     for(uint i = 0; i < this->_rows; i++){
-        if(split_value <= this->get_data(i, feature_idx)){
+        if(this->get_data(i, feature_idx) <= split_value){
             lt_rows++;
         }
     }
@@ -878,6 +954,8 @@ bool LabeledDenseMatrixT<T>::binary_split(uint feature_idx,
 
     uint* lt_feature_names = new uint[this->_cols];
     uint* gt_feature_names = new uint[this->_cols];
+    memcpy(lt_feature_names, _feature_names, sizeof(uint) * this->_cols);
+    memcpy(gt_feature_names, _feature_names, sizeof(uint) * this->_cols);
 
     lt_mat->set_shallow_data(lt_data, lt_labels, lt_feature_names, lt_rows, this->_cols);
     gt_mat->set_shallow_data(gt_data, gt_labels, gt_feature_names, gt_rows, this->_cols);
@@ -902,6 +980,40 @@ CCMap<T>* LabeledDenseMatrixT<T>::get_label_cnt_map(){
     }
 
     return _cache_label_cnt_map;
+}
+template<class T>
+bool LabeledDenseMatrixT<T>::is_unique_label(){
+    CCMap<T>* label_cnt_map = get_label_cnt_map();
+    return (label_cnt_map->size() == 1);
+}
+
+template<class T>
+real LabeledDenseMatrixT<T>::label_mean(){
+    if(this->_rows == 0){
+        return 0.0;
+    }
+
+    real sum = 0.0;
+    for(uint i = 0; i < this->_rows; i++){
+        sum += _labels[i];
+    }
+
+    return (sum / this->_rows);
+}
+
+template<class T>
+real LabeledDenseMatrixT<T>::label_var(){
+    if(this->_rows == 0){
+        return 0.0;
+    }
+
+    real mean = label_mean();
+    real var_sum = 0.0;
+    for(uint i = 0; i < this->_rows; i++){
+        var_sum += pow(this->_labels[i] - mean, 2);
+    }
+
+    return (var_sum / this->_rows);
 }
 
 template<class T>
