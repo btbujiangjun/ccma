@@ -58,18 +58,14 @@ public:
     virtual bool extend(const BaseMatrixT<T>* mat) = 0;
 
     virtual bool add(const BaseMatrixT<T>* mat) = 0;
-    virtual bool add(const BaseMatrixT<T>* mat, BaseMatrixT<T>* result) = 0;
-    virtual bool add(const BaseMatrixT<int>* mat, BaseMatrixT<real>* result) = 0;
-
     virtual bool subtract(const BaseMatrixT<T>* mat) = 0;
-    virtual bool subtract(const BaseMatrixT<T>* mat, BaseMatrixT<T>* result) = 0;
 
+    virtual bool pow(T exponent) = 0;
 
     virtual bool product(const T value) = 0;
-    virtual bool product(const T value, BaseMatrixT<T>* result) = 0;
-    virtual bool product(const BaseMatrixT<int>* mat, BaseMatrixT<int>* result) = 0;
-    virtual bool product(const BaseMatrixT<int>* mat, BaseMatrixT<real>* result) = 0;
-    virtual bool product(const BaseMatrixT<real>* mat, BaseMatrixT<real>* result) = 0;
+    virtual bool product(const BaseMatrixT<T>* mat) = 0;
+
+    virtual T sum() const = 0;
 
     virtual bool swap(const uint a_row,
                       const uint a_col,
@@ -79,7 +75,6 @@ public:
     virtual bool swap_col(const uint a, const uint b) = 0;
 
     virtual void transpose() = 0;
-    virtual void transpose(BaseMatrixT<T>* result) = 0;
 
     virtual void add_x0() = 0;
     virtual void add_x0(BaseMatrixT<T>* result) = 0;
@@ -137,18 +132,14 @@ public:
     bool extend(const BaseMatrixT<T>* mat);
 
     bool add(const BaseMatrixT<T>* mat);
-    bool add(const BaseMatrixT<T>* mat, BaseMatrixT<T>* result);
-    bool add(const BaseMatrixT<int>* mat, BaseMatrixT<real>* result);
-
     bool subtract(const BaseMatrixT<T>* mat);
-    bool subtract(const BaseMatrixT<T>* mat, BaseMatrixT<T>* result);
 
+    bool pow(T exponent);
 
     bool product(const T value);
-    bool product(const T value, BaseMatrixT<T>* result);
-    bool product(const BaseMatrixT<int>* mat, BaseMatrixT<int>* result);
-    bool product(const BaseMatrixT<int>* mat, BaseMatrixT<real>* result);
-    bool product(const BaseMatrixT<real>* mat, BaseMatrixT<real>* result);
+    bool product(const BaseMatrixT<T>* mat);
+
+    T sum() const;
 
     bool swap(const uint a_row,
               const uint a_col,
@@ -158,7 +149,6 @@ public:
     bool swap_col(const uint a, const uint b);
 
     void transpose();
-    void transpose(BaseMatrixT<T>* result);
 
     void add_x0();
     void add_x0(BaseMatrixT<T>* result);
