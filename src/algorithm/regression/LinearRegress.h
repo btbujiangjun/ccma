@@ -9,6 +9,7 @@
 #define _CCMA_ALGORITHM_REGRESSION_LINEARREGRESS_H_
 
 #include "algebra/BaseMatrix.h"
+#include "utils/MatrixHelper.h"
 
 namespace ccma{
 namespace algorithm{
@@ -16,6 +17,16 @@ namespace regression{
 
 class LinearRegression{
 public:
+    LinearRegression(){
+        _helper = new ccma::utils::MatrixHelper();
+    }
+    ~LinearRegression(){
+        if(_helper != nullptr){
+            delete _helper;
+        }
+    }
+
+
     /*
      * simple linear regression, samples >> features is need.
      * sum(yi - xiTw)^2 [i = i-->m]
@@ -32,9 +43,9 @@ public:
      */
     template<class T>
     bool local_weight_logistic_regression(ccma::algebra::LabeledDenseMatrixT<T>* train_data,
-                                         ccma::algebra::DenseMatrixT<T>* predict_data,
-                                         real k,
-                                         ccma::algebra::DenseColMatrixT<real>* predict_labels);
+                                          ccma::algebra::DenseMatrixT<T>* predict_data,
+                                          const real k,
+                                          ccma::algebra::DenseColMatrixT<real>* predict_labels);
 
     /*
      * ridge regression
@@ -46,6 +57,9 @@ public:
     bool ridge_regression(ccma::algebra::LabeledDenseMatrixT<T>* train_data,
                           const real lamda,
                           ccma::algebra::DenseColMatrixT<real>* weights);
+
+private:
+    ccma::utils::MatrixHelper* _helper;
 };//class LinearRegression
 
 

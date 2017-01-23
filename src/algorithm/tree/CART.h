@@ -11,6 +11,7 @@
 
 #include <string.h>
 #include "algebra/BaseMatrix.h"
+#include "utils/MatrixHelper.h"
 
 namespace ccma{
 namespace algorithm{
@@ -140,12 +141,23 @@ private:
 
 class ClassificationAndRegressionTree{
 public:
+    ClassificationAndRegressionTree(){
+        _helper = new ccma::utils::MatrixHelper();
+    }
+    ~ClassificationAndRegressionTree(){
+        if(_helper != nullptr){
+            delete _helper;
+        }
+    }
+
     template<class T>
     void train(ccma::algebra::LabeledDenseMatrixT<T>* train_data,
                const uint& min_sub_mat_rows,
                const real& min_dif_var,
                CartModel* model);
 private:
+    ccma::utils::MatrixHelper* _helper = nullptr;
+
     template<class T>
     void create_tree(ccma::algebra::LabeledDenseMatrixT<T>* train_data,
                      const uint& min_sub_mat_rows,

@@ -10,6 +10,7 @@
 
 #include <time.h>
 #include "algebra/BaseMatrix.h"
+#include "utils/MatrixHelper.h"
 
 namespace ccma{
 namespace algorithm{
@@ -17,10 +18,15 @@ namespace regression{
 
 class LogisticRegress{
 public:
-    LogisticRegress(){}
+    LogisticRegress(){
+        _helper = new ccma::utils::MatrixHelper();
+    }
     ~LogisticRegress(){
         if(_weights != nullptr){
             delete _weights;
+        }
+        if(_helper != nullptr){
+            delete _helper;
         }
     }
 
@@ -36,9 +42,7 @@ public:
 
 private:
     ccma::algebra::BaseMatrixT<real>* _weights = nullptr;
-
-    template<class T>
-    int signmod(ccma::algebra::BaseMatrixT<T>* mat, ccma::algebra::BaseMatrixT<real>* result);
+    ccma::utils::MatrixHelper* _helper = nullptr;
 
     template<class T>
     uint evaluate(ccma::algebra::LabeledDenseMatrixT<T>* train_data);
@@ -54,27 +58,27 @@ void LogisticRegress::batch_grad_desc(ccma::algebra::LabeledDenseMatrixT<T>* tra
     ccma::algebra::BaseMatrixT<T>* data_mat = train_data->copy_data();
 
     ccma::algebra::BaseMatrixT<T>* data_t_mat = new ccma::algebra::DenseMatrixT<T>();
-    data_mat->transpose(data_t_mat);
+    _helper->transpose(data_mat, data_t_mat);
 
     ccma::algebra::BaseMatrixT<T>* label_mat = train_data->get_labels();
 
     for(uint i = 0; i < epoch; i++){
 
         ccma::algebra::BaseMatrixT<T>* weight_mat = new ccma::algebra::DenseMatrixT<T>();
-        if(!data_mat->product(_weights, weight_mat)){
+        if(!_helper->product(data_mat,_weights, weight_mat)){
             delete[] data_mat, data_t_mat, label_mat;
         }
 
         ccma::algebra::BaseMatrixT<real>* h_mat = new ccma::algebra::DenseMatrixT<real>();
-        signmod(weight_mat, h_mat);
+        _helper->signmod(weight_mat, h_mat);
 
         ccma::algebra::BaseMatrixT<real>* error_mat = new ccma::algebra::DenseMatrixT<real>();
-        label_mat->subtract(h_mat, error_mat);
+        _helper->subtract(label_mat, h_mat, error_mat);
 
         error_mat->product(alpha);
 
         ccma::algebra::BaseMatrixT<real>* step_mat = new ccma::algebra::DenseMatrixT<real>();
-        data_t_mat->product(error_mat, step_mat);
+        _helper->product(data_t_mat, error_mat, step_mat);
 
         _weights->add(step_mat);
 
@@ -100,18 +104,18 @@ void LogisticRegress::stoc_grad_desc(ccma::algebra::LabeledDenseMatrixT<T>* trai
             ccma::algebra::BaseMatrixT<T>* row_mat = train_data->get_row_data(j);
 
             ccma::algebra::BaseMatrixT<T>* dp_mat = new ccma::algebra::DenseMatrixT<T>();
-            row_mat->product(_weights, dp_mat);
+            _helper->product(row_mat, _weights, dp_mat);
 
             ccma::algebra::BaseMatrixT<real>* sm_mat = new ccma::algebra::DenseMatrixT<real>();
-            signmod(dp_mat, sm_mat);
+            _helper->signmod(dp_mat, sm_mat);
 
             real error = (real)train_data->get_label(j) - sm_mat->get_data(0);
 
             ccma::algebra::BaseMatrixT<real>* h_mat = new ccma::algebra::DenseMatrixT<real>();
-            row_mat->product(error * alpha, h_mat);
+            _helper->product(row_mat, error * alpha, h_mat);
 
             ccma::algebra::BaseMatrixT<real>* h_t_mat = new ccma::algebra::DenseMatrixT<real>();
-            h_mat->transpose(h_t_mat);
+            _helper->transpose(h_mat, h_t_mat);
             _weights->add(h_t_mat);
 
             delete row_mat, dp_mat, sm_mat, h_mat, h_t_mat;
@@ -160,17 +164,17 @@ void LogisticRegress::smooth_stoc_grad_desc(ccma::algebra::LabeledDenseMatrixT<T
             ccma::algebra::BaseMatrixT<T>* row_mat = train_data->get_row_data(row);
 
             ccma::algebra::BaseMatrixT<T>* dp_mat = new ccma::algebra::DenseMatrixT<T>();
-            row_mat->product(_weights, dp_mat);
+            _helper->product(row_mat, _weights, dp_mat);
 
             ccma::algebra::BaseMatrixT<real>* sm_mat = new ccma::algebra::DenseMatrixT<real>();
-            signmod(dp_mat, sm_mat);
+            _helper->signmod(dp_mat, sm_mat);
             real error = (real)train_data->get_label(row) - sm_mat->get_data(0);
 
             ccma:algebra::BaseMatrixT<real>* h_mat = new ccma::algebra::DenseMatrixT<real>();
-            row_mat->product(error * alpha, h_mat);
+            _helper->product(row_mat, error * alpha, h_mat);
 
             ccma::algebra::BaseMatrixT<real>* h_t_mat = new ccma::algebra::DenseMatrixT<real>();
-            h_mat->transpose(h_t_mat);
+            _helper->transpose(h_mat, h_t_mat);
             _weights->add(h_t_mat);
 
             delete row_mat, dp_mat, sm_mat, h_mat, h_t_mat;
@@ -195,10 +199,10 @@ uint LogisticRegress::classify(ccma::algebra::BaseMatrixT<T>* mat, ccma::algebra
     }
 
     ccma::algebra::BaseMatrixT<real>* prob_mat = new ccma::algebra::DenseMatrixT<real>();
-    mat->product(_weights, prob_mat);
+    _helper->product(mat, _weights, prob_mat);
 
     ccma::algebra::BaseMatrixT<real>* signmod_mat = new ccma::algebra::DenseMatrixT<real>();
-    signmod(prob_mat, signmod_mat);
+    _helper->signmod(prob_mat, signmod_mat);
     delete prob_mat;
 
     T* data = new T[signmod_mat->get_rows()];
@@ -211,22 +215,6 @@ uint LogisticRegress::classify(ccma::algebra::BaseMatrixT<T>* mat, ccma::algebra
     }
 
     result->set_shallow_data(data, mat->get_rows(), 1);
-
-    return 1;
-}
-
-template<class T>
-int LogisticRegress::signmod(ccma::algebra::BaseMatrixT<T>* mat, ccma::algebra::BaseMatrixT<real>* result){
-    real* data = new real[mat->get_rows() * mat->get_cols()];
-    uint new_data_idx = 0;
-
-    for(uint i = 0; i < mat->get_rows(); i++){
-        for(uint j = 0; j < mat->get_cols(); j++){
-            data[new_data_idx++] = 1.0f/(1.0f+exp(-mat->get_data(i, j)));
-        }
-    }
-
-    result->set_shallow_data(data, mat->get_rows(), mat->get_cols());
 
     return 1;
 }
