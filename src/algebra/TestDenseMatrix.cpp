@@ -6,7 +6,7 @@ int main(int argc, char** argv){
     ccma::algebra::BaseMatrixT<float>* dm = new ccma::algebra::DenseMatrixT<float>(d, 2, 2);
     printf("[%d][%d]\n", dm->get_rows(), dm->get_cols());
     dm->display();
-    ccma::algebra::BaseMatrixT<float>* d1 = dm->copy_data();
+    ccma::algebra::BaseMatrixT<float>* d1 = dm->copy_matrix();
     d1->display();
     d1->set_row_data(d1, 1);
     d1->display();

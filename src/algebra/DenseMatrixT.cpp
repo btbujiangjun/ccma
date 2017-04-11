@@ -22,6 +22,15 @@ DenseMatrixT<T>::DenseMatrixT(){
     _cache_to_string = nullptr;
 }
 
+template<class T>
+DenseMatrixT<T>::DenseMatrixT(const uint rows, const uint cols){
+    this->_rows = rows;
+    this->_cols = cols;
+    _data = nullptr;
+    _cache_matrix_det = ccma::utils::get_max_value<T>();
+    _cache_to_string = nullptr;
+}
+
 
 template<class T>
 DenseMatrixT<T>::DenseMatrixT(const T* data,
@@ -36,6 +45,7 @@ DenseMatrixT<T>::DenseMatrixT(const T* data,
     _cache_to_string = nullptr;
 }
 
+
 template<class T>
 DenseMatrixT<T>::~DenseMatrixT(){
     if(_data != nullptr){
@@ -49,8 +59,19 @@ DenseMatrixT<T>::~DenseMatrixT(){
 }
 
 template<class T>
-DenseMatrixT<T>* DenseMatrixT<T>::copy_data(){
+DenseMatrixT<T>* DenseMatrixT<T>::copy_matrix(){
     return new DenseMatrixT<T>(_data, this->_rows, this->_cols);
+}
+
+template<class T>
+DenseMatrixT<T>* DenseMatrixT<T>::clear_matrix(){
+    if(_data != nullptr){
+        delete[] _data;
+    }
+
+    this->_rows = 0;
+
+    clear_cache();
 }
 
 template<class T>
@@ -128,9 +149,10 @@ DenseMatrixT<T>* DenseMatrixT<T>::get_row_data(const uint row) const{
     dm->set_shallow_data(data, 1, this->_cols);
     return dm;
 }
+
 template<class T>
 bool DenseMatrixT<T>::set_row_data(BaseMatrixT<T>* mat, const int row){
-    if(this->_cols != mat->get_rows()){
+    if(this->_cols != mat->get_cols()){
         return false;
     }
     int start_row = row;
