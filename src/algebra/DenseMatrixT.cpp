@@ -108,13 +108,19 @@ void DenseMatrixT<T>::set_shallow_data(T* data,
 
 
 template<class T>
-T DenseMatrixT<T>::get_data(const uint idx) const{
+T DenseMatrixT<T>::get_data(int idx) const{
     //todo check_range(idx)
+    if(idx < 0){
+        idx += this->_rows * this->_cols;
+    }
     return _data[idx];
 }
 template<class T>
-bool DenseMatrixT<T>::set_data(const T& value, const uint idx){
+bool DenseMatrixT<T>::set_data(const T& value, int idx){
     if(check_range(idx)){
+        if (idx < 0){
+            idx += this->_rows * this->_cols;
+        }
         _data[idx] = value;
         clear_cache();
         return true;
@@ -123,16 +129,30 @@ bool DenseMatrixT<T>::set_data(const T& value, const uint idx){
 }
 
 template<class T>
-T DenseMatrixT<T>::get_data(const uint row, const uint col) const{
+T DenseMatrixT<T>::get_data(int row, int col) const{
     //todo check_range(row, col)
+    if(row < 0){
+        row += this->_rows;
+    }
+    if(col < 0){
+        col += this->_cols;
+    }
+
     return _data[row * this->_cols + col];
 }
 
 template<class T>
 bool DenseMatrixT<T>::set_data(const T& value,
-                               const uint row,
-                               const uint col){
+                               int row,
+                               int col){
     if(check_range(row, col)){
+        if(row < 0){
+            row += this->_rows;
+        }
+        if(col < 0){
+            col += this->_cols;
+        }
+
         _data[row * this->_cols + col] = value;
         clear_cache();
         return true;
@@ -141,8 +161,11 @@ bool DenseMatrixT<T>::set_data(const T& value,
 }
 
 template<class T>
-DenseMatrixT<T>* DenseMatrixT<T>::get_row_data(const uint row) const{
+DenseMatrixT<T>* DenseMatrixT<T>::get_row_data(int row) const{
     // check row range
+    if(row < 0){
+        row += this->_rows;
+    }
     DenseMatrixT<T>* dm = new DenseMatrixT<T>();
     T* data = new T[this->_cols];
     memcpy(data, &_data[row * this->_cols], sizeof(T) * this->_cols);
@@ -151,22 +174,26 @@ DenseMatrixT<T>* DenseMatrixT<T>::get_row_data(const uint row) const{
 }
 
 template<class T>
-bool DenseMatrixT<T>::set_row_data(BaseMatrixT<T>* mat, const int row){
+bool DenseMatrixT<T>::set_row_data(BaseMatrixT<T>* mat, int row){
     if(this->_cols != mat->get_cols()){
         return false;
     }
-    int start_row = row;
-    if(start_row == -1 || start_row >= this->_rows){
-        start_row = this->_rows;
+
+    if(row < 0){
+        row += this->_rows;
+    }
+
+    if(row < this->_rows){
+        row = this->_rows;
     }
 
     T* data = new T[(this->_rows + mat->get_rows()) * this->_cols];
-    if(start_row > 0){
-        memcpy(data, _data, sizeof(T) * this->_cols * start_row);
+    if(row > 0){
+        memcpy(data, _data, sizeof(T) * this->_cols * row);
     }
-    memcpy(&data[(start_row) * this->_cols], mat->get_data(), sizeof(T) * mat->get_rows() * mat->get_cols());
-    if(start_row < this->_rows){
-        memcpy(&data[(start_row + mat->get_rows()) * this->_cols], &_data[this->_cols * start_row], sizeof(T) * (this->_rows - start_row) * this->_cols);
+    memcpy(&data[(row) * this->_cols], mat->get_data(), sizeof(T) * mat->get_rows() * mat->get_cols());
+    if(row < this->_rows){
+        memcpy(&data[(row + mat->get_rows()) * this->_cols], &_data[this->_cols * row], sizeof(T) * (this->_rows - row) * this->_cols);
     }
 
     if(_data != nullptr){
