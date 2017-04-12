@@ -62,7 +62,7 @@ bool DNN::sgd(ccma::algebra::BaseMatrixT<real>* train_data,
         num_test_data = test_data->get_rows();
     }
 
-    if(_num_layers <= 1 || _sizes[0] != train_data->get_cols() || (num_test_data > 0 && _sizes[0] != test_data->get_cols())){
+    if(_num_layers <= 1 || _sizes[0] != train_data->get_cols() - 1 || (num_test_data > 0 && _sizes[0] != test_data->get_cols() - 1)){
         return false;
     }
 
@@ -92,6 +92,33 @@ bool DNN::sgd(ccma::algebra::BaseMatrixT<real>* train_data,
     delete shuffler;
 
     return true;
+}
+
+
+bool DNN::mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch, real eta){
+    for(int i = 0; i < mini_batch->get_rows(); i++){
+        real* data = new real[_sizes[0]];
+        memcpy(data, mini_batch->get_row_data(i), sizeof(real) * _sizes[0]);
+    }
+}
+
+void DNN::back_propagation(const ccma::algebra::BaseMatrixT<real>* train_data,
+                           std::vector<ccma::algebra::DenseColMatrixT<real>*>* out_weights,
+                           std::vector<ccma::algebra::DenseColMatrixT<real>*>* out_biases){
+    std::vector<ccma::algebra::DenseColMatrixT<real>*> local_weights;
+    std::vector<ccma::algebra::DenseColMatrixT<real>*> local_biases;
+    std::vector<ccma::algebra::DenseColMatrixT<real>*> activations;
+    init_parameters(&local_weight);
+    init_parameters(&local_biases);
+
+    
+
+}
+
+void DNN::initize_parameter(std::vector<ccma::algebra::DenseColMatrixT<real>*>* out_parameters,real init_value){
+    for(int i = 1; i < _num_layers; i++){
+        out_parameters->push_back(new ccma::algebra::DenseColMatrixT<real>(_sizes[i-1]), init_value);
+    }
 }
 
 }//namespace nn

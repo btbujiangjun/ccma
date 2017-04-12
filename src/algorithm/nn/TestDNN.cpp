@@ -11,9 +11,9 @@
 
 int main(int argc, char** argv){
     ccma::algorithm::nn::DNN* dnn = new ccma::algorithm::nn::DNN();
-    dnn->add_layer(784);
-    dnn->add_layer(30);
-    dnn->add_layer(52);
+    dnn->add_layer(4);
+    dnn->add_layer(2);
+    dnn->add_layer(1);
     dnn->init_networks();
     std::cout <<"finished\n" <<std::endl;
     delete dnn;
