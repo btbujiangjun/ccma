@@ -46,9 +46,15 @@ public:
             int mini_batch_size = 1,
             ccma::algebra::BaseMatrixT<real>* test_data = nullptr);
 
+private:
+    bool mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch, real eta);
 
-    bool mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch,
-                           real eta);
+    void back_propagation(const ccma::algebra::LabeledDenseMatrixT<real>* train_data,
+                          std::vector<ccma::algebra::DenseColMatrixT<real>*>* out_weights,
+                          std::vector<ccma::algebra::DenseColMatrixT<real>*>* out_biases);
+
+
+    void initize_parameter(std::vector<ccma::algebra::DenseColMatrixT<real>*>* out_parameters,real init_value);
 
 private:
     int _num_layers;
