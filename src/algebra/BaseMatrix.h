@@ -44,15 +44,15 @@ public:
                                   const uint rows,
                                   const uint cols) = 0;
 
-    virtual T get_data(const uint idx) const = 0;
-    virtual bool set_data(const T& value, const uint idx) = 0;
+    virtual T get_data(int idx) const = 0;
+    virtual bool set_data(const T& value, int idx) = 0;
 
-    virtual T get_data(const uint row, const uint col) const = 0;
+    virtual T get_data(int row, int col) const = 0;
     virtual bool set_data(const T& data,
-                          const uint row,
-                          const uint col) = 0;
+                          int row,
+                          int col) = 0;
 
-    virtual BaseMatrixT<T>* get_row_data(const uint row) const = 0;
+    virtual BaseMatrixT<T>* get_row_data(const int row) const = 0;
     virtual bool set_row_data(BaseMatrixT<T>* mat, const int row) = 0;
 
     virtual bool extend(const BaseMatrixT<T>* mat) = 0;
@@ -118,20 +118,20 @@ public:
                   const uint rows,
                   const uint cols);
 
-    T get_data(const uint idx) const;
-    bool set_data(const T& value, const uint idx);
+    T get_data(int idx) const;
+    bool set_data(const T& value, int idx);
 
-    T get_data(const uint row, const uint col) const;
+    T get_data(int row, int col) const;
     bool set_data(const T& data,
-                  const uint row,
-                  const uint col);
+                  int row,
+                  int col);
     void set_shallow_data(T* data,
                           const uint rows,
                           const uint cols);
 
 
-    DenseMatrixT<T>* get_row_data(const uint row) const;
-    bool set_row_data(BaseMatrixT<T>* mat, const int row);
+    DenseMatrixT<T>* get_row_data(const int row) const;
+    bool set_row_data(BaseMatrixT<T>* mat, int row);
 
     bool extend(const BaseMatrixT<T>* mat);
 
@@ -174,10 +174,20 @@ public:
 protected:
     T* _data;
 
-    inline bool check_range(const uint idx){
+    inline bool check_range(int idx){
+        if(idx < 0){
+            idx += this->_rows * this->_cols;
+        }
         return idx < this->_rows * this->_cols;
     }
-    inline bool check_range(const uint row, const uint col){
+    inline bool check_range(int row, int col){
+        if(row < 0){
+            row += this->_rows;
+        }
+        if(col < 0){
+            col += this->_cols;
+        }
+
         return row < this->_rows && col < this->_cols;
     }
 
