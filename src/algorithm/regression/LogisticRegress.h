@@ -55,7 +55,7 @@ void LogisticRegress::batch_grad_desc(ccma::algebra::LabeledDenseMatrixT<T>* tra
     real alpha = 0.001;
     init_weights(train_data->get_cols());
 
-    ccma::algebra::BaseMatrixT<T>* data_mat = train_data->copy_data();
+    ccma::algebra::BaseMatrixT<T>* data_mat = train_data->copy_matrix();
 
     ccma::algebra::BaseMatrixT<T>* data_t_mat = new ccma::algebra::DenseMatrixT<T>();
     _helper->transpose(data_mat, data_t_mat);
