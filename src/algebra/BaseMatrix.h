@@ -34,7 +34,7 @@ public:
     inline uint get_rows() const { return this->_rows;}
     inline uint get_cols() const { return this->_cols;}
 
-    virtual BaseMatrixT<T>* copy_data() = 0;
+    virtual BaseMatrixT<T>* copy_matrix() = 0;
 
     virtual T* get_data() const = 0;
     virtual void set_data(const T* data,
@@ -91,6 +91,7 @@ public:
 
     virtual void display() = 0;
     virtual std::string* to_string() = 0;
+
 protected:
     uint _rows;
     uint _cols;
@@ -102,12 +103,15 @@ template<class T>
 class DenseMatrixT : public BaseMatrixT<T>{
 public:
     DenseMatrixT();
+    DenseMatrixT(const uint rows,
+                 const uint cols);
     DenseMatrixT(const T* data,
                  const uint rows,
                  const uint cols);
     ~DenseMatrixT();
 
-    DenseMatrixT<T>* copy_data();
+    DenseMatrixT<T>* copy_matrix();
+    DenseMatrixT<T>* clear_matrix();
 
     T* get_data() const;
     void set_data(const T* data,

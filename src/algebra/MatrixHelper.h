@@ -6,6 +6,9 @@
 * Description:Matrix algorithm Helper
 **********************************************/
 
+#ifndef _CCMA_ALGEBRA_MATRIXHELPER_H_
+#define _CCMA_ALGEBRA_MATRIXHELPER_H_
+
 #include "BaseMatrix.h"
 #include <cmath>
 
@@ -137,3 +140,4 @@ bool MatrixHelper::exp(const ccma::algebra::BaseMatrixT<T1>* mat,
 }//namespace algebra
 }//namespace ccma
 
+#endif
