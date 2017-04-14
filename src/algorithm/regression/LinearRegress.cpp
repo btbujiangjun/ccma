@@ -137,7 +137,7 @@ bool LinearRegression::ridge_regression(ccma::algebra::LabeledDenseMatrixT<T>* t
     _helper->product(xT, x, xTx);
 
     ccma::algebra::DenseEyeMatrixT<real>* eye = new ccma::algebra::DenseEyeMatrixT<real>(x->get_cols());
-    eye->product(lamda);
+    eye->add(lamda);
     _helper->add(eye, xTx, eye);
 
     real* result;
