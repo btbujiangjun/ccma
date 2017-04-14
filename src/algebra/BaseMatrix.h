@@ -57,13 +57,16 @@ public:
 
     virtual bool extend(const BaseMatrixT<T>* mat) = 0;
 
-    virtual bool add(const BaseMatrixT<T>* mat) = 0;
-    virtual bool subtract(const BaseMatrixT<T>* mat) = 0;
+    bool add(const BaseMatrixT<T>* mat);
+    bool subtract(const BaseMatrixT<T>* mat);
 
+    virtual bool product(const BaseMatrixT<T>* mat) = 0;
     virtual bool pow(T exponent) = 0;
 
-    virtual bool product(const T value) = 0;
-    virtual bool product(const BaseMatrixT<T>* mat) = 0;
+    bool add(const T value);
+    bool subtract(const T value);
+    bool multiply(const T value);
+    bool division(const T value);
 
     virtual T sum() const = 0;
 
@@ -135,12 +138,11 @@ public:
 
     bool extend(const BaseMatrixT<T>* mat);
 
-    bool add(const BaseMatrixT<T>* mat);
-    bool subtract(const BaseMatrixT<T>* mat);
+
+    //bool subtract(const BaseMatrixT<T>* mat);
 
     bool pow(T exponent);
 
-    bool product(const T value);
     bool product(const BaseMatrixT<T>* mat);
 
     T sum() const;
