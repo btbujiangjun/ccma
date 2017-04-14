@@ -33,6 +33,7 @@ public:
 
     inline uint get_rows() const { return this->_rows;}
     inline uint get_cols() const { return this->_cols;}
+    inline uint get_sizes() const { return this->_rows * this->_cols;}
 
     virtual BaseMatrixT<T>* copy_matrix() = 0;
 
@@ -67,6 +68,8 @@ public:
     bool subtract(const T value);
     bool multiply(const T value);
     bool division(const T value);
+
+    bool sigmoid();
 
     virtual T sum() const = 0;
 
@@ -137,9 +140,6 @@ public:
     bool set_row_data(BaseMatrixT<T>* mat, int row);
 
     bool extend(const BaseMatrixT<T>* mat);
-
-
-    //bool subtract(const BaseMatrixT<T>* mat);
 
     bool pow(T exponent);
 
