@@ -75,7 +75,7 @@ void LogisticRegress::batch_grad_desc(ccma::algebra::LabeledDenseMatrixT<T>* tra
         ccma::algebra::BaseMatrixT<real>* error_mat = new ccma::algebra::DenseMatrixT<real>();
         _helper->subtract(label_mat, h_mat, error_mat);
 
-        error_mat->product(alpha);
+        error_mat->multiply(alpha);
 
         ccma::algebra::BaseMatrixT<real>* step_mat = new ccma::algebra::DenseMatrixT<real>();
         _helper->product(data_t_mat, error_mat, step_mat);

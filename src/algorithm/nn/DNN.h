@@ -54,7 +54,7 @@ private:
                           std::vector<ccma::algebra::DenseColMatrixT<real>*>* out_biases);
 
 
-    void initize_parameter(std::vector<ccma::algebra::DenseColMatrixT<real>*>* out_parameters,real init_value);
+    void init_parameter(std::vector<ccma::algebra::DenseColMatrixT<real>*>* out_parameters,real init_value);
 
 private:
     int _num_layers;
