@@ -7,6 +7,7 @@
 **********************************************/
 
 #include "BaseMatrix.h"
+#include <cmath>
 
 namespace ccma{
 namespace algebra{
@@ -71,6 +72,19 @@ bool BaseMatrixT<T>::division(const T value){
 
     return true;
 }
+
+template<class T>
+bool BaseMatrixT<T>::sigmoid(){
+    for(int i = 0; i < _rows * _cols; i++){
+        set_data(1/(1 + exp(-get_data(i))), i);
+    }
+
+    return true;
+}
+
+
+template class BaseMatrixT<int>;
+template class BaseMatrixT<real>;
 
 
 template class BaseMatrixT<int>;
