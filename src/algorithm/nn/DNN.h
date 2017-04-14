@@ -25,20 +25,16 @@ public:
     ~DNN(){
         _sizes.clear();
 
-        for(int i = 0; i < _num_layers; i++){
-            delete _weights[i];
-        }
+        clear_parameter(&_weights);
         _weights.clear();
 
-        for(int i = 0; i < _num_layers  - 1; i++){
-            delete _biases[i];
-        }
+        clear_parameter(&_biases);
         _biases.clear();
     }
 
     int add_layer(int neural_size);
 
-    void init_networks();
+    void init_networks_weights();
 
     bool sgd(ccma::algebra::BaseMatrixT<real>* train_data,
             int epochs,
@@ -50,18 +46,25 @@ private:
     bool mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch, real eta);
 
     void back_propagation(const ccma::algebra::LabeledDenseMatrixT<real>* train_data,
-                          std::vector<ccma::algebra::DenseColMatrixT<real>*>* out_weights,
-                          std::vector<ccma::algebra::DenseColMatrixT<real>*>* out_biases);
+                          std::vector<ccma::algebra::BaseMatrixT<real>*>* out_weights,
+                          std::vector<ccma::algebra::BaseMatrixT<real>*>* out_biases);
 
+    void init_parameter(std::vector<ccma::algebra::BaseMatrixT<real>*>* weight_parameter,
+                        real weight_init_value
+                        std::vector<ccma::algebra::BaseMatrixT<real>*>* biases_parameter,
+                        real bias_init_value);
 
-    void init_parameter(std::vector<ccma::algebra::DenseColMatrixT<real>*>* out_parameters,real init_value);
+    void clear_parameter(std::vector<ccma::algebra::BaseMatrixT<real>*>* parameters);
 
+    real cost_derivative(real output_activation, y);
+
+    void sigmoid_derivative(ccma::algebra::BaseMatrixT<real>* z);
 private:
     int _num_layers;
 
     std::vector<uint> _sizes;
-    std::vector<ccma::algebra::DenseColMatrixT<real>*> _weights;
-    std::vector<ccma::algebra::DenseColMatrixT<real>*> _biases;
+    std::vector<ccma::algebra::BaseMatrixT<real>*> _weights;
+    std::vector<ccma::algebra::BaseMatrixT<real>*> _biases;
 };//class DNN
 
 }//namespace nn
