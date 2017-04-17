@@ -86,9 +86,5 @@ bool BaseMatrixT<T>::sigmoid(){
 template class BaseMatrixT<int>;
 template class BaseMatrixT<real>;
 
-
-template class BaseMatrixT<int>;
-template class BaseMatrixT<real>;
-
 }//namespace ccma
 }//namespace algebra

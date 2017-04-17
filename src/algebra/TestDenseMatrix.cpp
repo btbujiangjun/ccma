@@ -11,7 +11,7 @@ int main(int argc, char** argv){
 
     dm->display();
 
-    ccma::algebra::BaseMatrixT<float>* d1 = dm->copy_matrix();
+    ccma::algebra::BaseMatrixT<float>* d1 = dm->clone();
     d1->display();
     d1->set_row_data(d1, 1);
     d1->display();

@@ -26,7 +26,8 @@ template<class T>
 DenseMatrixT<T>::DenseMatrixT(const uint rows, const uint cols){
     this->_rows = rows;
     this->_cols = cols;
-    _data = nullptr;
+    _data = new T[rows * cols];
+    memset(_data, 0, sizeof(_data));
     _cache_matrix_det = ccma::utils::get_max_value<T>();
     _cache_to_string = nullptr;
 }
@@ -59,7 +60,7 @@ DenseMatrixT<T>::~DenseMatrixT(){
 }
 
 template<class T>
-DenseMatrixT<T>* DenseMatrixT<T>::copy_matrix(){
+DenseMatrixT<T>* DenseMatrixT<T>::clone(){
     return new DenseMatrixT<T>(_data, this->_rows, this->_cols);
 }
 
@@ -235,9 +236,9 @@ bool DenseMatrixT<T>::product(const BaseMatrixT<T>* mat){
     uint row_cursor = 0;
     for(int i = 0; i < this->_rows; i++){
         for(int j = 0; j < mat->get_cols(); j++){
-            int value = static_cast<int>(0);
+            T value = static_cast<T>(0);
             for(int k = 0; k < this->_cols; k++){
-                value += (int)this->get_data(i, k) * mat->get_data(k, j);
+                value += (T)this->get_data(i, k) * mat->get_data(k, j);
             }
             data[row_cursor++] = value;
         }
