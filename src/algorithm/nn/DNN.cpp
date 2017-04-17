@@ -10,6 +10,7 @@
 #include <random>
 #include <ctime>
 #include "algebra/MatrixShuffler.h"
+#include "algebra/MatrixHelper.h"
 
 namespace ccma{
 namespace algorithm{
@@ -44,11 +45,11 @@ void DNN::init_networks_weights(){
     }
 }
 
-bool DNN::sgd(ccma::algebra::BaseMatrixT<real>* train_data,
+bool DNN::sgd(ccma::algebra::LabeledDenseMatrixT<real>* train_data,
               int epochs,
               real eta,
               int mini_batch_size,
-              ccma::algebra::BaseMatrixT<real>* test_data){
+              ccma::algebra::LabeledDenseMatrixT<real>* test_data){
 
     int num_train_data = train_data->get_rows();
     int num_test_data = 0;
@@ -56,7 +57,7 @@ bool DNN::sgd(ccma::algebra::BaseMatrixT<real>* train_data,
         num_test_data = test_data->get_rows();
     }
 
-    if(_num_layers <= 1 || _sizes[0] != train_data->get_cols() - 1 || (num_test_data > 0 && _sizes[0] != test_data->get_cols() - 1)){
+    if(_num_layers <= 1 || _sizes[0] != train_data->get_cols() || (num_test_data > 0 && _sizes[0] != test_data->get_cols())){
         return false;
     }
 
@@ -79,6 +80,10 @@ bool DNN::sgd(ccma::algebra::BaseMatrixT<real>* train_data,
             }
         }
 
+        if(num_test_data > 0){
+            int num_predcit = evaluate(test_data);
+        }
+
     }
 
     delete mini_batch;
@@ -87,12 +92,39 @@ bool DNN::sgd(ccma::algebra::BaseMatrixT<real>* train_data,
     return true;
 }
 
+void DNN::feedforward(ccma::algebra::BaseMatrixT<real>* mat){
+    for(int i = 0; i < _weights.size(); i++){
+        mat->product(_weights[i]);
+        mat->add(_biases[i]);
+    }
+}
+
+int DNN::evaluate(ccma::algebra::LabeledDenseMatrixT<real>* test_data){
+
+    ccma::algebra::BaseMatrixT<real>* predict = test_data->get_data_matrix();
+    ccma::algebra::BaseMatrixT<real>* label_data = test_data->get_labels();
+
+    feedforward(predict);
+
+    int num = 0;
+    if(predict->get_rows() == label_data->get_rows() && predict->get_cols() == label_data->get_cols()){
+        for(int i = 0; i < predict->get_sizes(); i++){
+            if(predict->get_data(i) == label_data->get_data(i)){
+                num++;
+            }
+        }
+    }
+
+    delete predict;
+    delete label_data;
+
+    return num;
+}
 
 bool DNN::mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch, real eta){
     std::vector<ccma::algebra::BaseMatrixT<real>*> batch_weights;
     std::vector<ccma::algebra::BaseMatrixT<real>*> batch_biases;
-    init_parameter(&batch_weights, 0.0);
-    init_parameter(&batch_biases, 0.0);
+    init_parameter(&batch_weights, 0.0, &batch_biases, 0.0);
 
     ccma::algebra::LabeledDenseMatrixT<real>* label_data = new ccma::algebra::LabeledDenseMatrixT<real>();
     for(int i = 0; i < mini_batch->get_rows(); i++){
@@ -114,6 +146,8 @@ bool DNN::mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch, real e
         }
 
         //clear train_weight & train_bias
+        clear_parameter(&train_weight);
+        clear_parameter(&train_bias);
     }
     delete label_data;
 
@@ -129,39 +163,74 @@ bool DNN::mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch, real e
     }
 }
 
-void DNN::back_propagation(const ccma::algebra::LabeledDenseMatrixT<real>* train_data,
+void DNN::back_propagation(ccma::algebra::LabeledDenseMatrixT<real>* train_data,
                            std::vector<ccma::algebra::BaseMatrixT<real>*>* out_weights,
                            std::vector<ccma::algebra::BaseMatrixT<real>*>* out_biases){
 
-    std::vector<ccma::algebra::BaseMatrixT<real>*> local_weights;
-    std::vector<ccma::algebra::BaseMatrixT<real>*> local_biases;
-    init_parameter(&local_weights, 0.0, &local_biases, 0.0);
+    init_parameter(out_weights, 0.0, out_biases, 0.0);
 
     std::vector<ccma::algebra::BaseMatrixT<real>*> zs;
     std::vector<ccma::algebra::BaseMatrixT<real>*> activations;
     ccma::algebra::BaseMatrixT<real>* activation = train_data->get_data_matrix();
+    activations.push_back(activation);
 
+    //feedforward
     for(int i = 0; i < _weights.size(); i++){
-        activation->multiply(_weights[i]);
+        activation->product(_weights[i]);
         activation->add(_biases[i]);
-        zs.push_back(activation->copy_matrix());
+        zs.push_back(activation->clone());
 
-        activation->signmoid();
-        activations.push_back(activation->copy_matrix());
+        activation->sigmoid();
+        activations.push_back(activation->clone());
     }
+    delete activation;
 
+    //back pass
+    int last_layer = activations.size() - 1;
+    ccma::algebra::BaseMatrixT<real>* act = activations[last_layer];
+    cost_derivative(act, train_data->get_labels()->get_data(0));
+
+    sigmoid_derivative(zs[last_layer]);
+    act->product(zs[last_layer]);
+    out_biases->at(last_layer)->set_data(act);
+
+    act = activations[last_layer - 1];
+    act->product(out_biases->at(last_layer));
+    out_weights->at(last_layer)->set_data(act);
+
+    ccma::algebra::MatrixHelper helper;
+    ccma::algebra::BaseMatrixT<real>* mat = new ccma::algebra::DenseMatrixT<real>();
+    for(int i = _weights.size() - 2; i >= 0; i--){
+        sigmoid_derivative(zs[i]);
+        helper.product(_weights[i + 1], out_biases->at(i), mat);
+        mat->product(zs[i]);
+        out_biases->at(i)->set_data(mat);
+
+        helper.product(activations[i-1], out_biases->at(i), mat);
+        out_weights->at(i)->set_data(mat);
+    }
+    delete mat;
 }
-real DNN::cost_derivative(real output_activation, y){
-    return output_activation - y;
+void DNN::cost_derivative(ccma::algebra::BaseMatrixT<real>* output_activation, real y){
+    output_activation->subtract(y);
 }
 
 void DNN::sigmoid_derivative(ccma::algebra::BaseMatrixT<real>* z){
 
+    //sigmod(z)*(1-sigmod(z))
+    z->sigmoid();
+
+    ccma::algebra::BaseMatrixT<real>* mat = z->clone();
+    mat->multiply(-1);
+    mat->add(1);
+    z->product(mat);
+
+    delete mat;
 }
 
 void DNN::init_parameter(std::vector<ccma::algebra::BaseMatrixT<real>*>* weight_parameter,
-                         real weight_init_value
-                         std::vector<ccma::algebra::BaseMatrixT<real>*>* biases_parameter,
+                         real weight_init_value,
+                         std::vector<ccma::algebra::BaseMatrixT<real>*>* bias_parameter,
                          real bias_init_value){
 
     clear_parameter(weight_parameter);
@@ -179,7 +248,8 @@ void DNN::init_parameter(std::vector<ccma::algebra::BaseMatrixT<real>*>* weight_
 void DNN::clear_parameter(std::vector<ccma::algebra::BaseMatrixT<real>*>* parameters){
     size_t len = parameters->size();
     for(size_t i = 0; i < len; i++){
-        delete parameters[i];
+        ccma::algebra::BaseMatrixT<real>* mat = parameters->at(i);
+        delete mat;
     }
     parameters->clear();
 }

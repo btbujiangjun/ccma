@@ -17,7 +17,7 @@ namespace regression{
 template<class T>
 bool LinearRegression::standard_regression(ccma::algebra::LabeledDenseMatrixT<T>* train_data, ccma::algebra::DenseColMatrixT<real>* weights){
 
-    ccma::algebra::BaseMatrixT<T>* x = train_data->copy_matrix();
+    ccma::algebra::BaseMatrixT<T>* x = train_data->clone();
 
     ccma::algebra::BaseMatrixT<T>* y = train_data->get_labels();
 

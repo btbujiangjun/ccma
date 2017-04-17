@@ -14,7 +14,7 @@ int main(int argc, char** argv){
     dnn->add_layer(4);
     dnn->add_layer(2);
     dnn->add_layer(1);
-    dnn->init_networks();
+    dnn->init_networks_weights();
     std::cout <<"finished\n" <<std::endl;
     delete dnn;
 }
