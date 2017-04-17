@@ -94,16 +94,16 @@ ccma::algebra::BaseMatrixT<T>* MatrixShuffler<T>::get_row(int row_id){
 template<class T>
 LabeledMatrixShuffler<T>::LabeledMatrixShuffler(ccma::algebra::LabeledDenseMatrixT<T>* mat){
     m_mat = mat;
-    shuffle();
+    shuffle<T>();
 }
 
 template<class T>
-ccma::algebra::BaseMatrixT<T>* LabeledMatrixShuffler::get_row(int row_id){
+ccma::algebra::BaseMatrixT<T>* LabeledMatrixShuffler<T>::get_row(int row_id){
     return m_mat[m_shuffle_idx[row_id]];
 }
 
 template<class T>
-T LabeledMatrixShuffler:get_label(int row_id){
+T LabeledMatrixShuffler<T>::get_label(int row_id){
     return m_mat->get_label(row_id);
 }
 
