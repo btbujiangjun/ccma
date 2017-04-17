@@ -29,6 +29,11 @@ public:
                   ccma::algebra::BaseMatrixT<T3>* result);
 
     template<class T1, class T2, class T3>
+    bool product(const ccma::algebra::BaseMatrixT<T1>* mat1,
+                 const ccma::algebra::BaseMatrixT<T2>* mat2,
+                 ccma::algebra::BaseMatrixT<T3>* result);
+
+    template<class T1, class T2, class T3>
     bool pow(const ccma::algebra::BaseMatrixT<T1>* mat,
              const T2 exponent,
              ccma::algebra::BaseMatrixT<T3>* result);
@@ -79,6 +84,31 @@ bool MatrixHelper::subtract(const ccma::algebra::BaseMatrixT<T1>* mat1,
     if(result == nullptr){
         result = new ccma::algebra::DenseMatrixT<T3>();
     }
+    result->set_shallow_data(data, mat1->get_rows(), mat2->get_cols());
+
+    return true;
+}
+
+template<class T1, class T2, class T3>
+bool MatrixHelper::product(const ccma::algebra::BaseMatrixT<T1>* mat1,
+                           const ccma::algebra::BaseMatrixT<T2>* mat2,
+                           ccma::algebra::BaseMatrixT<T3>* result){
+    if(mat1->get_cols() != mat2->get_rows()){
+        return false;
+    }
+
+    T3* data = new T3[mat1->get_rows() * mat2->get_cols()];
+    uint row_cursor = 0;
+    for(int i = 0; i < mat1->get_rows(); i++){
+        for(int j = 0; j < mat2->get_cols(); j++){
+            T3 value = static_cast<T3>(0);
+            for(int k = 0; k < mat1->get_cols(); k++){
+                value += (T3)mat1->get_data(i, k) * mat2->get_data(k, j);
+            }
+            data[row_cursor++] = value;
+        }
+    }
+
     result->set_shallow_data(data, mat1->get_rows(), mat2->get_cols());
 
     return true;

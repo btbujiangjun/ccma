@@ -35,6 +35,17 @@ private:
 
 
 template<class T>
+class LabeledMatrixShuffler : public MatrixShuffler<T>{
+public:
+    LabeledMatrixShuffler(ccma::algebra::LabeledDenseMatrixT<T>* mat);
+
+    ccma::algebra::BaseMatrixT<T>* get_row(int row_id);
+    T get_label(int row_id);
+private:
+    ccma::algebra::LabeledDenseMatrixT<real>* m_mat;
+};//class LabeledMatrixShuffler
+
+template<class T>
 MatrixShuffler<T>::MatrixShuffler(ccma::algebra::BaseMatrixT<T>* mat){
     m_mat = mat;
     shuffle();
@@ -78,6 +89,22 @@ void MatrixShuffler<T>::shuffle(){
 template<class T>
 ccma::algebra::BaseMatrixT<T>* MatrixShuffler<T>::get_row(int row_id){
     return m_mat[m_shuffle_idx[row_id]];
+}
+
+template<class T>
+LabeledMatrixShuffler<T>::LabeledMatrixShuffler(ccma::algebra::LabeledDenseMatrixT<T>* mat){
+    m_mat = mat;
+    shuffle();
+}
+
+template<class T>
+ccma::algebra::BaseMatrixT<T>* LabeledMatrixShuffler::get_row(int row_id){
+    return m_mat[m_shuffle_idx[row_id]];
+}
+
+template<class T>
+T LabeledMatrixShuffler:get_label(int row_id){
+    return m_mat->get_label(row_id);
 }
 
 }//namespace algebra

@@ -35,12 +35,15 @@ public:
     inline uint get_cols() const { return this->_cols;}
     inline uint get_sizes() const { return this->_rows * this->_cols;}
 
-    virtual BaseMatrixT<T>* copy_matrix() = 0;
+    virtual BaseMatrixT<T>* clone() = 0;
 
     virtual T* get_data() const = 0;
     virtual void set_data(const T* data,
                           const uint rows,
                           const uint cols) = 0;
+
+    void set_data(const BaseMatrixT<T>* mat){set_data(mat->get_data(), mat->get_rows(), mat->get_cols());}
+
     virtual void set_shallow_data(T* data,
                                   const uint rows,
                                   const uint cols) = 0;
@@ -57,6 +60,8 @@ public:
     virtual bool set_row_data(BaseMatrixT<T>* mat, const int row) = 0;
 
     virtual bool extend(const BaseMatrixT<T>* mat) = 0;
+
+//    friend BaseMatrixT<T>* operator + (const BaseMatrixT<T>* mat1, const BaseMatrixT<T>* mat2);
 
     bool add(const BaseMatrixT<T>* mat);
     bool subtract(const BaseMatrixT<T>* mat);
@@ -116,7 +121,7 @@ public:
                  const uint cols);
     ~DenseMatrixT();
 
-    DenseMatrixT<T>* copy_matrix();
+    DenseMatrixT<T>* clone();
     DenseMatrixT<T>* clear_matrix();
 
     T* get_data() const;
