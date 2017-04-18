@@ -56,7 +56,7 @@ public:
                           int row,
                           int col) = 0;
 
-    virtual BaseMatrixT<T>* get_row_data(const int row) const = 0;
+    virtual BaseMatrixT<T>* get_row_data(const int row) = 0;
     virtual bool set_row_data(BaseMatrixT<T>* mat, const int row) = 0;
 
     virtual bool extend(const BaseMatrixT<T>* mat) = 0;
@@ -122,7 +122,7 @@ public:
     ~DenseMatrixT();
 
     DenseMatrixT<T>* clone();
-    DenseMatrixT<T>* clear_matrix();
+    void clear_matrix();
 
     T* get_data() const;
     void set_data(const T* data,
@@ -141,7 +141,7 @@ public:
                           const uint cols);
 
 
-    DenseMatrixT<T>* get_row_data(const int row) const;
+    DenseMatrixT<T>* get_row_data(const int row);
     bool set_row_data(BaseMatrixT<T>* mat, int row);
 
     bool extend(const BaseMatrixT<T>* mat);
@@ -352,6 +352,9 @@ public:
                   const uint rows,
                   const uint cols);
 
+    LabeledDenseMatrixT<T>* get_row_data(const int row_id);
+    void set_row_data(LabeledDenseMatrixT<T>* mat, const int row_id);
+
     void set_shallow_data(T* data,
                           T* labels,
                           const uint rows,
@@ -362,6 +365,8 @@ public:
                           uint* feature_names,
                           const uint rows,
                           const uint cols);
+
+    void clear_matrix();
 
     real get_shannon_entropy();
 
