@@ -27,10 +27,11 @@ public:
     void shuffle();
 
     ccma::algebra::BaseMatrixT<T>* get_row(int row_id);
+protected:
+    std::vector<int> m_shuffle_idx;
 
 private:
     ccma::algebra::BaseMatrixT<T>* m_mat;
-    std::vector<int> m_shuffle_idx;
 };//class MatrixShuffler
 
 
@@ -94,17 +95,17 @@ ccma::algebra::BaseMatrixT<T>* MatrixShuffler<T>::get_row(int row_id){
 template<class T>
 LabeledMatrixShuffler<T>::LabeledMatrixShuffler(ccma::algebra::LabeledDenseMatrixT<T>* mat){
     m_mat = mat;
-    shuffle<T>();
+    MatrixShuffler<T>::shuffle();
 }
 
 template<class T>
 ccma::algebra::BaseMatrixT<T>* LabeledMatrixShuffler<T>::get_row(int row_id){
-    return m_mat[m_shuffle_idx[row_id]];
+    return m_mat[MatrixShuffler<T>::m_shuffle_idx[row_id]];
 }
 
 template<class T>
 T LabeledMatrixShuffler<T>::get_label(int row_id){
-    return m_mat->get_label(row_id);
+    return m_mat->get_label(MatrixShuffler<T>::row_id);
 }
 
 }//namespace algebra
