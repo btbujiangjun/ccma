@@ -48,7 +48,7 @@ public:
     int evaluate(ccma::algebra::LabeledDenseMatrixT<real>* test_data);
 
 private:
-    bool mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch, real eta);
+    bool mini_batch_update(ccma::algebra::LabeledDenseMatrixT<real>* mini_batch, real eta);
 
     void back_propagation(ccma::algebra::LabeledDenseMatrixT<real>* train_data,
                           std::vector<ccma::algebra::BaseMatrixT<real>*>* out_weights,
