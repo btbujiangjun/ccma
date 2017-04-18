@@ -41,7 +41,21 @@ void MnistHelper::read_mnist_file(const std::string& path, uint32_t key){
     file.read(buffer.get(), size);
     file.close();
 
+    auto magic_num = read_header(buffer, 0);
 
+    if(magic_num != key){
+        std::cout << "Invalid magic number, probably not  a MNIST file" << std::endl;
+        return {};
+    }
+
+    auto count = read_header(buffer, 1);
+}
+
+inline uint32_t MnistHelper::read_header(const std::unique_ptr<char[]>& buffer, size_t position){
+    auto header = reinterpret_cast<uint32_t*>(buffer.get());
+
+    auto value = *(header + position);
+    return (value << 24) | ((value << 8) & 0x00FF0000) | ((value >> 8) & 0X0000FF00) | (value >> 24);
 }
 
 }//namespace utils
