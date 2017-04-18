@@ -65,7 +65,7 @@ DenseMatrixT<T>* DenseMatrixT<T>::clone(){
 }
 
 template<class T>
-DenseMatrixT<T>* DenseMatrixT<T>::clear_matrix(){
+void DenseMatrixT<T>::clear_matrix(){
     if(_data != nullptr){
         delete[] _data;
     }
@@ -162,7 +162,7 @@ bool DenseMatrixT<T>::set_data(const T& value,
 }
 
 template<class T>
-DenseMatrixT<T>* DenseMatrixT<T>::get_row_data(int row) const{
+DenseMatrixT<T>* DenseMatrixT<T>::get_row_data(int row){
     // check row range
     if(row < 0){
         row += this->_rows;
@@ -176,7 +176,7 @@ DenseMatrixT<T>* DenseMatrixT<T>::get_row_data(int row) const{
 
 template<class T>
 bool DenseMatrixT<T>::set_row_data(BaseMatrixT<T>* mat, int row){
-    if(this->_cols != mat->get_cols()){
+    if(this->_rows > 0 &&this->_cols != mat->get_cols()){
         return false;
     }
 
@@ -676,6 +676,55 @@ void LabeledDenseMatrixT<T>::set_data(const T* data,
 }
 
 template<class T>
+LabeledDenseMatrixT<T>* LabeledDenseMatrixT<T>::get_row_data(const int row_id){
+
+    int id = row_id;
+    if(row_id < 0){
+        id += this->_rows;
+    }
+
+    LabeledDenseMatrixT<T>* row_data = new LabeledDenseMatrixT<T>();
+
+    if(id < 0 || id >= this->_rows){
+        return row_data;
+    }
+
+    T* data = new T[this->_rows];
+    T* label = new T[1];
+    label[0] = get_label(id);
+
+    row_data->set_shallow_data(data, label, 1, this->_cols);
+
+    return row_data;
+}
+
+template<class T>
+void LabeledDenseMatrixT<T>::set_row_data(LabeledDenseMatrixT<T>* mat, const int row_id){
+    int id = row_id;
+    if(id < 0){
+        id += this->_rows;
+    }
+
+    BaseMatrixT<T>* data = mat->get_data_matrix();
+    DenseMatrixT<T>::set_row_data(data, id);
+    delete data;
+
+    BaseMatrixT<T>* l = mat->get_labels();
+    T* labels = new T[mat->get_rows() + this->_rows];
+    if(id > 0){
+        memcpy(labels, _labels, sizeof(T) * id);
+    }
+    memcpy(&labels[id], l->get_data(), sizeof(T) * data->get_rows());
+    if(id < this->_rows){
+        memcpy(&labels[id + data->get_rows()], &l->get_data()[id], sizeof(T) * (this->_rows - id));
+    }
+    delete l;
+
+    delete[] _labels;
+    _labels = labels;
+}
+
+template<class T>
 void LabeledDenseMatrixT<T>::set_data(const T* data,
                                       const T* labels,
                                       const uint* feature_names,
@@ -730,6 +779,13 @@ void LabeledDenseMatrixT<T>::set_shallow_data(T* data,
     }
     _feature_names = feature_names;
 
+    clear_cache();
+}
+
+template<class T>
+void LabeledDenseMatrixT<T>::clear_matrix(){
+    DenseMatrixT<T>::clear_matrix();
+    delete[] _labels;
     clear_cache();
 }
 
