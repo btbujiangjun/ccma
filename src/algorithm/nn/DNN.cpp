@@ -57,20 +57,19 @@ bool DNN::sgd(ccma::algebra::LabeledDenseMatrixT<real>* train_data,
         num_test_data = test_data->get_rows();
     }
 
+    //check nn structure and data dims
     if(_num_layers <= 1 || _sizes[0] != train_data->get_cols() || (num_test_data > 0 && _sizes[0] != test_data->get_cols())){
         return false;
     }
 
     ccma::algebra::MatrixShuffler<real>* shuffler = new ccma::algebra::MatrixShuffler<real>(train_data);
-
-    ccma::algebra::DenseMatrixT<real>* mini_batch = new ccma::algebra::DenseMatrixT<real>(0,train_data->get_cols());
-
+    ccma::algebra::LabeledDenseMatrixT<real>* mini_batch = new ccma::algebra::LabeledDenseMatrixT<real>();
     for(int i = 0; i < epochs; i++){
 
         shuffler->shuffle();
 
         for(int j = 0; j < num_train_data; j++){
-            ccma::algebra::BaseMatrixT<real>* row_data = train_data->get_row_data(j);
+            ccma::algebra::LabeledDenseMatrixT<real>* row_data = train_data->get_row_data(j);
             mini_batch->set_row_data(row_data, j % mini_batch_size);
             delete row_data;
 
@@ -121,23 +120,18 @@ int DNN::evaluate(ccma::algebra::LabeledDenseMatrixT<real>* test_data){
     return num;
 }
 
-bool DNN::mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch, real eta){
+bool DNN::mini_batch_update(ccma::algebra::LabeledDenseMatrixT<real>* mini_batch, real eta){
     std::vector<ccma::algebra::BaseMatrixT<real>*> batch_weights;
     std::vector<ccma::algebra::BaseMatrixT<real>*> batch_biases;
     init_parameter(&batch_weights, 0.0, &batch_biases, 0.0);
 
-    ccma::algebra::LabeledDenseMatrixT<real>* label_data = new ccma::algebra::LabeledDenseMatrixT<real>();
     for(int i = 0; i < mini_batch->get_rows(); i++){
-
-        real* data = new real[_sizes[0]];
-        memcpy(data, mini_batch->get_row_data(i)->get_data(), sizeof(real) * _sizes[0]);
-        real label = mini_batch->get_row_data(i)->get_data()[_sizes[0]];
-        label_data->set_shallow_data(data, &label, 1, _sizes[0]);
-
         std::vector<ccma::algebra::BaseMatrixT<real>*> train_weight;
         std::vector<ccma::algebra::BaseMatrixT<real>*> train_bias;
 
+        ccma::algebra::LabeledDenseMatrixT<real>* label_data = mini_batch->get_row_data(i);
         back_propagation(label_data, &train_weight, &train_bias);
+        delete label_data;
 
         //sum weights & biases
         for(int i = 0; i < _num_layers; i++){
@@ -149,7 +143,6 @@ bool DNN::mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch, real e
         clear_parameter(&train_weight);
         clear_parameter(&train_bias);
     }
-    delete label_data;
 
     //batch update with average grad
     for(int i = 0; i < _num_layers; i++){
@@ -188,7 +181,9 @@ void DNN::back_propagation(ccma::algebra::LabeledDenseMatrixT<real>* train_data,
     //back pass
     int last_layer = activations.size() - 1;
     ccma::algebra::BaseMatrixT<real>* act = activations[last_layer];
-    cost_derivative(act, train_data->get_labels()->get_data(0));
+    ccma:algebra::BaseMatrixT<real>* label_mat = train_data->get_labels();
+    cost_derivative(act, label_mat->get_data(0));
+    delete label_mat;
 
     sigmoid_derivative(zs[last_layer]);
     act->product(zs[last_layer]);
