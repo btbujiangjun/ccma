@@ -180,6 +180,10 @@ bool DenseMatrixT<T>::set_row_data(BaseMatrixT<T>* mat, int row){
         return false;
     }
 
+    if(this->_rows == 0){
+        this->_cols = mat->get_cols();
+    }
+
     if(row < 0){
         row += this->_rows;
     }
@@ -192,16 +196,18 @@ bool DenseMatrixT<T>::set_row_data(BaseMatrixT<T>* mat, int row){
     if(row > 0){
         memcpy(data, _data, sizeof(T) * this->_cols * row);
     }
-    memcpy(&data[(row) * this->_cols], mat->get_data(), sizeof(T) * mat->get_rows() * mat->get_cols());
+    memcpy(&data[row * this->_cols], mat->get_data(), sizeof(T) * mat->get_rows() * mat->get_cols());
     if(row < this->_rows){
         memcpy(&data[(row + mat->get_rows()) * this->_cols], &_data[this->_cols * row], sizeof(T) * (this->_rows - row) * this->_cols);
     }
 
     if(_data != nullptr){
         delete[] _data;
+        _data = nullptr;
     }
     _data = data;
     this->_rows += mat->get_rows();
+
     clear_cache();
 
     return true;
@@ -547,10 +553,11 @@ template<class T>
 void DenseMatrixT<T>::display(){
     printf("[%d*%d][\n", this->_rows, this->_cols);
     for(int i = 0; i < this->_rows; i++){
+        printf("row[%d][",i);
         for(int j = 0; j < this->_cols; j++){
             printf("%s\t", std::to_string(get_data(i, j)).c_str());
         }
-        printf("\n");
+        printf("]\n");
     }
     printf("]\n");
 }
@@ -648,11 +655,14 @@ LabeledDenseMatrixT<T>::~LabeledDenseMatrixT(){
 
 template<class T>
 DenseMatrixT<T>* LabeledDenseMatrixT<T>::get_data_matrix(){
+    /*
     T* data = new T[this->_rows * this->_cols];
     memcpy(data, this->_data, sizeof(T)* this->_rows * this->_cols);
     DenseMatrixT<T>* data_mat = new DenseMatrixT<T>();
     data_mat->set_shallow_data(data, this->_rows, this->_cols);
     return data_mat;
+    */
+    return new DenseMatrixT<T>(this->_data, this->_rows, this->_cols);
 }
 
 template<class T>
@@ -705,22 +715,24 @@ void LabeledDenseMatrixT<T>::set_row_data(LabeledDenseMatrixT<T>* mat, const int
         id += this->_rows;
     }
 
-    BaseMatrixT<T>* data = mat->get_data_matrix();
-    DenseMatrixT<T>::set_row_data(data, id);
-    delete data;
+    BaseMatrixT<T>* data_mat = mat->get_data_matrix();
+    DenseMatrixT<T>::set_row_data(data_mat, id);
+    delete data_mat;
 
-    BaseMatrixT<T>* l = mat->get_labels();
+    BaseMatrixT<T>* label_mat = mat->get_labels();
     T* labels = new T[mat->get_rows() + this->_rows];
     if(id > 0){
         memcpy(labels, _labels, sizeof(T) * id);
     }
-    memcpy(&labels[id], l->get_data(), sizeof(T) * data->get_rows());
+    memcpy(&labels[id], label_mat->get_data(), sizeof(T) * data_mat->get_rows());
     if(id < this->_rows){
-        memcpy(&labels[id + data->get_rows()], &l->get_data()[id], sizeof(T) * (this->_rows - id));
+        memcpy(&labels[id + label_mat->get_rows()], &label_mat->get_data()[id], sizeof(T) * (this->_rows - id));
     }
-    delete l;
+    delete label_mat;
 
-    delete[] _labels;
+    if(_labels){
+        delete[] _labels;
+    }
     _labels = labels;
 }
 
