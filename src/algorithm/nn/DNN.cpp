@@ -33,10 +33,10 @@ void DNN::init_networks_weights(){
     int len = _weights.size();
     for(int i = 0; i < len; i++){
         for(int j = 0; j < _weights[i]->get_sizes(); j++){
-            _weights[i]->set_data(distribution(engine), j, 0);
+            _weights[i]->set_data(distribution(engine), j);
         }
         for(int j = 0; j < _biases[i]->get_sizes(); j++){
-            _biases[i]->set_data(distribution(engine), j, 0);
+            _biases[i]->set_data(distribution(engine), j);
         }
 
         _weights[i]->display();
@@ -80,7 +80,8 @@ bool DNN::sgd(ccma::algebra::LabeledDenseMatrixT<real>* train_data,
         }
 
         if(num_test_data > 0){
-            int num_predcit = evaluate(test_data);
+            int num_predict = evaluate(test_data);
+            printf("Epoch %d: %d / %d\n", i, num_predict, num_test_data);
         }
 
     }
