@@ -14,9 +14,4 @@ int main(int argc, char** argv){
     mat = helper.read<int>("data/mnist/train-images-idx3-ubyte", "data/mnist/train-labels-idx1-ubyte", 1);
     mat->display();
     delete mat;
-
-//    mat = helper.read_mnist_data<int>("data/mnist/train-images-idx3-ubyte", "data/mnist/train-labels-idx1-ubyte", 10);
-//    mat->display();
-
-//    delete mat;
 }

@@ -235,6 +235,7 @@ bool DenseMatrixT<T>::extend(const BaseMatrixT<T>* mat){
 template<class T>
 bool DenseMatrixT<T>::product(const BaseMatrixT<T>* mat){
     if(this->_cols != mat->get_rows()){
+        printf("Product Matrix Dim Error[%d:%d][%d:%d]\n", this->_rows, this->_cols, mat->get_rows(), mat->get_cols());
         return false;
     }
 
