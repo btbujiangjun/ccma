@@ -12,6 +12,7 @@
 
 #include <vector>
 #include "algebra/BaseMatrix.h"
+#include "utils/MatrixHelper.h"
 
 namespace ccma{
 namespace algorithm{
@@ -20,7 +21,9 @@ namespace nn{
 
 class DNN{
 public:
-    DNN(){}
+    DNN(){
+         _num_layers = 0;
+    }
 
     ~DNN(){
         _sizes.clear();
@@ -70,6 +73,8 @@ private:
     std::vector<uint> _sizes;
     std::vector<ccma::algebra::BaseMatrixT<real>*> _weights;
     std::vector<ccma::algebra::BaseMatrixT<real>*> _biases;
+
+    ccma::utils::MatrixHelper helper;
 };//class DNN
 
 }//namespace nn
