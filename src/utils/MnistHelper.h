@@ -61,6 +61,9 @@ ccma::algebra::LabeledDenseMatrixT<T>* MnistHelper::read(const std::string& imag
     T* data = new T[count * rows * cols];
     for(size_t i = 0; i < count * rows * cols; i++){
         auto pixel = *image_data_buffer++;
+        if(pixel != 0){
+            printf("%d\t%d\n", pixel, i);
+        }
         data[i] = static_cast<T>(pixel);
     }
 

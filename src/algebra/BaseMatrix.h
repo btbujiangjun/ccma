@@ -61,8 +61,6 @@ public:
 
     virtual bool extend(const BaseMatrixT<T>* mat) = 0;
 
-//    friend BaseMatrixT<T>* operator + (const BaseMatrixT<T>* mat1, const BaseMatrixT<T>* mat2);
-
     bool add(const BaseMatrixT<T>* mat);
     bool subtract(const BaseMatrixT<T>* mat);
 

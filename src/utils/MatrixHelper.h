@@ -104,6 +104,7 @@ bool MatrixHelper::product(const ccma::algebra::BaseMatrixT<T1>* mat1,
                            const ccma::algebra::BaseMatrixT<T2>* mat2,
                            ccma::algebra::BaseMatrixT<T3>* result){
     if(mat1->get_cols() != mat2->get_rows()){
+        printf("Product Matrix Dim ERROR:[%d-%d][%d-%d]\n", mat1->get_rows(), mat1->get_cols(), mat2->get_rows(), mat2->get_cols());
         return false;
     }
 
