@@ -10,7 +10,6 @@
 #include <random>
 #include <ctime>
 #include "algebra/MatrixShuffler.h"
-#include "algebra/MatrixHelper.h"
 
 namespace ccma{
 namespace algorithm{
@@ -94,7 +93,9 @@ bool DNN::sgd(ccma::algebra::LabeledDenseMatrixT<real>* train_data,
 
 void DNN::feedforward(ccma::algebra::BaseMatrixT<real>* mat){
     for(int i = 0; i < _weights.size(); i++){
-        mat->product(_weights[i]);
+        if(!mat->product(_weights[i])){
+            printf("Matrix Dim Error: weights[%d][%d:%d]-mat[%d:%d]\n", i, _weights[i]->get_rows(), _weights[i]->get_cols(), mat->get_rows(), mat->get_cols());
+        }
         mat->add(_biases[i]);
     }
 }
@@ -170,7 +171,9 @@ void DNN::back_propagation(ccma::algebra::LabeledDenseMatrixT<real>* train_data,
 
     //feedforward
     for(int i = 0; i < _weights.size(); i++){
-        activation->product(_weights[i]);
+        if(!helper.product(activation, _weights[i], activation)){
+            printf("Matrix Dim Error: weights[%d][%d:%d]-activation[%d:%d]\n", i, _weights[i]->get_rows(), _weights[i]->get_cols(), activation->get_rows(), activation->get_cols());
+        }
         activation->add(_biases[i]);
         zs.push_back(activation->clone());
 
@@ -186,15 +189,19 @@ void DNN::back_propagation(ccma::algebra::LabeledDenseMatrixT<real>* train_data,
     cost_derivative(act, label_mat->get_data(0));
     delete label_mat;
 
-    sigmoid_derivative(zs[last_layer]);
-    act->product(zs[last_layer]);
-    out_biases->at(last_layer)->set_data(act);
+    sigmoid_derivative(zs[last_layer - 1]);
+
+    if(!act->product(zs[last_layer - 1])){
+        printf("Matrix Dim Error: zs layer[%d][%d:%d]-act[%d:%d]\n", last_layer, zs[last_layer]->get_rows(), zs[last_layer]->get_cols(), act->get_rows(), act->get_cols());
+    }
+    auto delta = act;
+    out_biases->at(last_layer - 1)->set_data(delta);
+    delta = out_biases->at(last_layer - 1);
 
     act = activations[last_layer - 1];
-    act->product(out_biases->at(last_layer));
-    out_weights->at(last_layer)->set_data(act);
+    act->product(delta);
+    out_weights->at(last_layer - 1)->set_data(act);
 
-    ccma::algebra::MatrixHelper helper;
     ccma::algebra::BaseMatrixT<real>* mat = new ccma::algebra::DenseMatrixT<real>();
     for(int i = _weights.size() - 2; i >= 0; i--){
         sigmoid_derivative(zs[i]);
@@ -233,11 +240,11 @@ void DNN::init_parameter(std::vector<ccma::algebra::BaseMatrixT<real>*>* weight_
     clear_parameter(bias_parameter);
 
     for(int i = 1; i < _num_layers; i++){
-        ccma::algebra::BaseMatrixT<real>* layer = new ccma::algebra::DenseMatrixT<real>(_sizes[i], _sizes[i - 1]);
-        _weights.push_back(layer);
+        ccma::algebra::BaseMatrixT<real>* layer = new ccma::algebra::DenseMatrixT<real>(_sizes[i - 1], _sizes[i]);
+        weight_parameter->push_back(layer);
 
         ccma::algebra::BaseMatrixT<real>* bias = new ccma::algebra::DenseMatrixT<real>(1, _sizes[i]);
-        _biases.push_back(bias);
+        bias_parameter->push_back(bias);
     }
 }
 
