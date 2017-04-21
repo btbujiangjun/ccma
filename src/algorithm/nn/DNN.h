@@ -39,21 +39,26 @@ public:
 
     void init_networks_weights();
 
-    bool sgd(ccma::algebra::LabeledDenseMatrixT<real>* train_data,
-            int epochs,
-            real eta,
-            int mini_batch_size = 1,
-            ccma::algebra::LabeledDenseMatrixT<real>* test_data = nullptr);
+    bool sgd(ccma::algebra::BaseMatrixT<real>* train_data,
+             ccma::algebra::BaseMatrixT<real>* train_label,
+             int epochs,
+             real eta,
+             int mini_batch_size = 1,
+             ccma::algebra::BaseMatrixT<real>* test_data = nullptr,
+             ccma::algebra::BaseMatrixT<real>* test_label = nullptr);
 
 
     void feedforward(ccma::algebra::BaseMatrixT<real>* mat);
 
-    int evaluate(ccma::algebra::LabeledDenseMatrixT<real>* test_data);
+    int evaluate(ccma::algebra::BaseMatrixT<real>* test_data, ccma::algebra::BaseMatrixT<real>* test_label);
 
 private:
-    bool mini_batch_update(ccma::algebra::LabeledDenseMatrixT<real>* mini_batch, real eta);
+    bool mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch_data,
+                           ccma::algebra::BaseMatrixT<real>* mini_batch_label,
+                           real eta);
 
-    void back_propagation(ccma::algebra::LabeledDenseMatrixT<real>* train_data,
+    void back_propagation(ccma::algebra::BaseMatrixT<real>* train_data,
+                          ccma::algebra::BaseMatrixT<real>* train_label,
                           std::vector<ccma::algebra::BaseMatrixT<real>*>* out_weights,
                           std::vector<ccma::algebra::BaseMatrixT<real>*>* out_biases);
 
@@ -64,7 +69,7 @@ private:
 
     void clear_parameter(std::vector<ccma::algebra::BaseMatrixT<real>*>* parameters);
 
-    void cost_derivative(ccma::algebra::BaseMatrixT<real>* output_activation,real y);
+    void cost_derivative(ccma::algebra::BaseMatrixT<real>* output_activation,ccma::algebra::BaseMatrixT<real>* y);
 
     void sigmoid_derivative(ccma::algebra::BaseMatrixT<real>* z);
 private:
