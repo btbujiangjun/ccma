@@ -28,7 +28,7 @@ public:
 
 private:
     uint _size;
-    std::vector<uint> _shuffer_idx;
+    std::vector<uint> _shuffler_idx;
 };//class Shuffler
 
 
@@ -38,12 +38,12 @@ Shuffler::Shuffler(uint size){
 }
 
 Shuffler::~Shuffler(){
-    _shuffle_idx.clear();
+    _shuffler_idx.clear();
 }
 
 void Shuffler::shuffle(){
 
-    _shuffle_idx.clear();
+    _shuffler_idx.clear();
 
     std::vector<int> idx;
     for(int i = 0; i < _size; i++){
@@ -55,7 +55,7 @@ void Shuffler::shuffle(){
         std::uniform_int_distribution<int> dis(0, idx.size() - 1);
 
         int idx_value = idx[dis(generator)];
-        _shuffle_idx.push_back(idx[idx_value]);
+        _shuffler_idx.push_back(idx[idx_value]);
 
         std::vector<int>::iterator it = idx.begin();
         while(it != idx.end()){
@@ -69,8 +69,8 @@ void Shuffler::shuffle(){
 
 }
 
-uint Shuffler<T>::get_row(int row_id){
-    return _shuffle_idx[row_id];
+uint Shuffler::get_row(uint row_id){
+    return _shuffler_idx[row_id];
 }
 
 }//namespace algebra

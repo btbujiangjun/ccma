@@ -70,6 +70,7 @@ public:
     bool add(const T value);
     bool subtract(const T value);
     bool multiply(const T value);
+    bool multiply(const BaseMatrixT<T>* mat);
     bool division(const T value);
 
     bool sigmoid();
@@ -98,8 +99,10 @@ public:
 
     virtual bool inverse(BaseMatrixT<real>* result) = 0;
 
-    virtual void display() = 0;
+    virtual void display(const std::string& split="\t") = 0;
     virtual std::string* to_string() = 0;
+
+    virtual bool operator==(BaseMatrixT<T>* mat) const = 0;
 
 protected:
     uint _rows;
@@ -172,7 +175,9 @@ public:
 
     bool inverse(BaseMatrixT<real>* result);
 
-    void display();
+    bool operator==(BaseMatrixT<T>* mat) const;
+
+    void display(const std::string& split="\t");
 
     std::string* to_string();
 
@@ -389,7 +394,9 @@ public:
 
     bool is_unique_label();
 
-    void display();
+    bool operator==(LabeledDenseMatrixT<T>* mat) const;
+
+    void display(const std::string& split="\t");
 
 protected:
     T* _labels = nullptr;
