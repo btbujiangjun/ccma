@@ -17,16 +17,16 @@ int main(int argc, char** argv){
     dnn->add_layer(10);
     dnn->init_networks_weights();
 
-    ccma::utils::MnistHelper helper;
-    ccma::algebra::LabeledDenseMatrixT<real>* train_mat;
-    ccma::algebra::LabeledDenseMatrixT<real>* test_mat;
+    ccma::utils::MnistHelper<real> helper;
 
-    train_mat = helper.read<real>("data/mnist/train-images-idx3-ubyte", "data/mnist/train-labels-idx1-ubyte", 1000);
-    test_mat = helper.read<real>("data/mnist/t10k-images-idx3-ubyte", "data/mnist/t10k-labels-idx1-ubyte", 1000);
+    auto train_data     = helper.read_image("data/mnist/train-images-idx3-ubyte", 1000);
+    auto train_label    = helper.read_label("data/mnist/train-labels-idx1-ubyte", 1000);
+    auto test_data      = helper.read_image("data/mnist/t10k-images-idx3-ubyte", 1000);
+    auto test_label     = helper.read_label("data/mnist/t10k-labels-idx1-ubyte", 1000);
 
-    dnn->sgd(train_mat, 30, 3, 10, test_mat);
+    dnn->sgd(train_data, train_label, 30, 3, 10, test_data, test_label);
 
-    delete train_mat;
-    delete test_mat;
+    delete train_data, train_label;
+    delete test_data, test_label;
     delete dnn;
 }
