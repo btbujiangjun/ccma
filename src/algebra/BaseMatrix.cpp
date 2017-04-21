@@ -65,6 +65,18 @@ bool BaseMatrixT<T>::multiply(const T value){
 }
 
 template<class T>
+bool BaseMatrixT<T>::multiply(const BaseMatrixT<T>* mat){
+    if(_rows != mat->get_rows() || _cols != mat->get_cols()){
+        return false;
+    }
+    for(int i = 0; i < _rows * _cols; i++){
+        set_data(get_data(i) * mat->get_data(i), i);
+    }
+
+    return true;
+}
+
+template<class T>
 bool BaseMatrixT<T>::division(const T value){
     for(int i = 0; i < _rows * _cols; i++){
         set_data(get_data(i) / value, i);

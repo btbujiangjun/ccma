@@ -70,6 +70,7 @@ void DenseMatrixT<T>::clear_matrix(){
         delete[] _data;
     }
 
+    _data == NULL;
     this->_rows = 0;
 
     clear_cache();
@@ -176,7 +177,7 @@ DenseMatrixT<T>* DenseMatrixT<T>::get_row_data(int row){
 
 template<class T>
 bool DenseMatrixT<T>::set_row_data(BaseMatrixT<T>* mat, int row){
-    if(this->_rows > 0 &&this->_cols != mat->get_cols()){
+    if(this->_rows > 0 && this->_cols != mat->get_cols()){
         return false;
     }
 
@@ -551,12 +552,27 @@ bool DenseMatrixT<T>::inverse(BaseMatrixT<real>* result){
 }
 
 template<class T>
-void DenseMatrixT<T>::display(){
+bool DenseMatrixT<T>::operator==(BaseMatrixT<T>* mat) const{
+    if(this->_rows == mat->get_rows() && this->_cols == mat->get_cols()){
+        int size = this->_rows * this->_cols;
+        for(int i = 0; i < size; i++){
+            if(_data[i] != mat->get_data(i)){
+                return false;
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
+
+template<class T>
+void DenseMatrixT<T>::display(const std::string& split){
     printf("[%d*%d][\n", this->_rows, this->_cols);
     for(int i = 0; i < this->_rows; i++){
         printf("row[%d][",i);
         for(int j = 0; j < this->_cols; j++){
-            printf("%s\t", std::to_string(get_data(i, j)).c_str());
+            printf("%s%s", std::to_string(get_data(i, j)).c_str(), split.c_str());
         }
         printf("]\n");
     }
@@ -656,13 +672,6 @@ LabeledDenseMatrixT<T>::~LabeledDenseMatrixT(){
 
 template<class T>
 DenseMatrixT<T>* LabeledDenseMatrixT<T>::get_data_matrix(){
-    /*
-    T* data = new T[this->_rows * this->_cols];
-    memcpy(data, this->_data, sizeof(T)* this->_rows * this->_cols);
-    DenseMatrixT<T>* data_mat = new DenseMatrixT<T>();
-    data_mat->set_shallow_data(data, this->_rows, this->_cols);
-    return data_mat;
-    */
     return new DenseMatrixT<T>(this->_data, this->_rows, this->_cols);
 }
 
@@ -1022,14 +1031,32 @@ void LabeledDenseMatrixT<T>::clear_cache(){
 }
 
 template<class T>
-void LabeledDenseMatrixT<T>::display(){
+bool LabeledDenseMatrixT<T>::operator==(LabeledDenseMatrixT<T>* mat) const{
+    if(this->get_rows() == mat->get_rows() && this->get_cols() == mat->get_cols()){
+        for(int i = 0; i < this->get_rows(); i++){
+            if(this->get_label(i) == mat->get_label(i)){
+                return false;
+            }
+            for(int j = 0; j < this->get_cols(); j++){
+                if(this->get_data(i, j) != this->get_data(i, j)){
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
+template<class T>
+void LabeledDenseMatrixT<T>::display(const std::string& split){
     for(uint i = 0; i < this->_cols; i++){
         printf("col:%d\t", get_feature_name(i));
     }
     printf("label\n");
     for(uint i = 0; i < this->_rows; i++){
         for(uint j = 0; j < this->_cols; j++){
-            printf("%s\t", std::to_string(this->get_data(i, j)).c_str());
+            printf("%s%s", std::to_string(this->get_data(i, j)).c_str(), split.c_str());
         }
         printf("%s\n", std::to_string(this->get_label(i)).c_str());
     }
