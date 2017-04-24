@@ -3,7 +3,7 @@
 
 int main(int argc, char** argv){
     float d[4] =  {1, 3, 2, 5};
-    ccma::algebra::BaseMatrixT<float>* dm = new ccma::algebra::DenseMatrixT<float>(d, 2, 2);
+    auto dm = new ccma::algebra::DenseMatrixT<float>(d, 2, 2);
     printf("[%d][%d]\n", dm->get_rows(), dm->get_cols());
     dm->display();
 
@@ -11,7 +11,9 @@ int main(int argc, char** argv){
 
     dm->display();
 
-    ccma::algebra::BaseMatrixT<float>* d1 = dm->clone();
+    auto d1 = new ccma::algebra::DenseMatrixT<float>(d, 2, 2);
+    dm->clone(d1);
+
     d1->display();
     d1->set_row_data(d1, 1);
     d1->display();

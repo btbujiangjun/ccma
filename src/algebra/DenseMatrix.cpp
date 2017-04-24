@@ -14,20 +14,17 @@ namespace ccma{
 namespace algebra{
 
 template<class T>
-DenseMatrixT<T>::DenseMatrixT(){
-    this->_rows = 0;
-    this->_cols = 0;
+DenseMatrixT<T>::DenseMatrixT() : BaseMatrixT<T>(){
     _data = nullptr;
     _cache_matrix_det = ccma::utils::get_max_value<T>();
     _cache_to_string = nullptr;
 }
 
 template<class T>
-DenseMatrixT<T>::DenseMatrixT(const uint rows, const uint cols){
-    this->_rows = rows;
-    this->_cols = cols;
+DenseMatrixT<T>::DenseMatrixT(const uint rows, const uint cols) : BaseMatrixT<T>(rows, cols){
     _data = new T[rows * cols];
-    memset(_data, 0, sizeof(_data));
+    memset(_data, 0, sizeof(T)* rows * cols);
+
     _cache_matrix_det = ccma::utils::get_max_value<T>();
     _cache_to_string = nullptr;
 }
@@ -39,8 +36,6 @@ DenseMatrixT<T>::DenseMatrixT(const T* data,
                               const uint cols):BaseMatrixT<T>(rows, cols){
     _data = new T[rows * cols];
     memcpy(_data, data, sizeof(T) * rows * cols);
-    this->_rows = rows;
-    this->_cols = cols;
 
     _cache_matrix_det = ccma::utils::get_max_value<T>();
     _cache_to_string = nullptr;
@@ -49,81 +44,79 @@ DenseMatrixT<T>::DenseMatrixT(const T* data,
 
 template<class T>
 DenseMatrixT<T>::~DenseMatrixT(){
-    if(_data != nullptr){
-        delete[] _data;
-        _data = nullptr;
-    }
-    if(_cache_to_string != nullptr){
-        delete _cache_to_string;
-        _cache_to_string = nullptr;
-    }
+    clear_matrix();
 }
 
 template<class T>
-DenseMatrixT<T>* DenseMatrixT<T>::clone(){
-    return new DenseMatrixT<T>(_data, this->_rows, this->_cols);
+void DenseMatrixT<T>::clone(BaseMatrixT<T>* out_mat){
+    out_mat->set_data(_data, this->_rows, this->_cols);
 }
 
 template<class T>
 void DenseMatrixT<T>::clear_matrix(){
-    if(_data != nullptr){
+    if(_data != nullptr && this->_rows > 0){
         delete[] _data;
+        this->_rows = 0;
+        this->_cols = 0;
+
+        clear_cache();
     }
-
-    _data == NULL;
-    this->_rows = 0;
-
-    clear_cache();
 }
 
 template<class T>
-T* DenseMatrixT<T>::get_data() const{
+T* DenseMatrixT<T>::get_data(){
     return _data;
 }
 template<class T>
 void DenseMatrixT<T>::set_data(const T* data,
                                const uint rows,
                                const uint cols){
-    if(_data != nullptr){
+
+    if(_data != nullptr && this->_rows > 0){
         delete[] _data;
+        _data = nullptr;
+
+        clear_cache();
     }
+
     _data = new T[rows * cols];
     memcpy(_data, data, sizeof(T)* rows * cols);
     this->_rows = rows;
     this->_cols = cols;
-
-    clear_cache();
 }
 
 template<class T>
 void DenseMatrixT<T>::set_shallow_data(T* data,
                                        const uint rows,
                                        const uint cols){
-    if(_data != nullptr){
+
+    if(_data != nullptr && this->_rows > 0){
         delete[] _data;
+        _data = nullptr;
+
+        clear_cache();
     }
+
     _data = data;
     this->_rows = rows;
     this->_cols = cols;
-    clear_cache();
 }
 
 
 template<class T>
-T DenseMatrixT<T>::get_data(int idx) const{
-    //todo check_range(idx)
-    if(idx < 0){
-        idx += this->_rows * this->_cols;
+T DenseMatrixT<T>::get_data(const int idx){
+    int index = idx;
+    if(check_range(&index)){
+        return _data[index];
     }
+    //todo out_of_range exception
     return _data[idx];
 }
 template<class T>
-bool DenseMatrixT<T>::set_data(const T& value, int idx){
-    if(check_range(idx)){
-        if (idx < 0){
-            idx += this->_rows * this->_cols;
-        }
-        _data[idx] = value;
+bool DenseMatrixT<T>::set_data(const T& value, const int idx){
+    int index = idx;
+    if(check_range(&index)){
+        _data[index] = value;
         clear_cache();
         return true;
     }
@@ -131,52 +124,45 @@ bool DenseMatrixT<T>::set_data(const T& value, int idx){
 }
 
 template<class T>
-T DenseMatrixT<T>::get_data(int row, int col) const{
-    //todo check_range(row, col)
-    if(row < 0){
-        row += this->_rows;
+T DenseMatrixT<T>::get_data(const int row, const int col){
+    int r = row, c = col;
+    if(check_range(&r, &c)){
+        return _data[r * this->_cols + c];
+    }else{
+        //todo out_of_range exception
+        return _data[row * this->_cols + col];
     }
-    if(col < 0){
-        col += this->_cols;
-    }
-
-    return _data[row * this->_cols + col];
 }
 
 template<class T>
 bool DenseMatrixT<T>::set_data(const T& value,
-                               int row,
-                               int col){
-    if(check_range(row, col)){
-        if(row < 0){
-            row += this->_rows;
-        }
-        if(col < 0){
-            col += this->_cols;
-        }
-
-        _data[row * this->_cols + col] = value;
+                               const int row,
+                               const int col){
+    int r = row, c = col;
+    if(check_range(&r, &c)){
+        _data[r * this->_cols + c] = value;
         clear_cache();
+
         return true;
     }
     return false;
 }
 
 template<class T>
-DenseMatrixT<T>* DenseMatrixT<T>::get_row_data(int row){
-    // check row range
-    if(row < 0){
-        row += this->_rows;
+bool DenseMatrixT<T>::get_row_data(const int row, BaseMatrixT<T>* out_mat){
+    int r = row, c = 0;
+    if(check_range(&r, &c)){
+        T* data = new T[this->_cols];
+        memcpy(data, &_data[r * this->_cols], sizeof(T) * this->_cols);
+        out_mat->set_shallow_data(data, 1, this->_cols);
+        return true;
     }
-    DenseMatrixT<T>* dm = new DenseMatrixT<T>();
-    T* data = new T[this->_cols];
-    memcpy(data, &_data[row * this->_cols], sizeof(T) * this->_cols);
-    dm->set_shallow_data(data, 1, this->_cols);
-    return dm;
+    return false;
 }
 
 template<class T>
-bool DenseMatrixT<T>::set_row_data(BaseMatrixT<T>* mat, int row){
+bool DenseMatrixT<T>::set_row_data(BaseMatrixT<T>* mat, const int row){
+    int r = row;
     if(this->_rows > 0 && this->_cols != mat->get_cols()){
         return false;
     }
@@ -185,37 +171,42 @@ bool DenseMatrixT<T>::set_row_data(BaseMatrixT<T>* mat, int row){
         this->_cols = mat->get_cols();
     }
 
-    if(row < 0){
-        row += this->_rows;
+    if(r < 0){
+        r += this->_rows;
+    }
+    if(r < 0){
+        r = 0;
     }
 
-    if(row < this->_rows){
-        row = this->_rows;
+    if(r > this->_rows){
+        r = this->_rows;
     }
 
     T* data = new T[(this->_rows + mat->get_rows()) * this->_cols];
-    if(row > 0){
+    if(r > 0){
         memcpy(data, _data, sizeof(T) * this->_cols * row);
     }
-    memcpy(&data[row * this->_cols], mat->get_data(), sizeof(T) * mat->get_rows() * mat->get_cols());
+    memcpy(&data[r * this->_cols], mat->get_data(), sizeof(T) * mat->get_rows() * mat->get_cols());
     if(row < this->_rows){
-        memcpy(&data[(row + mat->get_rows()) * this->_cols], &_data[this->_cols * row], sizeof(T) * (this->_rows - row) * this->_cols);
+        memcpy(&data[(r + mat->get_rows()) * this->_cols], &_data[this->_cols * r], sizeof(T) * (this->_rows - r) * this->_cols);
     }
 
-    if(_data != nullptr){
+    if(_data != nullptr && this->_rows > 0){
         delete[] _data;
         _data = nullptr;
+
+        clear_cache();
     }
+
     _data = data;
     this->_rows += mat->get_rows();
-
-    clear_cache();
+    this->_cols = mat->get_cols();
 
     return true;
 }
 
 template<class T>
-bool DenseMatrixT<T>::extend(const BaseMatrixT<T>* mat){
+bool DenseMatrixT<T>::extend(BaseMatrixT<T>* mat){
     if(this->_rows != mat->get_rows()){
         return false;
     }
@@ -234,7 +225,7 @@ bool DenseMatrixT<T>::extend(const BaseMatrixT<T>* mat){
  * A(m,p) * B(p,n) = C(m,n)
  */
 template<class T>
-bool DenseMatrixT<T>::product(const BaseMatrixT<T>* mat){
+bool DenseMatrixT<T>::product(BaseMatrixT<T>* mat){
     if(this->_cols != mat->get_rows()){
         printf("Product Matrix Dim Error[%d:%d][%d:%d]\n", this->_rows, this->_cols, mat->get_rows(), mat->get_cols());
         return false;
@@ -258,7 +249,7 @@ bool DenseMatrixT<T>::product(const BaseMatrixT<T>* mat){
 }
 
 template<class T>
-bool DenseMatrixT<T>::pow(T exponent){
+bool DenseMatrixT<T>::pow(const T exponent){
     for(uint i = 0; i < this->_rows * this->_cols; i++){
         this->_data[i] = static_cast<T>(std::pow(this->_data[i], exponent));
     }
@@ -279,11 +270,12 @@ T DenseMatrixT<T>::sum() const{
 
 
 template<class T>
-bool DenseMatrixT<T>::swap(const uint a_row,
-                           const uint a_col,
-                           const uint b_row,
-                           const uint b_col){
-    if(!check_range(a_row, a_col) || !check_range(b_row, b_col)){
+bool DenseMatrixT<T>::swap(const uint aa_row,
+                           const uint aa_col,
+                           const uint bb_row,
+                           const uint bb_col){
+    int a_row = aa_row, a_col = aa_col, b_row = bb_row, b_col = bb_col;
+    if(!check_range(&a_row, &a_col) || !check_range(&b_row, &b_col)){
         return false;
     }
 
@@ -311,7 +303,9 @@ bool DenseMatrixT<T>::swap_row(const uint a, const uint b){
     memcpy(data, &_data[a * this->_cols], sizeof(T) * this->_cols);
     memcpy(&_data[a * this->_cols], &_data[b * this->_cols], sizeof(T) * this->_cols);
     memcpy(&_data[b * this->_cols], data, sizeof(T) * this->_cols);
+
     delete[] data;
+    data = nullptr;
 
     clear_cache();
 
@@ -360,17 +354,12 @@ void DenseMatrixT<T>::add_x0(BaseMatrixT<T>* result){
         memcpy(&data[i * (this->_cols + 1) + 1], &this->_data[i * this->_cols], sizeof(T) * this->_cols);
     }
 
-    if(result == nullptr){
-        result =  new DenseMatrixT<T>();
-    }
-
     result->set_shallow_data(data, this->_rows, this->_cols + 1);
 }
 
 template<class T>
 bool DenseMatrixT<T>::det(T* result){
-    *result = static_cast<T>(1);
-return true;
+
     //must be phalanx N*N
     if(this->_rows != this->_cols){
         return false;
@@ -542,9 +531,6 @@ bool DenseMatrixT<T>::inverse(BaseMatrixT<real>* result){
         }
     }
 
-    if(result == nullptr){
-        result = new DenseMatrixT<real>();
-    }
     result->set_shallow_data(data, this->_rows, this->_cols);
     delete extend_mat;
 
@@ -671,13 +657,13 @@ LabeledDenseMatrixT<T>::~LabeledDenseMatrixT(){
 }
 
 template<class T>
-DenseMatrixT<T>* LabeledDenseMatrixT<T>::get_data_matrix(){
-    return new DenseMatrixT<T>(this->_data, this->_rows, this->_cols);
+void LabeledDenseMatrixT<T>::get_data_matrix(DenseMatrixT<T>* out_mat){
+    return out_mat->set_shallow_data(this->_data, this->_rows, this->_cols);
 }
 
 template<class T>
-DenseColMatrixT<T>* LabeledDenseMatrixT<T>::get_labels(){
-    return new DenseColMatrixT<T>(_labels, this->_rows);
+void LabeledDenseMatrixT<T>::get_labels(DenseMatrixT<T>* out_mat){
+    return out_mat->set_shallow_data(_labels, this->_rows, 1);
 }
 
 template<class T>
@@ -696,17 +682,15 @@ void LabeledDenseMatrixT<T>::set_data(const T* data,
 }
 
 template<class T>
-LabeledDenseMatrixT<T>* LabeledDenseMatrixT<T>::get_row_data(const int row_id){
+bool LabeledDenseMatrixT<T>::get_row_data(const int row_id, LabeledDenseMatrixT<T>* row_data){
 
     int id = row_id;
     if(row_id < 0){
         id += this->_rows;
     }
 
-    LabeledDenseMatrixT<T>* row_data = new LabeledDenseMatrixT<T>();
-
     if(id < 0 || id >= this->_rows){
-        return row_data;
+        return false;
     }
 
     T* data = new T[this->_rows];
@@ -725,11 +709,13 @@ void LabeledDenseMatrixT<T>::set_row_data(LabeledDenseMatrixT<T>* mat, const int
         id += this->_rows;
     }
 
-    BaseMatrixT<T>* data_mat = mat->get_data_matrix();
+    auto data_mat = new DenseMatrixT<T>();
+    mat->get_data_matrix(data_mat);
     DenseMatrixT<T>::set_row_data(data_mat, id);
     delete data_mat;
 
-    BaseMatrixT<T>* label_mat = mat->get_labels();
+    auto label_mat = new DenseMatrixT<T>();
+    mat->get_labels(label_mat);
     T* labels = new T[mat->get_rows() + this->_rows];
     if(id > 0){
         memcpy(labels, _labels, sizeof(T) * id);
@@ -1031,7 +1017,7 @@ void LabeledDenseMatrixT<T>::clear_cache(){
 }
 
 template<class T>
-bool LabeledDenseMatrixT<T>::operator==(LabeledDenseMatrixT<T>* mat) const{
+bool LabeledDenseMatrixT<T>::operator==(LabeledDenseMatrixT<T>* mat){
     if(this->get_rows() == mat->get_rows() && this->get_cols() == mat->get_cols()){
         for(int i = 0; i < this->get_rows(); i++){
             if(this->get_label(i) == mat->get_label(i)){

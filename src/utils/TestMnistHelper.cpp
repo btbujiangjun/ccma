@@ -14,9 +14,16 @@ int main(int argc, char** argv){
 
     mat = helper.read("data/mnist/train-images-idx3-ubyte", "data/mnist/train-labels-idx1-ubyte", 10);
     for(int i =0; i < mat->get_rows(); i++){
-        int* data = mat->get_data_matrix()->get_row_data(i)->get_data();
+        auto data_mat = new ccma::algebra::DenseMatrixT<int>();
+        mat->get_data_matrix(data_mat);
+
+        auto row_mat = new ccma::algebra::DenseMatrixT<int>();
+        data_mat->get_row_data(i, row_mat);
+
+        int* data = row_mat->get_data();
         auto m = new ccma::algebra::DenseMatrixT<int>(data, 28, 28);
-        delete data;
+        delete data_mat, row_mat;
+
         m->display("");
         delete m;
         auto n = new ccma::algebra::DenseMatrixT<int>(helper.vectorize_label(mat->get_label(i), 10), 1, 10);

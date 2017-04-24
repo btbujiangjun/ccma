@@ -13,7 +13,7 @@ namespace ccma{
 namespace algebra{
 
 template<class T>
-bool BaseMatrixT<T>::add(const BaseMatrixT<T>* mat){
+bool BaseMatrixT<T>::add(BaseMatrixT<T>* mat){
     if(this->_rows != mat->get_rows() || this->_cols != mat->get_cols()){
         return false;
     }
@@ -26,7 +26,7 @@ bool BaseMatrixT<T>::add(const BaseMatrixT<T>* mat){
 }
 
 template<class T>
-bool BaseMatrixT<T>::subtract(const BaseMatrixT<T>* mat){
+bool BaseMatrixT<T>::subtract(BaseMatrixT<T>* mat){
     if( this->_rows != mat->get_rows() || this->_cols != mat->get_cols()){
         return false;
     }
@@ -65,7 +65,7 @@ bool BaseMatrixT<T>::multiply(const T value){
 }
 
 template<class T>
-bool BaseMatrixT<T>::multiply(const BaseMatrixT<T>* mat){
+bool BaseMatrixT<T>::multiply(BaseMatrixT<T>* mat){
     if(_rows != mat->get_rows() || _cols != mat->get_cols()){
         return false;
     }
