@@ -112,10 +112,12 @@ bool ClassificationAndRegressionTree::choose_best_split(ccma::algebra::LabeledDe
 
 template<class T>
 bool ClassificationAndRegressionTree::linear_regression(ccma::algebra::LabeledDenseMatrixT<T>* mat, ccma::algebra::DenseColMatrixT<real>* weights){
-    ccma::algebra::DenseMatrixT<T>* x = mat->get_data_matrix();
+    auto x = new ccma::algebra::DenseMatrixT<T>();
+    mat->get_data_matrix(x);
     x->add_x0();
 
-    ccma::algebra::DenseColMatrixT<T>* y = mat->get_labels();
+    auto y = new ccma::algebra::DenseMatrixT<T>();
+    mat->get_labels(y);
 
     ccma::algebra::DenseMatrixT<T>* xT = new ccma::algebra::DenseMatrixT<T>();
     _helper->transpose(x, xT);
@@ -144,8 +146,11 @@ template<class T>
 bool ClassificationAndRegressionTree::model_error(ccma::algebra::LabeledDenseMatrixT<T>* mat, real* error){
     ccma::algebra::DenseColMatrixT<real>* weights = new ccma::algebra::DenseColMatrixT<real>(mat->get_cols(), 1.0);
     if(linear_regression(mat, weights)){
-        ccma::algebra::DenseMatrixT<T>* x = mat->get_data_matrix();
-        ccma::algebra::DenseColMatrixT<T>* y = mat->get_labels();
+        auto x = new ccma::algebra::DenseMatrixT<T>();
+        mat->get_data_matrix(x);
+
+        auto y = new ccma::algebra::DenseMatrixT<T>();
+        mat->get_labels(y);
 
         ccma::algebra::DenseMatrixT<real>* y_predict = new ccma::algebra::DenseMatrixT<real>();
         _helper->product(x, weights, y_predict);

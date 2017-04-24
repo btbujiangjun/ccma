@@ -17,9 +17,11 @@ namespace regression{
 template<class T>
 bool LinearRegression::standard_regression(ccma::algebra::LabeledDenseMatrixT<T>* train_data, ccma::algebra::DenseColMatrixT<real>* weights){
 
-    ccma::algebra::BaseMatrixT<T>* x = train_data->clone();
+    auto x = new ccma::algebra::DenseMatrixT<T>();
+    train_data->clone(x);
 
-    ccma::algebra::BaseMatrixT<T>* y = train_data->get_labels();
+    auto y = new ccma::algebra::DenseMatrixT<T>();
+    train_data->get_labels(y);
 
     ccma::algebra::BaseMatrixT<T>* xT = new ccma::algebra::DenseMatrixT<T>();
     _helper->transpose(x, xT);
@@ -57,18 +59,23 @@ bool LinearRegression::local_weight_logistic_regression(ccma::algebra::LabeledDe
 
     real* labels = new real[predict_data->get_rows()];
 
-    ccma::algebra::DenseMatrixT<T>* x = train_data->get_data_matrix();
-    ccma::algebra::DenseMatrixT<T>* y = train_data->get_labels();
+    auto x = new ccma::algebra::DenseMatrixT<T>();
+    train_data->get_data_matrix(x);
+
+    auto y = new ccma::algebra::DenseMatrixT<T>();
+    train_data->get_labels(y);
 
     ccma::algebra::DenseMatrixT<T>* xT = new ccma::algebra::DenseMatrixT<T>();
     _helper->transpose(x, xT);
 
     for(uint i = 0 ; i < predict_data->get_rows(); i++){
         ccma::algebra::BaseMatrixT<real>* weight = new ccma::algebra::DenseEyeMatrixT<real>(train_data->get_rows());
-        ccma::algebra::DenseMatrixT<T>* predict_row_mat = predict_data->get_row_data(i);
+        auto predict_row_mat = new ccma::algebra::DenseMatrixT<T>();
+        predict_data->get_row_data(i, predict_row_mat);
 
         for(uint j = 0; j < train_data->get_rows(); j++){
-            ccma::algebra::DenseMatrixT<T>* train_row_mat = train_data->get_row_data(j);
+            auto train_row_mat = new ccma::algebra::LabeledDenseMatrixT<T>();
+            train_data->get_row_data(j, train_row_mat);
 
             ccma::algebra::DenseMatrixT<T>* diff_mat = new ccma::algebra::DenseMatrixT<T>();
             _helper->subtract(predict_row_mat, train_row_mat, diff_mat);
@@ -127,8 +134,11 @@ bool LinearRegression::ridge_regression(ccma::algebra::LabeledDenseMatrixT<T>* t
                                         const real lamda,
                                         ccma::algebra::DenseColMatrixT<real>* weights){
 
-    ccma::algebra::DenseMatrixT<T>* x = train_data->get_data_matrix();
-    ccma::algebra::DenseColMatrixT<T>* y = train_data->get_labels();
+    auto x = new ccma::algebra::DenseMatrixT<T>();
+    train_data->get_data_matrix(x);
+
+    auto y = new ccma::algebra::DenseMatrixT<T>();
+    train_data->get_labels(y);
 
     ccma::algebra::DenseMatrixT<T>* xT = new ccma::algebra::DenseMatrixT<T>();
     _helper->transpose(x, xT);

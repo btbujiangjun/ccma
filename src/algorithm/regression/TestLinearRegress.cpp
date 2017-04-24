@@ -24,7 +24,8 @@ int main(int argc, char** argv){
         delete weights;
         delete regression;
 
-        ccma::algebra::DenseMatrixT<real>* predict_mat = lmat->get_data_matrix();
+        auto predict_mat = new ccma::algebra::DenseMatrixT<real>();
+        lmat->get_data_matrix(predict_mat);
         ccma::algebra::DenseColMatrixT<real> predict_labels(1, predict_mat->get_rows());
         if(regression->local_weight_logistic_regression(lmat, predict_mat, 1, &predict_labels)){
             printf("predict_labels:\n");

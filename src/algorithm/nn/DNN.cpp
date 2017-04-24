@@ -69,17 +69,32 @@ bool DNN::sgd(ccma::algebra::BaseMatrixT<real>* train_data,
     auto mini_batch_data    = new ccma::algebra::DenseMatrixT<real>();
     auto mini_batch_label   = new ccma::algebra::DenseMatrixT<real>();
 
+
+//    int num_batch = (num_train_data % mini_batch_size == 0) ? num_train_data / mini_batch_size : (num_train_data / mini_batch_size + 1);
+
     for(int i = 0; i < epochs; i++){
 
         shuffler->shuffle();
 
+        /*
+        for(int j = 0; j < num_batch; j++){
+            int data_size = (j == (num_batch - 1)) ? (num_train_data - mini_batch_size * (num_batch - 1)) : mini_batch_size;
+            real* data = new real[data_sizei * train_data_];
+            for(int k = 0; k < data_size; k++){
+                memcpy()
+            }
+        }
+        */
+
         for(int j = 0; j < num_train_data; j++){
 
-            auto row_data = train_data->get_row_data(shuffler->get_row(j));
+            auto row_data = new ccma::algebra::DenseMatrixT<real>();
+            train_data->get_row_data(shuffler->get_row(j), row_data);
             mini_batch_data->set_row_data(row_data, j % mini_batch_size);
             delete row_data;
 
-            auto row_label = train_label->get_row_data(shuffler->get_row(j));
+            auto row_label = new ccma::algebra::DenseMatrixT<real>();
+            train_label->get_row_data(shuffler->get_row(j), row_label);
             mini_batch_label->set_row_data(row_label, j % mini_batch_size);
             delete row_label;
 
@@ -116,16 +131,23 @@ void DNN::feedforward(ccma::algebra::BaseMatrixT<real>* mat){
 
 int DNN::evaluate(ccma::algebra::BaseMatrixT<real>* test_data, ccma::algebra::BaseMatrixT<real>* test_label){
 
-    ccma::algebra::BaseMatrixT<real>* predict = test_data->clone();
+    auto predict = new ccma::algebra::DenseMatrixT<real>();
+    test_data->clone(predict);
 
     feedforward(predict);
 
     int num = 0;
     if(predict->get_rows() == test_label->get_rows() && predict->get_cols() == test_label->get_cols()){
         for(int i = 0; i < predict->get_sizes(); i++){
-            if(predict->get_row_data(i) == test_label->get_row_data(i)){
+            auto p_mat = new ccma::algebra::DenseMatrixT<real>();
+            auto t_mat = new ccma::algebra::DenseMatrixT<real>();
+            predict->get_row_data(i, p_mat);
+            test_label->get_row_data(i, t_mat);
+            if(p_mat == t_mat){
                 num++;
             }
+            delete p_mat;
+            delete t_mat;
         }
     }
 
@@ -146,8 +168,11 @@ bool DNN::mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch_data,
         std::vector<ccma::algebra::BaseMatrixT<real>*> train_weight;
         std::vector<ccma::algebra::BaseMatrixT<real>*> train_bias;
 
-        auto train_data     = mini_batch_data->get_row_data(i);
-        auto train_label    = mini_batch_label->get_row_data(i);
+        auto train_data     = new ccma::algebra::DenseMatrixT<real>();
+        mini_batch_data->get_row_data(i, train_data);
+
+        auto train_label    = new ccma::algebra::DenseMatrixT<real>();
+        mini_batch_label->get_row_data(i, train_label);
 
         back_propagation(train_data, train_label, &train_weight, &train_bias);
 
@@ -187,8 +212,12 @@ void DNN::back_propagation(ccma::algebra::BaseMatrixT<real>* train_data,
     std::vector<ccma::algebra::BaseMatrixT<real>*> zs;
     std::vector<ccma::algebra::BaseMatrixT<real>*> activations;
 
-    auto activation = train_data->clone();
-    activations.push_back(activation);
+    auto activation = new ccma::algebra::DenseMatrixT<real>();
+    train_data->clone(activation);
+
+    auto as = new ccma::algebra::DenseMatrixT<real>();
+    train_data->clone(as);
+    activations.push_back(as);
 
     //feedforward
     for(int i = 0; i < _weights.size(); i++){
@@ -196,10 +225,14 @@ void DNN::back_propagation(ccma::algebra::BaseMatrixT<real>* train_data,
             printf("Matrix Dim Error: weights[%d][%d:%d]-activation[%d:%d]\n", i, _weights[i]->get_rows(), _weights[i]->get_cols(), activation->get_rows(), activation->get_cols());
         }
         activation->add(_biases[i]);
-        zs.push_back(activation->clone());
+        auto a_clone = new ccma::algebra::DenseMatrixT<real>();
+        activation->clone(a_clone);
+        zs.push_back(a_clone);
 
         activation->sigmoid();
-        activations.push_back(activation->clone());
+        auto as_clone = new ccma::algebra::DenseMatrixT<real>();
+        activation->clone(as_clone);
+        activations.push_back(as_clone);
     }
     delete activation;
 
@@ -243,7 +276,9 @@ void DNN::sigmoid_derivative(ccma::algebra::BaseMatrixT<real>* z){
     //sigmod(z)*(1-sigmod(z))
     z->sigmoid();
 
-    ccma::algebra::BaseMatrixT<real>* mat = z->clone();
+    auto mat = new ccma::algebra::DenseMatrixT<real>();
+    z->clone(mat);
+
     mat->multiply(-1);
     mat->add(1);
     z->multiply(mat);
