@@ -55,12 +55,14 @@ void LogisticRegress::batch_grad_desc(ccma::algebra::LabeledDenseMatrixT<T>* tra
     real alpha = 0.001;
     init_weights(train_data->get_cols());
 
-    ccma::algebra::BaseMatrixT<T>* data_mat = train_data->clone();
+    auto data_mat = new ccma::algebra::DenseMatrixT<T>();
+    train_data->clone(data_mat);
 
     ccma::algebra::BaseMatrixT<T>* data_t_mat = new ccma::algebra::DenseMatrixT<T>();
     _helper->transpose(data_mat, data_t_mat);
 
-    ccma::algebra::BaseMatrixT<T>* label_mat = train_data->get_labels();
+    auto label_mat = new ccma::algebra::DenseMatrixT<T>();
+    train_data->get_labels(label_mat);
 
     for(uint i = 0; i < epoch; i++){
 
@@ -101,7 +103,8 @@ void LogisticRegress::stoc_grad_desc(ccma::algebra::LabeledDenseMatrixT<T>* trai
     uint rows = train_data->get_rows();
     for(uint i = 0; i < epoch; i++){
         for(uint j = 0; j < rows; j++){
-            ccma::algebra::BaseMatrixT<T>* row_mat = train_data->get_row_data(j);
+            auto row_mat = new ccma::algebra::LabeledDenseMatrixT<T>();
+            train_data->get_row_data(j, row_mat);
 
             ccma::algebra::BaseMatrixT<T>* dp_mat = new ccma::algebra::DenseMatrixT<T>();
             _helper->product(row_mat, _weights, dp_mat);
@@ -119,7 +122,7 @@ void LogisticRegress::stoc_grad_desc(ccma::algebra::LabeledDenseMatrixT<T>* trai
             _weights->add(h_t_mat);
 
             delete row_mat, dp_mat, sm_mat, h_mat, h_t_mat;
-            row_mat = dp_mat = sm_mat = h_mat = h_t_mat = nullptr;
+            row_mat = nullptr, dp_mat = sm_mat = h_mat = h_t_mat = nullptr;
 
 //            printf("error:[%d]\n", evaluate(train_data));
 //            _weights->display();
@@ -161,7 +164,8 @@ void LogisticRegress::smooth_stoc_grad_desc(ccma::algebra::LabeledDenseMatrixT<T
             row = rand_row_idx[m];
             rand_row_idx[m] = -1;//avoid sampling twice
 
-            ccma::algebra::BaseMatrixT<T>* row_mat = train_data->get_row_data(row);
+            auto row_mat = new ccma::algebra::LabeledDenseMatrixT<T>();
+            train_data->get_row_data(row, row_mat);
 
             ccma::algebra::BaseMatrixT<T>* dp_mat = new ccma::algebra::DenseMatrixT<T>();
             _helper->product(row_mat, _weights, dp_mat);
