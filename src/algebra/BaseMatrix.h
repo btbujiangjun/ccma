@@ -35,42 +35,42 @@ public:
     inline uint get_cols() const { return this->_cols;}
     inline uint get_sizes() const { return this->_rows * this->_cols;}
 
-    virtual BaseMatrixT<T>* clone() = 0;
+    virtual void clone(BaseMatrixT<T>* out_mat) = 0;
 
-    virtual T* get_data() const = 0;
+    virtual T* get_data() = 0;
     virtual void set_data(const T* data,
                           const uint rows,
                           const uint cols) = 0;
 
-    void set_data(const BaseMatrixT<T>* mat){set_data(mat->get_data(), mat->get_rows(), mat->get_cols());}
+    void set_data(BaseMatrixT<T>* mat){set_data(mat->get_data(), mat->get_rows(), mat->get_cols());}
 
     virtual void set_shallow_data(T* data,
                                   const uint rows,
                                   const uint cols) = 0;
 
-    virtual T get_data(int idx) const = 0;
-    virtual bool set_data(const T& value, int idx) = 0;
+    virtual T get_data(const int idx) = 0;
+    virtual bool set_data(const T& value, const int idx) = 0;
 
-    virtual T get_data(int row, int col) const = 0;
+    virtual T get_data(const int row, const int col) = 0;
     virtual bool set_data(const T& data,
-                          int row,
-                          int col) = 0;
+                          const int row,
+                          const int col) = 0;
 
-    virtual BaseMatrixT<T>* get_row_data(const int row) = 0;
+    virtual bool get_row_data(const int row, BaseMatrixT<T>* out_mat) = 0;
     virtual bool set_row_data(BaseMatrixT<T>* mat, const int row) = 0;
 
-    virtual bool extend(const BaseMatrixT<T>* mat) = 0;
+    virtual bool extend(BaseMatrixT<T>* mat) = 0;
 
-    bool add(const BaseMatrixT<T>* mat);
-    bool subtract(const BaseMatrixT<T>* mat);
+    bool add(BaseMatrixT<T>* mat);
+    bool subtract(BaseMatrixT<T>* mat);
 
-    virtual bool product(const BaseMatrixT<T>* mat) = 0;
-    virtual bool pow(T exponent) = 0;
+    virtual bool product(BaseMatrixT<T>* mat) = 0;
+    virtual bool pow(const T exponent) = 0;
 
     bool add(const T value);
     bool subtract(const T value);
     bool multiply(const T value);
-    bool multiply(const BaseMatrixT<T>* mat);
+    bool multiply(BaseMatrixT<T>* mat);
     bool division(const T value);
 
     bool sigmoid();
@@ -122,34 +122,34 @@ public:
                  const uint cols);
     ~DenseMatrixT();
 
-    DenseMatrixT<T>* clone();
+    void clone(BaseMatrixT<T>* out_mat);
     void clear_matrix();
 
-    T* get_data() const;
+    T* get_data();
     void set_data(const T* data,
                   const uint rows,
                   const uint cols);
 
-    T get_data(int idx) const;
-    bool set_data(const T& value, int idx);
+    T get_data(const int idx);
+    bool set_data(const T& value, const int idx);
 
-    T get_data(int row, int col) const;
+    T get_data(const int row, const int col);
     bool set_data(const T& data,
-                  int row,
-                  int col);
+                  const int row,
+                  const int col);
     void set_shallow_data(T* data,
                           const uint rows,
                           const uint cols);
 
 
-    DenseMatrixT<T>* get_row_data(const int row);
+    bool get_row_data(const int row, BaseMatrixT<T>* out_mat);
     bool set_row_data(BaseMatrixT<T>* mat, int row);
 
-    bool extend(const BaseMatrixT<T>* mat);
+    bool extend(BaseMatrixT<T>* mat);
 
-    bool pow(T exponent);
+    bool pow(const T exponent);
 
-    bool product(const BaseMatrixT<T>* mat);
+    bool product(BaseMatrixT<T>* mat);
 
     T sum() const;
 
@@ -184,21 +184,35 @@ public:
 protected:
     T* _data;
 
-    inline bool check_range(int idx){
-        if(idx < 0){
-            idx += this->_rows * this->_cols;
+    inline bool check_range(int* idx){
+        int mat_size = this->get_rows() * this->get_cols();
+        if(*idx >= 0 && *idx < mat_size){
+            return true;
+        }else if(*idx < 0 && *idx + mat_size >= 0){
+            *idx =+ mat_size;
+            return true;
         }
-        return idx < this->_rows * this->_cols;
+        return false;
     }
-    inline bool check_range(int row, int col){
-        if(row < 0){
-            row += this->_rows;
+    inline bool check_range(int* row, int* col){
+        int r = *row, c = *col;
+        if(r < 0){
+            r += this->get_rows();
         }
-        if(col < 0){
-            col += this->_cols;
+        if(c < 0){
+            c += this->get_cols();
         }
 
-        return row < this->_rows && col < this->_cols;
+        if(r >= 0 && r < this->get_rows() && c >= 0 && c < this->get_cols()){
+            if(*row < 0){
+                *row = r;
+            }
+            if(*col < 0){
+                *col = c;
+            }
+            return true;
+        }
+        return false;
     }
 
     inline void clear_cache(){
@@ -213,7 +227,7 @@ protected:
 private:
     T _cache_matrix_det;
     std::string* _cache_to_string = nullptr;
-};//class DenseMatrixT
+};//class tenseMatrixT
 
 
 template<class T>
@@ -307,8 +321,8 @@ private:
         typename std::unordered_map<T, uint>::const_iterator it;
         for(it = this->begin(); it != this->end(); it++){
             if(it->second > _value){
-                _value = it->second;
-                _key = it->first;
+                _value  = it->second;
+                _key    = it->first;
             }
         }
     }
@@ -332,17 +346,35 @@ public:
                         const uint cols);
     ~LabeledDenseMatrixT();
 
-    inline T get_label(uint idx) const{
-        return this->_labels[idx];
+    inline T get_label(const uint idx) const{
+        uint index = idx;
+        if(index < 0){
+            index += this->_rows;
+        }
+        if(index >= 0 && index < this->_rows){
+            return this->_labels[index];
+        }else{
+            //todo out_of_range exception.
+            return static_cast<T>(0);
+        }
     }
 
-    inline uint get_feature_name(uint idx) const{
-        return this->_feature_names[idx];
+    inline uint get_feature_name(const uint idx) const{
+        uint index = idx;
+        if(index < 0){
+            index += this->_rows;
+        }
+        if(index >= 0 && index < this->_rows){
+            return this->_feature_names[index];
+        }else{
+            //todo out_of_range exception.
+            return 0;
+        }
     }
 
-    DenseMatrixT<T>* get_data_matrix();
+    void get_data_matrix(DenseMatrixT<T>* out_mat);
 
-    DenseColMatrixT<T>* get_labels();
+    void get_labels(DenseMatrixT<T>* out_mat);
 
     void set_data(const T* data,
                   const T* labels,
@@ -355,7 +387,7 @@ public:
                   const uint rows,
                   const uint cols);
 
-    LabeledDenseMatrixT<T>* get_row_data(const int row_id);
+    bool get_row_data(const int row_id, LabeledDenseMatrixT<T>* out_mat);
     void set_row_data(LabeledDenseMatrixT<T>* mat, const int row_id);
 
     void set_shallow_data(T* data,
@@ -394,7 +426,7 @@ public:
 
     bool is_unique_label();
 
-    bool operator==(LabeledDenseMatrixT<T>* mat) const;
+    bool operator==(LabeledDenseMatrixT<T>* mat);
 
     void display(const std::string& split="\t");
 

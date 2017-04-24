@@ -18,53 +18,53 @@ namespace utils{
 class MatrixHelper{
 public:
     template<class T1, class T2, class T3>
-    bool add(const ccma::algebra::BaseMatrixT<T1>* mat1,
-             const ccma::algebra::BaseMatrixT<T2>* mat2,
+    bool add(ccma::algebra::BaseMatrixT<T1>* mat1,
+             ccma::algebra::BaseMatrixT<T2>* mat2,
              ccma::algebra::BaseMatrixT<T3>* result);
 
     template<class T1, class T2, class T3>
-    bool subtract(const ccma::algebra::BaseMatrixT<T1>* mat1,
-                  const ccma::algebra::BaseMatrixT<T2>* mat2,
+    bool subtract(ccma::algebra::BaseMatrixT<T1>* mat1,
+                  ccma::algebra::BaseMatrixT<T2>* mat2,
                   ccma::algebra::BaseMatrixT<T3>* result);
 
     template<class T1, class T2, class T3>
-    bool product(const ccma::algebra::BaseMatrixT<T1>* mat1,
-                 const ccma::algebra::BaseMatrixT<T2>* mat2,
+    bool product(ccma::algebra::BaseMatrixT<T1>* mat1,
+                 ccma::algebra::BaseMatrixT<T2>* mat2,
                  ccma::algebra::BaseMatrixT<T3>* result);
 
     template<class T>
-    bool product(const ccma::algebra::BaseMatrixT<T>* mat,
+    bool product(ccma::algebra::BaseMatrixT<T>* mat,
                  const T value,
                  ccma::algebra::BaseMatrixT<T>* result);
 
     template<class T1, class T2, class T3>
-    bool multiply(const ccma::algebra::BaseMatrixT<T1>* mat1,
-                  const ccma::algebra::BaseMatrixT<T2>* mat2,
+    bool multiply(ccma::algebra::BaseMatrixT<T1>* mat1,
+                  ccma::algebra::BaseMatrixT<T2>* mat2,
                   ccma::algebra::BaseMatrixT<T3>* result);
 
     template<class T1, class T2, class T3>
-    bool pow(const ccma::algebra::BaseMatrixT<T1>* mat,
+    bool pow(ccma::algebra::BaseMatrixT<T1>* mat,
              const T2 exponent,
              ccma::algebra::BaseMatrixT<T3>* result);
 
     template<class T1, class T2>
-    bool log(const ccma::algebra::BaseMatrixT<T1>* mat,
+    bool log(ccma::algebra::BaseMatrixT<T1>* mat,
              ccma::algebra::BaseMatrixT<T2>* result);
 
     template<class T1, class T2>
-    bool exp(const ccma::algebra::BaseMatrixT<T1>* mat,
+    bool exp(ccma::algebra::BaseMatrixT<T1>* mat,
              ccma::algebra::BaseMatrixT<T2>* result);
 
     template<class T>
-    void transpose(const ccma::algebra::BaseMatrixT<T>* mat, ccma::algebra::BaseMatrixT<T>* result);
+    void transpose(ccma::algebra::BaseMatrixT<T>* mat, ccma::algebra::BaseMatrixT<T>* result);
 
     template<class T>
-    bool signmod(const ccma::algebra::BaseMatrixT<T>* mat, ccma::algebra::BaseMatrixT<real>* result);
+    bool signmod(ccma::algebra::BaseMatrixT<T>* mat, ccma::algebra::BaseMatrixT<real>* result);
 };//class MatrixHelper
 
 template<class T1, class T2, class T3>
-bool MatrixHelper::add(const ccma::algebra::BaseMatrixT<T1>* mat1,
-                       const ccma::algebra::BaseMatrixT<T2>* mat2,
+bool MatrixHelper::add(ccma::algebra::BaseMatrixT<T1>* mat1,
+                       ccma::algebra::BaseMatrixT<T2>* mat2,
                        ccma::algebra::BaseMatrixT<T3>* result){
     if(mat1->get_rows() != mat2->get_rows() || mat1->get_cols() != mat2->get_cols()){
         return false;
@@ -84,8 +84,8 @@ bool MatrixHelper::add(const ccma::algebra::BaseMatrixT<T1>* mat1,
 }
 
 template<class T1, class T2, class T3>
-bool MatrixHelper::subtract(const ccma::algebra::BaseMatrixT<T1>* mat1,
-                            const ccma::algebra::BaseMatrixT<T2>* mat2,
+bool MatrixHelper::subtract(ccma::algebra::BaseMatrixT<T1>* mat1,
+                            ccma::algebra::BaseMatrixT<T2>* mat2,
                             ccma::algebra::BaseMatrixT<T3>* result){
     if(mat1->get_rows() != mat2->get_rows() || mat1->get_cols() != mat2->get_cols()){
         return false;
@@ -105,8 +105,8 @@ bool MatrixHelper::subtract(const ccma::algebra::BaseMatrixT<T1>* mat1,
 }
 
 template<class T1, class T2, class T3>
-bool MatrixHelper::product(const ccma::algebra::BaseMatrixT<T1>* mat1,
-                           const ccma::algebra::BaseMatrixT<T2>* mat2,
+bool MatrixHelper::product(ccma::algebra::BaseMatrixT<T1>* mat1,
+                           ccma::algebra::BaseMatrixT<T2>* mat2,
                            ccma::algebra::BaseMatrixT<T3>* result){
     if(mat1->get_cols() != mat2->get_rows()){
         printf("Product Matrix Dim ERROR:[%d-%d][%d-%d]\n", mat1->get_rows(), mat1->get_cols(), mat2->get_rows(), mat2->get_cols());
@@ -133,7 +133,7 @@ bool MatrixHelper::product(const ccma::algebra::BaseMatrixT<T1>* mat1,
 }
 
 template<class T>
-bool MatrixHelper::product(const ccma::algebra::BaseMatrixT<T>* mat,
+bool MatrixHelper::product(ccma::algebra::BaseMatrixT<T>* mat,
                            const T value,
                            ccma::algebra::BaseMatrixT<T>* result){
     T* data = new T[mat->get_rows() * mat->get_cols()];
@@ -151,8 +151,8 @@ bool MatrixHelper::product(const ccma::algebra::BaseMatrixT<T>* mat,
 }
 
 template<class T1, class T2, class T3>
-bool MatrixHelper::multiply(const ccma::algebra::BaseMatrixT<T1>* mat1,
-                            const ccma::algebra::BaseMatrixT<T2>* mat2,
+bool MatrixHelper::multiply(ccma::algebra::BaseMatrixT<T1>* mat1,
+                            ccma::algebra::BaseMatrixT<T2>* mat2,
                             ccma::algebra::BaseMatrixT<T3>* result){
     if(mat1->get_rows() != mat2->get_rows() || mat1->get_cols() != mat2->get_cols()){
         return false;
@@ -175,7 +175,7 @@ bool MatrixHelper::multiply(const ccma::algebra::BaseMatrixT<T1>* mat1,
 }
 
 template<class T1, class T2, class T3>
-bool MatrixHelper::pow(const ccma::algebra::BaseMatrixT<T1>* mat,
+bool MatrixHelper::pow(ccma::algebra::BaseMatrixT<T1>* mat,
                        const T2 exponent,
                        ccma::algebra::BaseMatrixT<T3>* result){
     T3* data = new T3[mat->get_rows() * mat->get_cols()];
@@ -193,7 +193,7 @@ bool MatrixHelper::pow(const ccma::algebra::BaseMatrixT<T1>* mat,
 }
 
 template<class T1, class T2>
-bool MatrixHelper::log(const ccma::algebra::BaseMatrixT<T1>* mat,
+bool MatrixHelper::log(ccma::algebra::BaseMatrixT<T1>* mat,
                        ccma::algebra::BaseMatrixT<T2>* result){
     T2* data = new T2[mat->get_rows() * mat->get_cols()];
     for(uint i = 0; i < mat->get_rows() * mat->get_cols(); i++){
@@ -210,7 +210,7 @@ bool MatrixHelper::log(const ccma::algebra::BaseMatrixT<T1>* mat,
 }
 
 template<class T1, class T2>
-bool MatrixHelper::exp(const ccma::algebra::BaseMatrixT<T1>* mat,
+bool MatrixHelper::exp(ccma::algebra::BaseMatrixT<T1>* mat,
                        ccma::algebra::BaseMatrixT<T2>* result){
     T2* data = new T2[mat->get_rows() * mat->get_cols()];
     for(uint i = 0; i < mat->get_rows() * mat->get_cols(); i++){
@@ -227,7 +227,7 @@ bool MatrixHelper::exp(const ccma::algebra::BaseMatrixT<T1>* mat,
 }
 
 template<class T>
-bool MatrixHelper::signmod(const ccma::algebra::BaseMatrixT<T>* mat, ccma::algebra::BaseMatrixT<real>* result){
+bool MatrixHelper::signmod(ccma::algebra::BaseMatrixT<T>* mat, ccma::algebra::BaseMatrixT<real>* result){
     real* data = new real[mat->get_rows() * mat->get_cols()];
     for(uint i = 0; i < mat->get_rows() * mat->get_cols(); i++){
         data[i] = 1.0f/(1.0f + std::exp(-mat->get_data(i)));
@@ -243,7 +243,7 @@ bool MatrixHelper::signmod(const ccma::algebra::BaseMatrixT<T>* mat, ccma::algeb
 }
 
 template<class T>
-void MatrixHelper::transpose(const ccma::algebra::BaseMatrixT<T>* mat, ccma::algebra::BaseMatrixT<T>* result){
+void MatrixHelper::transpose(ccma::algebra::BaseMatrixT<T>* mat, ccma::algebra::BaseMatrixT<T>* result){
 
     T* data = new T[mat->get_rows() * mat->get_cols()];
 
