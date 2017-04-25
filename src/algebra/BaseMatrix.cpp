@@ -15,6 +15,7 @@ namespace algebra{
 template<class T>
 bool BaseMatrixT<T>::add(BaseMatrixT<T>* mat){
     if(this->_rows != mat->get_rows() || this->_cols != mat->get_cols()){
+        printf("Add matrix dim Error:[%d-%d][%d-%d]\n", this->_rows, this->_cols, mat->get_rows(), mat->get_cols());
         return false;
     }
 
@@ -28,6 +29,7 @@ bool BaseMatrixT<T>::add(BaseMatrixT<T>* mat){
 template<class T>
 bool BaseMatrixT<T>::subtract(BaseMatrixT<T>* mat){
     if( this->_rows != mat->get_rows() || this->_cols != mat->get_cols()){
+        printf("Subtract matrix dim Error:[%d-%d][%d-%d]\n", this->_rows, this->_cols, mat->get_rows(), mat->get_cols());
         return false;
     }
 
@@ -67,6 +69,7 @@ bool BaseMatrixT<T>::multiply(const T value){
 template<class T>
 bool BaseMatrixT<T>::multiply(BaseMatrixT<T>* mat){
     if(_rows != mat->get_rows() || _cols != mat->get_cols()){
+        printf("multiply matrix dim Error:[%d-%d][%d-%d]\n", this->_rows, this->_cols, mat->get_rows(), mat->get_cols());
         return false;
     }
     for(int i = 0; i < _rows * _cols; i++){
