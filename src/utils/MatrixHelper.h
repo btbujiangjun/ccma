@@ -67,6 +67,7 @@ bool MatrixHelper::add(ccma::algebra::BaseMatrixT<T1>* mat1,
                        ccma::algebra::BaseMatrixT<T2>* mat2,
                        ccma::algebra::BaseMatrixT<T3>* result){
     if(mat1->get_rows() != mat2->get_rows() || mat1->get_cols() != mat2->get_cols()){
+        printf("MatrixHelper::add, Matrix Dim Error:[%d-%d][%d-%d]\n", mat1->get_rows(), mat1->get_cols(), mat2->get_rows(), mat2->get_cols());
         return false;
     }
 
@@ -75,9 +76,6 @@ bool MatrixHelper::add(ccma::algebra::BaseMatrixT<T1>* mat1,
         data[i] = static_cast<T3>(mat1->get_data(i)) + static_cast<T3>(mat2->get_data(i));
     }
 
-    if(result == nullptr){
-        result = new ccma::algebra::DenseMatrixT<T3>();
-    }
     result->set_shallow_data(data, mat1->get_rows(), mat1->get_cols());
 
     return true;
@@ -88,6 +86,7 @@ bool MatrixHelper::subtract(ccma::algebra::BaseMatrixT<T1>* mat1,
                             ccma::algebra::BaseMatrixT<T2>* mat2,
                             ccma::algebra::BaseMatrixT<T3>* result){
     if(mat1->get_rows() != mat2->get_rows() || mat1->get_cols() != mat2->get_cols()){
+        printf("MatrixHelper::subtract, Matrix Dim Error:[%d-%d][%d-%d]\n", mat1->get_rows(), mat1->get_cols(), mat2->get_rows(), mat2->get_cols());
         return false;
     }
 
@@ -96,9 +95,6 @@ bool MatrixHelper::subtract(ccma::algebra::BaseMatrixT<T1>* mat1,
         data[i] = static_cast<T3>(mat1->get_data(i)) - static_cast<T3>(mat2->get_data(i));
     }
 
-    if(result == nullptr){
-        result = new ccma::algebra::DenseMatrixT<T3>();
-    }
     result->set_shallow_data(data, mat1->get_rows(), mat1->get_cols());
 
     return true;
@@ -109,7 +105,7 @@ bool MatrixHelper::product(ccma::algebra::BaseMatrixT<T1>* mat1,
                            ccma::algebra::BaseMatrixT<T2>* mat2,
                            ccma::algebra::BaseMatrixT<T3>* result){
     if(mat1->get_cols() != mat2->get_rows()){
-        printf("Product Matrix Dim ERROR:[%d-%d][%d-%d]\n", mat1->get_rows(), mat1->get_cols(), mat2->get_rows(), mat2->get_cols());
+        printf("MatrixHelper::product, Matrix Dim ERROR:[%d-%d][%d-%d]\n", mat1->get_rows(), mat1->get_cols(), mat2->get_rows(), mat2->get_cols());
         return false;
     }
 
@@ -124,9 +120,6 @@ bool MatrixHelper::product(ccma::algebra::BaseMatrixT<T1>* mat1,
         }
     }
 
-    if(result == nullptr){
-        result = new ccma::algebra::DenseMatrixT<T3>();
-    }
     result->set_shallow_data(data, mat1->get_rows(), mat2->get_cols());
 
     return true;
@@ -140,11 +133,6 @@ bool MatrixHelper::product(ccma::algebra::BaseMatrixT<T>* mat,
     for(uint i = 0; i < mat->get_rows() * mat->get_cols(); i++){
         data[i] = mat->get_data(i) * value;
     }
-
-    if(result == nullptr){
-        result = new ccma::algebra::DenseMatrixT<T>();
-    }
-
     result->set_shallow_data(data, mat->get_rows(), mat->get_cols());
 
     return true;
@@ -155,6 +143,7 @@ bool MatrixHelper::multiply(ccma::algebra::BaseMatrixT<T1>* mat1,
                             ccma::algebra::BaseMatrixT<T2>* mat2,
                             ccma::algebra::BaseMatrixT<T3>* result){
     if(mat1->get_rows() != mat2->get_rows() || mat1->get_cols() != mat2->get_cols()){
+        printf("MatrixHelper::multiply, Matrix Dim ERROR:[%d-%d][%d-%d]\n", mat1->get_rows(), mat1->get_cols(), mat2->get_rows(), mat2->get_cols());
         return false;
     }
 
@@ -163,10 +152,6 @@ bool MatrixHelper::multiply(ccma::algebra::BaseMatrixT<T1>* mat1,
 
     for(uint i = 0; i < size; i++){
         data[i] = static_cast<T3>(mat1->get_data(i) * mat2->get_data(i));
-    }
-
-    if(!result){
-        result = new ccma::algebra::DenseMatrixT<T3>();
     }
 
     result->set_shallow_data(data, mat1->get_rows(), mat1->get_cols());
@@ -183,10 +168,6 @@ bool MatrixHelper::pow(ccma::algebra::BaseMatrixT<T1>* mat,
         data[i] = static_cast<T3>(std::pow(mat->get_data(i), exponent));
     }
 
-    if(result == nullptr){
-        result = new ccma::algebra::DenseMatrixT<T3>();
-    }
-
     result->set_shallow_data(data, mat->get_rows(), mat->get_cols());
 
     return true;
@@ -198,10 +179,6 @@ bool MatrixHelper::log(ccma::algebra::BaseMatrixT<T1>* mat,
     T2* data = new T2[mat->get_rows() * mat->get_cols()];
     for(uint i = 0; i < mat->get_rows() * mat->get_cols(); i++){
         data[i] = static_cast<T2>(std::log(mat->get_data(i)));
-    }
-
-    if(result == nullptr){
-        result = new ccma::algebra::DenseMatrixT<T2>();
     }
 
     result->set_shallow_data(data, mat->get_rows(), mat->get_cols());
@@ -217,10 +194,6 @@ bool MatrixHelper::exp(ccma::algebra::BaseMatrixT<T1>* mat,
         data[i] = static_cast<T2>(std::exp(mat->get_data(i)));
     }
 
-    if(result == nullptr){
-        result = new ccma::algebra::DenseMatrixT<T2>();
-    }
-
     result->set_shallow_data(data, mat->get_rows(), mat->get_cols());
 
     return true;
@@ -231,10 +204,6 @@ bool MatrixHelper::signmod(ccma::algebra::BaseMatrixT<T>* mat, ccma::algebra::Ba
     real* data = new real[mat->get_rows() * mat->get_cols()];
     for(uint i = 0; i < mat->get_rows() * mat->get_cols(); i++){
         data[i] = 1.0f/(1.0f + std::exp(-mat->get_data(i)));
-    }
-
-    if(result == nullptr){
-        result = new ccma::algebra::DenseMatrixT<real>();
     }
 
     result->set_shallow_data(data, mat->get_rows(), mat->get_cols());
@@ -251,10 +220,6 @@ void MatrixHelper::transpose(ccma::algebra::BaseMatrixT<T>* mat, ccma::algebra::
         for(int j = 0; j < mat->get_rows(); j++){
             data[i * mat->get_rows() + j] = mat->get_data(j, i);
         }
-    }
-
-    if(result == nullptr){
-        result = new ccma::algebra::DenseMatrixT<T>();
     }
     result->set_shallow_data(data, mat->get_cols(), mat->get_rows());
 }
