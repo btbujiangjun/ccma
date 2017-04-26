@@ -31,6 +31,7 @@ int main(int argc, char** argv){
             printf("predict_labels:\n");
             predict_labels.display();
         }
+        predict_mat->display();
         delete predict_mat;
     }
     delete fo;

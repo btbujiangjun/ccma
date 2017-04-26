@@ -31,10 +31,13 @@ void DNN::init_networks_weights(){
 
     int len = _weights.size();
     for(int i = 0; i < len; i++){
-        for(int j = 0; j < _weights[i]->get_sizes(); j++){
+        uint size = _weights[i]->get_size();
+        for(int j = 0; j < size; j++){
             _weights[i]->set_data(distribution(engine), j);
         }
-        for(int j = 0; j < _biases[i]->get_sizes(); j++){
+
+        size = _biases[i]->get_size();
+        for(int j = 0; j < size; j++){
             _biases[i]->set_data(distribution(engine), j);
         }
 
@@ -69,21 +72,20 @@ bool DNN::sgd(ccma::algebra::BaseMatrixT<real>* train_data,
     auto mini_batch_data    = new ccma::algebra::DenseMatrixT<real>();
     auto mini_batch_label   = new ccma::algebra::DenseMatrixT<real>();
 
+    auto row_data = new ccma::algebra::DenseMatrixT<real>();
+    auto row_label = new ccma::algebra::DenseMatrixT<real>();
+
     for(int i = 0; i < epochs; i++){
 
         shuffler->shuffle();
 
         for(int j = 0; j < num_train_data; j++){
 
-            auto row_data = new ccma::algebra::DenseMatrixT<real>();
             train_data->get_row_data(shuffler->get_row(j), row_data);
             mini_batch_data->set_row_data(row_data, j % mini_batch_size);
-            delete row_data;
 
-            auto row_label = new ccma::algebra::DenseMatrixT<real>();
             train_label->get_row_data(shuffler->get_row(j), row_label);
             mini_batch_label->set_row_data(row_label, j % mini_batch_size);
-            delete row_label;
 
             if(mini_batch_data->get_rows() == mini_batch_size || j == (num_train_data - 1) ){
                 mini_batch_update(mini_batch_data, mini_batch_label, eta);
@@ -99,6 +101,9 @@ bool DNN::sgd(ccma::algebra::BaseMatrixT<real>* train_data,
         }
 
     }
+
+    delete row_data;
+    delete row_label;
 
     delete mini_batch_data;
     delete mini_batch_label;
@@ -119,27 +124,31 @@ void DNN::feedforward(ccma::algebra::BaseMatrixT<real>* mat){
 
 int DNN::evaluate(ccma::algebra::BaseMatrixT<real>* test_data, ccma::algebra::BaseMatrixT<real>* test_label){
 
-    int num = 0;
+    int num             = 0;
     auto predict_mat    = new ccma::algebra::DenseMatrixT<real>();
-    auto label_mat      = new ccma::algebra::DenseMatrixT<real>();
     int num_test        = test_data->get_rows();
 
     for(int i = 0; i < num_test; i++){
-        test_data->get_row_data(i, predict_mat);
-        test_label->get_row_data(i, label_mat);
-        feedforward(predict_mat);
-        printf("predict:\t");
-        predict_mat->display();
-        printf("labled:\t");
-        label_mat->display();
 
-        if(predict_mat == label_mat){
+        test_data->get_row_data(i, predict_mat);
+        feedforward(predict_mat);
+
+        real max_value = 0;
+        int max_index = 0;
+
+        uint size = predict_mat->get_cols();
+        for(int j = 0; j < size; j++){
+            if(predict_mat->get_data(j) > max_value){
+                max_index = j;
+            }
+        }
+
+        if(max_index == test_label->get_data(i, 0)){
             num++;
         }
     }
 
     delete predict_mat;
-    delete label_mat;
 
     return num;
 }
@@ -151,24 +160,24 @@ bool DNN::mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch_data,
     std::vector<ccma::algebra::BaseMatrixT<real>*> batch_biases;
     init_parameter(&batch_weights, 0.0, &batch_biases, 0.0);
 
-    for(int i = 0; i < mini_batch_data->get_rows(); i++){
+    uint row = mini_batch_data->get_rows();
+    uint weight_size = _weights.size();
 
-        std::vector<ccma::algebra::BaseMatrixT<real>*> train_weight;
-        std::vector<ccma::algebra::BaseMatrixT<real>*> train_bias;
+    auto train_data     = new ccma::algebra::DenseMatrixT<real>();
+    auto train_label    = new ccma::algebra::DenseMatrixT<real>();
 
-        auto train_data     = new ccma::algebra::DenseMatrixT<real>();
+    std::vector<ccma::algebra::BaseMatrixT<real>*> train_weight;
+    std::vector<ccma::algebra::BaseMatrixT<real>*> train_bias;
+
+    for(int i = 0; i < row; i++){
+
         mini_batch_data->get_row_data(i, train_data);
-
-        auto train_label    = new ccma::algebra::DenseMatrixT<real>();
         mini_batch_label->get_row_data(i, train_label);
 
         back_propagation(train_data, train_label, &train_weight, &train_bias);
 
-        delete train_data;
-        delete train_label;
-
         //sum weights & biases
-        for(int i = 0; i < _weights.size(); i++){
+        for(int i = 0; i < weight_size; i++){
             batch_weights[i]->add(train_weight[i]);
             batch_biases[i]->add(train_bias[i]);
         }
@@ -178,8 +187,11 @@ bool DNN::mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch_data,
         clear_parameter(&train_bias);
     }
 
+    delete train_data;
+    delete train_label;
+
     //batch update with average grad
-    for(int i = 0; i < _weights.size(); i++){
+    for(int i = 0; i < weight_size; i++){
         batch_weights[i]->multiply(eta);
         batch_weights[i]->division(mini_batch_data->get_rows());
         _weights[i]->subtract(batch_weights[i]);
