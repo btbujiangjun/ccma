@@ -31,9 +31,9 @@ public:
 
     virtual ~BaseMatrixT() = default;
 
-    inline uint get_rows() const { return this->_rows;}
-    inline uint get_cols() const { return this->_cols;}
-    inline uint get_sizes() const { return this->_rows * this->_cols;}
+    inline uint get_rows() const { return _rows;}
+    inline uint get_cols() const { return _cols;}
+    inline uint get_size() const { return _rows * _cols;}
 
     virtual void clone(BaseMatrixT<T>* out_mat) = 0;
 
@@ -125,18 +125,55 @@ public:
     void clone(BaseMatrixT<T>* out_mat);
     void clear_matrix();
 
-    T* get_data();
+    inline T* get_data(){
+        return _data;
+    }
+
     void set_data(const T* data,
                   const uint rows,
                   const uint cols);
 
-    T get_data(const int idx);
-    bool set_data(const T& value, const int idx);
+    inline T get_data(const int idx){
+        int index = idx;
+        if(check_range(&index)){
+            return _data[index];
+        }
+        //todo out_of_range exception
+        return _data[idx];
+    }
+    inline bool set_data(const T& value, const int idx){
+        int index = idx;
+        if(check_range(&index)){
+            _data[index] = value;
+            clear_cache();
+            return true;
+        }
+        return false;
+    }
 
-    T get_data(const int row, const int col);
-    bool set_data(const T& data,
-                  const int row,
-                  const int col);
+    inline T get_data(const int row, const int col){
+        int r = row, c = col;
+        if(check_range(&r, &c)){
+            return _data[r * this->_cols + c];
+        }else{
+            //todo out_of_range exception
+            return _data[row * this->_cols + col];
+        }
+    }
+
+    inline bool set_data(const T& value,
+                         const int row,
+                         const int col){
+        int r = row, c = col;
+        if(check_range(&r, &c)){
+            _data[r * this->_cols + c] = value;
+            clear_cache();
+
+            return true;
+        }
+        return false;
+    }
+
     void set_shallow_data(T* data,
                           const uint rows,
                           const uint cols);

@@ -66,17 +66,24 @@ template<class T1, class T2, class T3>
 bool MatrixHelper::add(ccma::algebra::BaseMatrixT<T1>* mat1,
                        ccma::algebra::BaseMatrixT<T2>* mat2,
                        ccma::algebra::BaseMatrixT<T3>* result){
-    if(mat1->get_rows() != mat2->get_rows() || mat1->get_cols() != mat2->get_cols()){
-        printf("MatrixHelper::add, Matrix Dim Error:[%d-%d][%d-%d]\n", mat1->get_rows(), mat1->get_cols(), mat2->get_rows(), mat2->get_cols());
+
+    uint row1 = mat1->get_rows();
+    uint col1 = mat1->get_cols();
+    uint row2 = mat2->get_rows();
+    uint col2 = mat2->get_cols();
+
+    if(row1 != row2 || col1 != col2){
+        printf("MatrixHelper::add, Matrix Dim Error:[%d-%d][%d-%d]\n", row1, col1, row2, col2);
         return false;
     }
 
-    T3* data = new T3[mat1->get_rows() * mat1->get_cols()];
-    for(uint i = 0; i < mat1->get_rows() * mat1->get_cols(); i++){
+    uint size = row1 * col1;
+    T3* data = new T3[size];
+    for(uint i = 0; i < size; i++){
         data[i] = static_cast<T3>(mat1->get_data(i)) + static_cast<T3>(mat2->get_data(i));
     }
 
-    result->set_shallow_data(data, mat1->get_rows(), mat1->get_cols());
+    result->set_shallow_data(data, row1, col1);
 
     return true;
 }
@@ -85,17 +92,24 @@ template<class T1, class T2, class T3>
 bool MatrixHelper::subtract(ccma::algebra::BaseMatrixT<T1>* mat1,
                             ccma::algebra::BaseMatrixT<T2>* mat2,
                             ccma::algebra::BaseMatrixT<T3>* result){
-    if(mat1->get_rows() != mat2->get_rows() || mat1->get_cols() != mat2->get_cols()){
-        printf("MatrixHelper::subtract, Matrix Dim Error:[%d-%d][%d-%d]\n", mat1->get_rows(), mat1->get_cols(), mat2->get_rows(), mat2->get_cols());
+
+    uint row1 = mat1->get_rows();
+    uint col1 = mat1->get_cols();
+    uint row2 = mat2->get_rows();
+    uint col2 = mat2->get_cols();
+
+    if(row1 != row2 || col1 != col2){
+        printf("MatrixHelper::subtract, Matrix Dim Error:[%d-%d][%d-%d]\n", row1, col1, row2, col2);
         return false;
     }
 
-    T3* data = new T3[mat1->get_rows() * mat1->get_cols()];
-    for(uint i = 0; i < mat1->get_rows() * mat1->get_cols(); i++){
+    uint size = row1 * col1;
+    T3* data = new T3[size];
+    for(uint i = 0; i < size; i++){
         data[i] = static_cast<T3>(mat1->get_data(i)) - static_cast<T3>(mat2->get_data(i));
     }
 
-    result->set_shallow_data(data, mat1->get_rows(), mat1->get_cols());
+    result->set_shallow_data(data, row1, col1);
 
     return true;
 }
@@ -104,23 +118,29 @@ template<class T1, class T2, class T3>
 bool MatrixHelper::product(ccma::algebra::BaseMatrixT<T1>* mat1,
                            ccma::algebra::BaseMatrixT<T2>* mat2,
                            ccma::algebra::BaseMatrixT<T3>* result){
-    if(mat1->get_cols() != mat2->get_rows()){
-        printf("MatrixHelper::product, Matrix Dim ERROR:[%d-%d][%d-%d]\n", mat1->get_rows(), mat1->get_cols(), mat2->get_rows(), mat2->get_cols());
+
+    uint row1 = mat1->get_rows();
+    uint col1 = mat1->get_cols();
+    uint row2 = mat2->get_rows();
+    uint col2 = mat2->get_cols();
+
+    if(col1 != row2){
+        printf("MatrixHelper::product, Matrix Dim ERROR:[%d-%d][%d-%d]\n", row1, col1, row2, col2);
         return false;
     }
 
-    T3* data = new T3[mat1->get_rows() * mat2->get_cols()];
-    for(int i = 0; i < mat1->get_rows(); i++){
-        for(int j = 0; j < mat2->get_cols(); j++){
+    T3* data = new T3[row1 * col2];
+    for(int i = 0; i < row1; i++){
+        for(int j = 0; j < col2; j++){
             T3 value = static_cast<T3>(0);
-            for(int k = 0; k < mat1->get_cols(); k++){
+            for(int k = 0; k < col1; k++){
                 value += static_cast<T3>(mat1->get_data(i, k) * mat2->get_data(k, j));
             }
-            data[i * mat2->get_cols() + j] = value;
+            data[i * col2 + j] = value;
         }
     }
 
-    result->set_shallow_data(data, mat1->get_rows(), mat2->get_cols());
+    result->set_shallow_data(data, row1, col2);
 
     return true;
 }
@@ -129,8 +149,9 @@ template<class T>
 bool MatrixHelper::product(ccma::algebra::BaseMatrixT<T>* mat,
                            const T value,
                            ccma::algebra::BaseMatrixT<T>* result){
-    T* data = new T[mat->get_rows() * mat->get_cols()];
-    for(uint i = 0; i < mat->get_rows() * mat->get_cols(); i++){
+    int size = mat->get_rows() * mat->get_cols();
+    T* data = new T[size];
+    for(uint i = 0; i < size; i++){
         data[i] = mat->get_data(i) * value;
     }
     result->set_shallow_data(data, mat->get_rows(), mat->get_cols());
@@ -142,19 +163,25 @@ template<class T1, class T2, class T3>
 bool MatrixHelper::multiply(ccma::algebra::BaseMatrixT<T1>* mat1,
                             ccma::algebra::BaseMatrixT<T2>* mat2,
                             ccma::algebra::BaseMatrixT<T3>* result){
-    if(mat1->get_rows() != mat2->get_rows() || mat1->get_cols() != mat2->get_cols()){
-        printf("MatrixHelper::multiply, Matrix Dim ERROR:[%d-%d][%d-%d]\n", mat1->get_rows(), mat1->get_cols(), mat2->get_rows(), mat2->get_cols());
+
+    uint row1 = mat1->get_rows();
+    uint col1 = mat1->get_cols();
+    uint row2 = mat2->get_rows();
+    uint col2 = mat2->get_cols();
+
+    if(row1 != row2 || col1 != col2){
+        printf("MatrixHelper::multiply, Matrix Dim ERROR:[%d-%d][%d-%d]\n", row1, col1, row2, col2);
         return false;
     }
 
-    int size = mat1->get_rows() * mat1->get_cols();
+    int size = row1 * col1;
     T3* data = new T3[size];
 
     for(uint i = 0; i < size; i++){
         data[i] = static_cast<T3>(mat1->get_data(i) * mat2->get_data(i));
     }
 
-    result->set_shallow_data(data, mat1->get_rows(), mat1->get_cols());
+    result->set_shallow_data(data, row1, col1);
 
     return true;
 }
@@ -163,8 +190,9 @@ template<class T1, class T2, class T3>
 bool MatrixHelper::pow(ccma::algebra::BaseMatrixT<T1>* mat,
                        const T2 exponent,
                        ccma::algebra::BaseMatrixT<T3>* result){
-    T3* data = new T3[mat->get_rows() * mat->get_cols()];
-    for(uint i = 0; i < mat->get_rows() * mat->get_cols(); i++){
+    uint size = mat->get_rows() * mat->get_cols();
+    T3* data = new T3[size];
+    for(uint i = 0; i < size; i++){
         data[i] = static_cast<T3>(std::pow(mat->get_data(i), exponent));
     }
 
@@ -176,8 +204,9 @@ bool MatrixHelper::pow(ccma::algebra::BaseMatrixT<T1>* mat,
 template<class T1, class T2>
 bool MatrixHelper::log(ccma::algebra::BaseMatrixT<T1>* mat,
                        ccma::algebra::BaseMatrixT<T2>* result){
-    T2* data = new T2[mat->get_rows() * mat->get_cols()];
-    for(uint i = 0; i < mat->get_rows() * mat->get_cols(); i++){
+    uint size = mat->get_rows() * mat->get_cols();
+    T2* data = new T2[size];
+    for(uint i = 0; i < size; i++){
         data[i] = static_cast<T2>(std::log(mat->get_data(i)));
     }
 
@@ -189,8 +218,9 @@ bool MatrixHelper::log(ccma::algebra::BaseMatrixT<T1>* mat,
 template<class T1, class T2>
 bool MatrixHelper::exp(ccma::algebra::BaseMatrixT<T1>* mat,
                        ccma::algebra::BaseMatrixT<T2>* result){
-    T2* data = new T2[mat->get_rows() * mat->get_cols()];
-    for(uint i = 0; i < mat->get_rows() * mat->get_cols(); i++){
+    uint size = mat->get_rows() * mat->get_cols();
+    T2* data = new T2[size];
+    for(uint i = 0; i < size; i++){
         data[i] = static_cast<T2>(std::exp(mat->get_data(i)));
     }
 
@@ -201,8 +231,9 @@ bool MatrixHelper::exp(ccma::algebra::BaseMatrixT<T1>* mat,
 
 template<class T>
 bool MatrixHelper::signmod(ccma::algebra::BaseMatrixT<T>* mat, ccma::algebra::BaseMatrixT<real>* result){
-    real* data = new real[mat->get_rows() * mat->get_cols()];
-    for(uint i = 0; i < mat->get_rows() * mat->get_cols(); i++){
+    uint size = mat->get_rows() * mat->get_cols();
+    real* data = new real[size];
+    for(uint i = 0; i < size; i++){
         data[i] = 1.0f/(1.0f + std::exp(-mat->get_data(i)));
     }
 
@@ -214,14 +245,17 @@ bool MatrixHelper::signmod(ccma::algebra::BaseMatrixT<T>* mat, ccma::algebra::Ba
 template<class T>
 void MatrixHelper::transpose(ccma::algebra::BaseMatrixT<T>* mat, ccma::algebra::BaseMatrixT<T>* result){
 
-    T* data = new T[mat->get_rows() * mat->get_cols()];
+    uint row    = mat->get_rows();
+    uint col    = mat->get_cols();
+    uint size   = row * col;
+    T* data     = new T[size];
 
-    for(int i = 0; i < mat->get_cols(); i++){
-        for(int j = 0; j < mat->get_rows(); j++){
-            data[i * mat->get_rows() + j] = mat->get_data(j, i);
+    for(int i = 0; i < col; i++){
+        for(int j = 0; j < row; j++){
+            data[i * row + j] = mat->get_data(j, i);
         }
     }
-    result->set_shallow_data(data, mat->get_cols(), mat->get_rows());
+    result->set_shallow_data(data, col, row);
 }
 
 }//namespace utils

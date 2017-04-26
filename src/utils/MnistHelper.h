@@ -26,20 +26,26 @@ public:
                                                 const int limit = -1,
                                                 const uint threshold = 30);
 
-    inline T* vectorize_label(const uint data, const uint sizes);
+    bool read_image(const std::string& image_file,
+                    ccma::algebra::BaseMatrixT<T>* out_mat,
+                    const int limit = -1,
+                    const uint threshold = 30);
 
-    ccma::algebra::BaseMatrixT<T>* read_image(const std::string& image_file,
-                                        const int limit = -1,
-                                        const uint threshold = 30);
+    bool read_label(const std::string& label_file,
+                    ccma::algebra::BaseMatrixT<T>* out_mat,
+                    const int limit = -1);
 
-    ccma::algebra::BaseMatrixT<T>* read_label(const std::string& label_file,
-                                              const int limit = -1,
-                                              const uint vec_size = 10);
+    bool read_vec_label(const std::string& label_file,
+                        ccma::algebra::BaseMatrixT<T>* out_mat,
+                        const int limit = -1,
+                        const uint vec_size = 10);
+
 private:
     inline std::unique_ptr<char[]> read_mnist_file(const std::string& path,
                                                    uint key,
                                                    uint* out_rows);
     inline uint read_header(const std::unique_ptr<char[]>& buffer, size_t position);
+    inline T* vectorize_label(const uint data, const uint sizes);
 
 };//class MnistHelper
 
@@ -95,15 +101,16 @@ ccma::algebra::LabeledDenseMatrixT<T>* MnistHelper<T>::read(const std::string& i
 }
 
 template<class T>
-ccma::algebra::BaseMatrixT<T>* MnistHelper<T>::read_image(const std::string& image_file,
-                                                          const int limit,
-                                                          const uint threshold){
-    auto mat = new ccma::algebra::DenseMatrixT<T>();
+bool MnistHelper<T>::read_image(const std::string& image_file,
+                                ccma::algebra::BaseMatrixT<T>* out_mat,
+                                const int limit,
+                                const uint threshold){
+
     uint count = 0;
     auto image_buffer = read_mnist_file(image_file, 0x803, &count);
 
     if(!image_buffer || count == 0){
-        return mat;
+        return false;
     }
 
     if( limit > 0 && limit < count){
@@ -116,25 +123,57 @@ ccma::algebra::BaseMatrixT<T>* MnistHelper<T>::read_image(const std::string& ima
 
     auto image_data_buffer = reinterpret_cast<unsigned char*>(image_buffer.get() + 16);
 
-    T* data = new T[count * rows * cols];
-    for(size_t i = 0; i < count * rows * cols; i++){
+    uint size = count * rows * cols;
+    T* data = new T[size];
+    for(size_t i = 0; i < size; i++){
         data[i] = static_cast<T>((*image_data_buffer++ >= threshold) ? 1 : 0);
     }
 
-    mat->set_shallow_data(data, count, rows * cols);
+    out_mat->set_shallow_data(data, count, rows * cols);
 
-    return mat;
+    return true;
 }
 
 template<class T>
-ccma::algebra::BaseMatrixT<T>* MnistHelper<T>::read_label(const std::string& label_file,
-                                                          const int limit,
-                                                          const uint vec_size){
-    auto mat = new ccma::algebra::DenseMatrixT<T>();
+bool MnistHelper<T>::read_label(const std::string& label_file,
+                                ccma::algebra::BaseMatrixT<T>* out_mat,
+                                const int limit){
     uint count = 0;
     auto label_buffer = read_mnist_file(label_file, 0x801, &count);
     if(!label_buffer || count == 0){
-        return mat;
+        return false;
+    }
+
+    if( limit > 0 && limit < count){
+        count = limit;
+    }
+
+    //read label data
+    auto label_data_buffer = reinterpret_cast<unsigned char*>(label_buffer.get() + 8);
+
+    T* labels = new T[count];
+    memset(labels, 0, sizeof(T) * count);
+
+    for(size_t i = 0; i < count; i++){
+        auto label = *label_data_buffer++;
+        labels[i] = static_cast<T>(label);
+    }
+
+    out_mat->set_shallow_data(labels, count, 1);
+
+    return true;
+}
+
+
+template<class T>
+bool MnistHelper<T>::read_vec_label(const std::string& label_file,
+                                ccma::algebra::BaseMatrixT<T>* out_mat,
+                                const int limit,
+                                const uint vec_size){
+    uint count = 0;
+    auto label_buffer = read_mnist_file(label_file, 0x801, &count);
+    if(!label_buffer || count == 0){
+        return false;
     }
 
     if( limit > 0 && limit < count){
@@ -152,11 +191,10 @@ ccma::algebra::BaseMatrixT<T>* MnistHelper<T>::read_label(const std::string& lab
         labels[i * vec_size + label] = 1;
     }
 
-    mat->set_shallow_data(labels, count, vec_size);
+    out_mat->set_shallow_data(labels, count, vec_size);
 
-    return mat;
+    return true;
 }
-
 template<class T>
 inline std::unique_ptr<char[]> MnistHelper<T>::read_mnist_file(const std::string& path,
                                                             uint key,
@@ -183,7 +221,7 @@ inline std::unique_ptr<char[]> MnistHelper<T>::read_mnist_file(const std::string
     auto magic_num = read_header(buffer, 0);
 
     if(magic_num != key){
-        std::cout << "Invalid magic number, probably not  a MNIST file" << std::endl;
+        std::cout << "Invalid magic number, probably not a MNIST file" << std::endl;
         return {};
     }
 
