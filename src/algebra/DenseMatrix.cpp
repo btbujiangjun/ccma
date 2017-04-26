@@ -64,10 +64,6 @@ void DenseMatrixT<T>::clear_matrix(){
 }
 
 template<class T>
-T* DenseMatrixT<T>::get_data(){
-    return _data;
-}
-template<class T>
 void DenseMatrixT<T>::set_data(const T* data,
                                const uint rows,
                                const uint cols){
@@ -104,51 +100,6 @@ void DenseMatrixT<T>::set_shallow_data(T* data,
 
 
 template<class T>
-T DenseMatrixT<T>::get_data(const int idx){
-    int index = idx;
-    if(check_range(&index)){
-        return _data[index];
-    }
-    //todo out_of_range exception
-    return _data[idx];
-}
-template<class T>
-bool DenseMatrixT<T>::set_data(const T& value, const int idx){
-    int index = idx;
-    if(check_range(&index)){
-        _data[index] = value;
-        clear_cache();
-        return true;
-    }
-    return false;
-}
-
-template<class T>
-T DenseMatrixT<T>::get_data(const int row, const int col){
-    int r = row, c = col;
-    if(check_range(&r, &c)){
-        return _data[r * this->_cols + c];
-    }else{
-        //todo out_of_range exception
-        return _data[row * this->_cols + col];
-    }
-}
-
-template<class T>
-bool DenseMatrixT<T>::set_data(const T& value,
-                               const int row,
-                               const int col){
-    int r = row, c = col;
-    if(check_range(&r, &c)){
-        _data[r * this->_cols + c] = value;
-        clear_cache();
-
-        return true;
-    }
-    return false;
-}
-
-template<class T>
 bool DenseMatrixT<T>::get_row_data(const int row, BaseMatrixT<T>* out_mat){
     int r = row, c = 0;
     if(check_range(&r, &c)){
@@ -161,8 +112,8 @@ bool DenseMatrixT<T>::get_row_data(const int row, BaseMatrixT<T>* out_mat){
 }
 
 template<class T>
-bool DenseMatrixT<T>::set_row_data(BaseMatrixT<T>* mat, const int row){
-    int r = row;
+bool DenseMatrixT<T>::set_row_data(BaseMatrixT<T>* mat, const int row_id){
+    int r = row_id;
     if(this->_rows > 0 && this->_cols != mat->get_cols()){
         return false;
     }
@@ -184,10 +135,10 @@ bool DenseMatrixT<T>::set_row_data(BaseMatrixT<T>* mat, const int row){
 
     T* data = new T[(this->_rows + mat->get_rows()) * this->_cols];
     if(r > 0){
-        memcpy(data, _data, sizeof(T) * this->_cols * row);
+        memcpy(data, _data, sizeof(T) * this->_cols * r);
     }
     memcpy(&data[r * this->_cols], mat->get_data(), sizeof(T) * mat->get_rows() * mat->get_cols());
-    if(row < this->_rows){
+    if(r < this->_rows){
         memcpy(&data[(r + mat->get_rows()) * this->_cols], &_data[this->_cols * r], sizeof(T) * (this->_rows - r) * this->_cols);
     }
 
@@ -207,17 +158,20 @@ bool DenseMatrixT<T>::set_row_data(BaseMatrixT<T>* mat, const int row){
 
 template<class T>
 bool DenseMatrixT<T>::extend(BaseMatrixT<T>* mat){
-    if(this->_rows != mat->get_rows()){
+    uint row = mat->get_rows();
+    uint col = mat->get_cols();
+
+    if(this->_rows != row){
         return false;
     }
 
-    T* data = new T[this->_rows * (this->_cols + mat->get_cols())];
+    T* data = new T[this->_rows * (this->_cols + col)];
     for(int i = 0; i < this->_rows; i++){
-        memcpy(&data[i * (this->_cols + mat->get_cols())], &_data[i * this->_cols], sizeof(T) * this->_cols);
-        memcpy(&data[(i+1) * (this->_cols + mat->get_cols()) - this->_cols], &mat->get_data()[i*mat->get_cols()], sizeof(T) * mat->get_cols());
+        memcpy(&data[i * (this->_cols + col)], &_data[i * this->_cols], sizeof(T) * this->_cols);
+        memcpy(&data[(i+1) * (this->_cols + col) - this->_cols], &mat->get_data()[i * col], sizeof(T) * col);
     }
 
-    set_shallow_data(data, this->_rows, (this->_cols + mat->get_cols()));
+    set_shallow_data(data, this->_rows, (this->_cols + col));
 }
 
 
@@ -226,31 +180,35 @@ bool DenseMatrixT<T>::extend(BaseMatrixT<T>* mat){
  */
 template<class T>
 bool DenseMatrixT<T>::product(BaseMatrixT<T>* mat){
-    if(this->_cols != mat->get_rows()){
-        printf("Product Matrix Dim Error[%d:%d][%d:%d]\n", this->_rows, this->_cols, mat->get_rows(), mat->get_cols());
+    uint row = mat->get_rows();
+    uint col = mat->get_cols();
+
+    if(this->_cols != row){
+        printf("Product Matrix Dim Error[%d:%d][%d:%d]\n", this->_rows, this->_cols, row, col);
         return false;
     }
 
-    T* data = new T[this->_rows * mat->get_cols()];
+    T* data = new T[this->_rows * col];
     uint row_cursor = 0;
     for(int i = 0; i < this->_rows; i++){
-        for(int j = 0; j < mat->get_cols(); j++){
+        for(int j = 0; j < col; j++){
             T value = static_cast<T>(0);
             for(int k = 0; k < this->_cols; k++){
-                value += (T)this->get_data(i, k) * mat->get_data(k, j);
+                value += this->get_data(i, k) * mat->get_data(k, j);
             }
             data[row_cursor++] = value;
         }
     }
 
-    this->set_shallow_data(data, this->_rows, mat->get_cols());
+    this->set_shallow_data(data, this->_rows, col);
 
     return true;
 }
 
 template<class T>
 bool DenseMatrixT<T>::pow(const T exponent){
-    for(uint i = 0; i < this->_rows * this->_cols; i++){
+    uint size = this->_rows * this->_cols;
+    for(uint i = 0; i < size; i++){
         this->_data[i] = static_cast<T>(std::pow(this->_data[i], exponent));
     }
     clear_cache();
@@ -262,7 +220,8 @@ bool DenseMatrixT<T>::pow(const T exponent){
 template<class T>
 T DenseMatrixT<T>::sum() const{
     T value = static_cast<T>(0);
-    for(uint i = 0; i < this->_rows * this->_cols; i++){
+    uint size = this->_rows * this->_cols;
+    for(uint i = 0; i < size; i++){
         value += _data[i];
     }
     return value;
@@ -348,7 +307,7 @@ void DenseMatrixT<T>::add_x0(){
 }
 template<class T>
 void DenseMatrixT<T>::add_x0(BaseMatrixT<T>* result){
-    T* data = new T[this->_rows * (this->_cols)];
+    T* data = new T[this->_rows * this->_cols];
     for(uint i = 0; i < this->_rows; i++){
         data[i * (this->_cols + 1)] = 1;
         memcpy(&data[i * (this->_cols + 1) + 1], &this->_data[i * this->_cols], sizeof(T) * this->_cols);
@@ -414,11 +373,12 @@ bool DenseMatrixT<T>::det(T* result){
 
 template<class T>
 real DenseMatrixT<T>::mean(){
-    if(this->_rows * this->_cols == 0){
+    uint size = this->get_size();
+    if(size == 0){
         return 0.0;
     }
     real sum = 0.0;
-    for(uint i = 0; i < this->_rows * this->_cols; i++){
+    for(uint i = 0; i < size; i++){
         sum += static_cast<real>(_data[i]);
     }
     return sum/(this->_rows * this->_cols);
@@ -440,13 +400,15 @@ real DenseMatrixT<T>::mean(uint col){
 
 template<class T>
 real DenseMatrixT<T>::var(){
-    if(this->_rows * this->_cols == 0){
+    uint size =  this->get_size();
+
+    if(size == 0){
         return 0.0;
     }
 
     real mean_value = mean();
     real var_sum = 0.0;
-    for(uint i = 0; i < this->_rows * this->_cols; i++){
+    for(uint i = 0; i < size; i++){
         var_sum += std::pow(this->_data[i] - mean_value, 2);
     }
 
@@ -473,11 +435,16 @@ bool DenseMatrixT<T>::inverse(BaseMatrixT<real>* result){
         return false;
     }
 
-    DenseMatrixT<real>* extend_mat = new DenseMatrixT<real>();
+    auto extend_mat = new DenseMatrixT<real>();
     //copy src matrix
-    real* data = new real[this->_rows * this->_cols];
-    for(int i = 0; i < this->_rows * this->_cols ; i++){
-        data[i] = static_cast<real>(_data[i]);
+    uint size = this->get_size();
+    real* data = new real[size];
+    if(typeid(T).name() == typeid(real).name()){
+        memcpy(data, _data, sizeof(real) * size);
+    }else{
+        for(int i = 0; i < size ; i++){
+            data[i] = static_cast<real>(_data[i]);
+        }
     }
     extend_mat->set_shallow_data(data, this->_rows, this->_cols);
 
@@ -540,7 +507,7 @@ bool DenseMatrixT<T>::inverse(BaseMatrixT<real>* result){
 template<class T>
 bool DenseMatrixT<T>::operator==(BaseMatrixT<T>* mat) const{
     if(this->_rows == mat->get_rows() && this->_cols == mat->get_cols()){
-        int size = this->_rows * this->_cols;
+        int size = this->get_size();
         for(int i = 0; i < size; i++){
             if(_data[i] != mat->get_data(i)){
                 return false;
@@ -558,7 +525,10 @@ void DenseMatrixT<T>::display(const std::string& split){
     for(int i = 0; i < this->_rows; i++){
         printf("row[%d][",i);
         for(int j = 0; j < this->_cols; j++){
-            printf("%s%s", std::to_string(get_data(i, j)).c_str(), split.c_str());
+            printf("%s", std::to_string(get_data(i, j)).c_str());
+            if(j != this->_cols - 1){
+                printf("%s", split.c_str());
+            }
         }
         printf("]\n");
     }
@@ -807,7 +777,7 @@ real LabeledDenseMatrixT<T>::get_shannon_entropy(){
     CCMap<T>* vm = get_label_cnt_map();
     typename CCMap<T>::const_iterator it;
     for(it = vm->begin(); it != vm->end(); it++){
-        real prob = (real)it->second/this->get_rows();
+        real prob = (real)it->second/this->_rows;
         ent -= prob * (log(prob)/log(2));
     }
     _cache_shannon_entropy = ent;
@@ -921,7 +891,7 @@ CCMap<T>* LabeledDenseMatrixT<T>::get_label_cnt_map(){
     }
 
     typename CCMap<T>::iterator it;
-    for(uint i = 0; i < this->get_rows(); i++){
+    for(uint i = 0; i < this->_rows; i++){
         it = _cache_label_cnt_map->find(_labels[i]);
         if(it == _cache_label_cnt_map->end()){
             _cache_label_cnt_map->insert(std::make_pair(_labels[i], 1));
@@ -1018,12 +988,12 @@ void LabeledDenseMatrixT<T>::clear_cache(){
 
 template<class T>
 bool LabeledDenseMatrixT<T>::operator==(LabeledDenseMatrixT<T>* mat){
-    if(this->get_rows() == mat->get_rows() && this->get_cols() == mat->get_cols()){
-        for(int i = 0; i < this->get_rows(); i++){
+    if(this->_rows == mat->get_rows() && this->_cols == mat->get_cols()){
+        for(int i = 0; i < this->_rows; i++){
             if(this->get_label(i) == mat->get_label(i)){
                 return false;
             }
-            for(int j = 0; j < this->get_cols(); j++){
+            for(int j = 0; j < this->_cols; j++){
                 if(this->get_data(i, j) != this->get_data(i, j)){
                     return false;
                 }
