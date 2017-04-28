@@ -21,11 +21,6 @@ namespace utils{
 template<class T>
 class MnistHelper{
 public:
-    ccma::algebra::LabeledDenseMatrixT<T>* read(const std::string& image_file,
-                                                const std::string& label_file,
-                                                const int limit = -1,
-                                                const uint threshold = 30);
-
     bool read_image(const std::string& image_file,
                     ccma::algebra::BaseMatrixT<T>* out_mat,
                     const int limit = -1,
@@ -49,56 +44,6 @@ private:
 
 };//class MnistHelper
 
-template<class T>
-ccma::algebra::LabeledDenseMatrixT<T>* MnistHelper<T>::read(const std::string& image_file,
-                                                            const std::string& label_file,
-                                                            const int limit,
-                                                            const uint threshold){
-
-    ccma::algebra::LabeledDenseMatrixT<T>* mat;
-
-    uint image_num = 0;
-    uint label_num = 0;
-    auto image_buffer = read_mnist_file(image_file, 0x803, &image_num);
-    auto label_buffer = read_mnist_file(label_file, 0x801, &label_num);
-    if(!image_buffer || !label_buffer || image_num != label_num){
-        mat = new ccma::algebra::LabeledDenseMatrixT<T>();
-        return mat;
-    }
-
-    auto count = image_num;
-    if( limit > 0 && limit < count){
-        count = limit;
-    }
-
-    //read image data
-    auto rows = read_header(image_buffer, 2);
-    auto cols = read_header(image_buffer, 3);
-
-    auto image_data_buffer = reinterpret_cast<unsigned char*>(image_buffer.get() + 16);
-
-    T* data = new T[count * rows * cols];
-    for(size_t i = 0; i < count * rows * cols; i++){
-        auto pixel = *image_data_buffer++;
-        pixel = (pixel >= threshold) ? 1 : 0;
-        if(pixel != 0){
-            printf("%d\t%d\n", pixel, i);
-        }
-        data[i] = static_cast<T>(pixel);
-    }
-
-    //read label data
-    auto label_data_buffer = reinterpret_cast<unsigned char*>(label_buffer.get() + 8);
-
-    T* labels = new T[count];
-    for(size_t i = 0; i < count; i++){
-        auto label  = *label_data_buffer++;
-        labels[i]   = static_cast<T>(label);
-    }
-
-    mat = new ccma::algebra::LabeledDenseMatrixT<T>(data, labels, count, rows * cols);
-    return mat;
-}
 
 template<class T>
 bool MnistHelper<T>::read_image(const std::string& image_file,
@@ -126,7 +71,7 @@ bool MnistHelper<T>::read_image(const std::string& image_file,
     uint size = count * rows * cols;
     T* data = new T[size];
     for(size_t i = 0; i < size; i++){
-        data[i] = static_cast<T>((*image_data_buffer++ >= threshold) ? 1 : 0);
+        data[i] = static_cast<T>(*image_data_buffer++) > threshold ? 1 : 0;
     }
 
     out_mat->set_shallow_data(data, count, rows * cols);
@@ -152,11 +97,8 @@ bool MnistHelper<T>::read_label(const std::string& label_file,
     auto label_data_buffer = reinterpret_cast<unsigned char*>(label_buffer.get() + 8);
 
     T* labels = new T[count];
-    memset(labels, 0, sizeof(T) * count);
-
     for(size_t i = 0; i < count; i++){
-        auto label = *label_data_buffer++;
-        labels[i] = static_cast<T>(label);
+        labels[i] = static_cast<T>(*label_data_buffer++);
     }
 
     out_mat->set_shallow_data(labels, count, 1);
@@ -187,7 +129,7 @@ bool MnistHelper<T>::read_vec_label(const std::string& label_file,
     memset(labels, 0, sizeof(T) * count * vec_size);
 
     for(size_t i = 0; i < count; i++){
-        auto label = *label_data_buffer++;
+        auto label = static_cast<uint>(*label_data_buffer++);
         labels[i * vec_size + label] = 1;
     }
 
@@ -197,8 +139,8 @@ bool MnistHelper<T>::read_vec_label(const std::string& label_file,
 }
 template<class T>
 inline std::unique_ptr<char[]> MnistHelper<T>::read_mnist_file(const std::string& path,
-                                                            uint key,
-                                                            uint* out_rows){
+                                                               uint key,
+                                                               uint* out_rows){
 
     *out_rows = 0;
 

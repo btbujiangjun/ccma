@@ -34,7 +34,10 @@ private:
 
 Shuffler::Shuffler(uint size){
     _size = size;
-    shuffle();
+    std::vector<int> idx;
+    for(int i = 0; i < _size; i++){
+        _shuffler_idx.push_back(i);
+    }
 }
 
 Shuffler::~Shuffler(){
@@ -43,28 +46,15 @@ Shuffler::~Shuffler(){
 
 void Shuffler::shuffle(){
 
-    _shuffler_idx.clear();
+    std::random_device rd;
+    uint random_idx, value;
 
-    std::vector<int> idx;
-    for(int i = 0; i < _size; i++){
-        idx.push_back(i);
-    }
+    for(int i = _size - 1; i > 0 ; i--){
+        random_idx = rd() % i;
+        value =  _shuffler_idx[random_idx];
 
-    while(idx.size() > 0){
-        std::default_random_engine generator(time(0));
-        std::uniform_int_distribution<int> dis(0, idx.size() - 1);
-
-        int idx_value = idx[dis(generator)];
-        _shuffler_idx.push_back(idx[idx_value]);
-
-        std::vector<int>::iterator it = idx.begin();
-        while(it != idx.end()){
-            if(*it == idx_value){
-                idx.erase(it);
-                break;
-            }
-            it++;
-        }
+        _shuffler_idx[random_idx] = _shuffler_idx[i];
+        _shuffler_idx[i] = value;
     }
 
 }
