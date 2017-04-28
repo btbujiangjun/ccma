@@ -77,6 +77,8 @@ bool DNN::sgd(ccma::algebra::BaseMatrixT<real>* train_data,
 
     for(int i = 0; i < epochs; i++){
 
+        clock_t start_time = clock();
+
         shuffler->shuffle();
 
         for(int j = 0; j < num_train_data; j++){
@@ -94,12 +96,19 @@ bool DNN::sgd(ccma::algebra::BaseMatrixT<real>* train_data,
                 mini_batch_label->clear_matrix();
             }
         }
+        clock_t training_time = clock();
+        printf("Epoch %d train runtime: %f ms\n", i, static_cast<double>(training_time - start_time)/CLOCKS_PER_SEC*1000);
 
         if(num_test_data > 0){
             int num_predict = evaluate(test_data, test_label);
             printf("Epoch %d: %d / %d\n", i, num_predict, num_test_data);
+
+            clock_t predict_time = clock();
+            printf("Epoch %d predict runtime: %f ms\n", i, static_cast<double>(predict_time - training_time)/CLOCKS_PER_SEC*1000);
         }
 
+        clock_t end_time = clock();
+        printf("Epoch %d runtime: %f ms\n", i, static_cast<double>(end_time - start_time)/CLOCKS_PER_SEC*1000);
     }
 
     delete row_data;
@@ -134,11 +143,14 @@ int DNN::evaluate(ccma::algebra::BaseMatrixT<real>* test_data, ccma::algebra::Ba
         feedforward(predict_mat);
 
         real max_value = 0;
+        real value;
         int max_index = 0;
 
         uint size = predict_mat->get_cols();
         for(int j = 0; j < size; j++){
-            if(predict_mat->get_data(j) > max_value){
+            value = predict_mat->get_data(j);
+            if(value > max_value){
+                max_value = value;
                 max_index = j;
             }
         }
