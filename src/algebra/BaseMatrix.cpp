@@ -23,7 +23,7 @@ bool BaseMatrixT<T>::add(BaseMatrixT<T>* mat){
     for(int i = 0; i < size; i++){
         T value = mat->get_data(i);
         if(value != 0){
-            set_data(this->get_data(i) + mat->get_data(i), i);
+            set_data(this->get_data(i) + value, i);
         }
     }
 
@@ -41,7 +41,7 @@ bool BaseMatrixT<T>::subtract(BaseMatrixT<T>* mat){
     for(int i = 0; i < size; i++){
         T value = mat->get_data(i);
         if(value != 0){
-            set_data(get_data(i) - mat->get_data(i), i);
+            set_data(get_data(i) - value, i);
         }
     }
 
@@ -85,10 +85,10 @@ bool BaseMatrixT<T>::multiply(BaseMatrixT<T>* mat){
     }
 
     uint size = this->get_size();
-    for(int i = 0; i < _rows * _cols; i++){
+    for(int i = 0; i < size; i++){
         T value = mat->get_data(i);
         if(value != 1){
-           set_data(get_data(i) * mat->get_data(i), i);
+           set_data(get_data(i) * value, i);
         }
     }
 
