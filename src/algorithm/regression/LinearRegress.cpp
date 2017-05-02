@@ -27,7 +27,7 @@ bool LinearRegression::standard_regression(ccma::algebra::LabeledDenseMatrixT<T>
     _helper->transpose(x, xT);
 
     ccma::algebra::BaseMatrixT<T>* xTx = new ccma::algebra::DenseMatrixT<T>();
-    if(_helper->product(xT, x, xTx)){
+    if(_helper->dot(xT, x, xTx)){
         delete x, y, xT, xTx;
         return false;
     }
@@ -39,8 +39,8 @@ bool LinearRegression::standard_regression(ccma::algebra::LabeledDenseMatrixT<T>
     }
 
     ccma::algebra::BaseMatrixT<T>* xTy = new ccma::algebra::DenseMatrixT<T>();
-    _helper->product(xT, y, xTy);
-    _helper->product(xTxI, xTy, weights);
+    _helper->dot(xT, y, xTy);
+    _helper->dot(xTxI, xTy, weights);
 
     delete x, y, xT, xTx, xTy, xTxI;
 
@@ -84,7 +84,7 @@ bool LinearRegression::local_weight_logistic_regression(ccma::algebra::LabeledDe
             _helper->transpose(diff_mat, diff_mat_t);
 
             ccma::algebra::DenseMatrixT<T>* diff_mat_diff_mat_t = new ccma::algebra::DenseMatrixT<T>();
-            _helper->product(diff_mat, diff_mat_t, diff_mat_diff_mat_t);
+            _helper->dot(diff_mat, diff_mat_t, diff_mat_diff_mat_t);
 
             //personalized weight for every train data with gaussian kernal
             weight->set_data(exp((real)diff_mat_diff_mat_t->get_data(0, 0) / (-2.0 * k * k)), j, j);
@@ -92,10 +92,10 @@ bool LinearRegression::local_weight_logistic_regression(ccma::algebra::LabeledDe
         }
 
         ccma::algebra::DenseMatrixT<real>* weight_x = new ccma::algebra::DenseMatrixT<real>();
-        _helper->product(weight, x, weight_x);
+        _helper->dot(weight, x, weight_x);
 
         ccma::algebra::DenseMatrixT<real>* xTx = new ccma::algebra::DenseMatrixT<real>();
-        _helper->product(xT, weight_x, xTx);
+        _helper->dot(xT, weight_x, xTx);
 
         real det = 0.0;
         if(!xTx->det(&det) || det == 0.0){
@@ -104,19 +104,19 @@ bool LinearRegression::local_weight_logistic_regression(ccma::algebra::LabeledDe
         }
 
         ccma::algebra::DenseMatrixT<real>* weight_y = new ccma::algebra::DenseMatrixT<real>();
-        _helper->product(weight, y, weight_y);
+        _helper->dot(weight, y, weight_y);
 
         ccma::algebra::DenseMatrixT<real>* xT_weight_y = new ccma::algebra::DenseMatrixT<real>();
-        _helper->product(xT, weight_y, xT_weight_y);
+        _helper->dot(xT, weight_y, xT_weight_y);
 
         ccma::algebra::DenseMatrixT<real>* xTxI = new ccma::algebra::DenseMatrixT<real>();
         xTx->inverse(xTxI);
 
         ccma::algebra::DenseMatrixT<real>* weight_i = new ccma::algebra::DenseMatrixT<real>();
-        _helper->product(xTxI, xT_weight_y, weight_i);
+        _helper->dot(xTxI, xT_weight_y, weight_i);
 
         ccma::algebra::DenseMatrixT<real>* predict_mat_i = new ccma::algebra::DenseMatrixT<real>();
-        _helper->product(predict_row_mat, weight_i, predict_mat_i);
+        _helper->dot(predict_row_mat, weight_i, predict_mat_i);
 
         labels[i] = predict_mat_i->get_data(0);
 
@@ -144,7 +144,7 @@ bool LinearRegression::ridge_regression(ccma::algebra::LabeledDenseMatrixT<T>* t
     _helper->transpose(x, xT);
 
     ccma::algebra::DenseMatrixT<T>* xTx = new ccma::algebra::DenseMatrixT<T>();
-    _helper->product(xT, x, xTx);
+    _helper->dot(xT, x, xTx);
 
     ccma::algebra::DenseEyeMatrixT<real>* eye = new ccma::algebra::DenseEyeMatrixT<real>(x->get_cols());
     eye->add(lamda);
@@ -161,9 +161,9 @@ bool LinearRegression::ridge_regression(ccma::algebra::LabeledDenseMatrixT<T>* t
     eye->inverse(eyeI);
 
     ccma::algebra::DenseMatrixT<T>* xTy = new ccma::algebra::DenseMatrixT<T>();
-    _helper->product(xT, y, xTy);
+    _helper->dot(xT, y, xTy);
 
-    _helper->product(eyeI, xTy, weights);
+    _helper->dot(eyeI, xTy, weights);
 
     delete x, y, xT, xTx, eye, eyeI, xTy;
 

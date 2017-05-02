@@ -123,7 +123,7 @@ bool ClassificationAndRegressionTree::linear_regression(ccma::algebra::LabeledDe
     _helper->transpose(x, xT);
 
     ccma::algebra::DenseMatrixT<T>* xTx = new ccma::algebra::DenseMatrixT<T>();
-    _helper->product(xT, x, xTx);
+    _helper->dot(xT, x, xTx);
 
     T det = 0;
     if(!xTx->det(&det) || det == static_cast<T>(0)){
@@ -135,9 +135,9 @@ bool ClassificationAndRegressionTree::linear_regression(ccma::algebra::LabeledDe
     xTx->inverse(xTxI);
 
     ccma::algebra::DenseMatrixT<T>* xTy = new ccma::algebra::DenseMatrixT<T>();
-    _helper->product(xT, y, xTy);
+    _helper->dot(xT, y, xTy);
 
-    _helper->product(xTxI, xTy, weights);
+    _helper->dot(xTxI, xTy, weights);
 
     return true;
 }
@@ -153,7 +153,7 @@ bool ClassificationAndRegressionTree::model_error(ccma::algebra::LabeledDenseMat
         mat->get_labels(y);
 
         ccma::algebra::DenseMatrixT<real>* y_predict = new ccma::algebra::DenseMatrixT<real>();
-        _helper->product(x, weights, y_predict);
+        _helper->dot(x, weights, y_predict);
 
         ccma::algebra::DenseMatrixT<real>* y_diff = new ccma::algebra::DenseMatrixT<real>();
         _helper->subtract(y, y_predict, y_diff);
