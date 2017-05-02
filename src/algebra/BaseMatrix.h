@@ -64,7 +64,7 @@ public:
     bool add(BaseMatrixT<T>* mat);
     bool subtract(BaseMatrixT<T>* mat);
 
-    virtual bool product(BaseMatrixT<T>* mat) = 0;
+    virtual bool dot(BaseMatrixT<T>* mat) = 0;
     virtual bool pow(const T exponent) = 0;
 
     bool add(const T value);
@@ -186,7 +186,7 @@ public:
 
     bool pow(const T exponent);
 
-    bool product(BaseMatrixT<T>* mat);
+    bool dot(BaseMatrixT<T>* mat);
 
     T sum() const;
 

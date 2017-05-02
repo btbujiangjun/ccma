@@ -28,12 +28,12 @@ public:
                   ccma::algebra::BaseMatrixT<T3>* result);
 
     template<class T1, class T2, class T3>
-    bool product(ccma::algebra::BaseMatrixT<T1>* mat1,
+    bool dot(ccma::algebra::BaseMatrixT<T1>* mat1,
                  ccma::algebra::BaseMatrixT<T2>* mat2,
                  ccma::algebra::BaseMatrixT<T3>* result);
 
     template<class T>
-    bool product(ccma::algebra::BaseMatrixT<T>* mat,
+    bool dot(ccma::algebra::BaseMatrixT<T>* mat,
                  const T value,
                  ccma::algebra::BaseMatrixT<T>* result);
 
@@ -115,7 +115,7 @@ bool MatrixHelper::subtract(ccma::algebra::BaseMatrixT<T1>* mat1,
 }
 
 template<class T1, class T2, class T3>
-bool MatrixHelper::product(ccma::algebra::BaseMatrixT<T1>* mat1,
+bool MatrixHelper::dot(ccma::algebra::BaseMatrixT<T1>* mat1,
                            ccma::algebra::BaseMatrixT<T2>* mat2,
                            ccma::algebra::BaseMatrixT<T3>* result){
 
@@ -125,7 +125,7 @@ bool MatrixHelper::product(ccma::algebra::BaseMatrixT<T1>* mat1,
     uint col2 = mat2->get_cols();
 
     if(col1 != row2){
-        printf("MatrixHelper::product, Matrix Dim ERROR:[%d-%d][%d-%d]\n", row1, col1, row2, col2);
+        printf("MatrixHelper::dot, Matrix Dim ERROR:[%d-%d][%d-%d]\n", row1, col1, row2, col2);
         return false;
     }
 
@@ -146,7 +146,7 @@ bool MatrixHelper::product(ccma::algebra::BaseMatrixT<T1>* mat1,
 }
 
 template<class T>
-bool MatrixHelper::product(ccma::algebra::BaseMatrixT<T>* mat,
+bool MatrixHelper::dot(ccma::algebra::BaseMatrixT<T>* mat,
                            const T value,
                            ccma::algebra::BaseMatrixT<T>* result){
     int size = mat->get_rows() * mat->get_cols();
