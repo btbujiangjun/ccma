@@ -57,7 +57,7 @@ int main(int argc, char** argv){
     ccma::algebra::BaseMatrixT<float>* mat2 = new ccma::algebra::DenseMatrixT<float>(data2, 3, 3);
     ccma::algebra::BaseMatrixT<float>* mat3 = new ccma::algebra::DenseMatrixT<float>(data3, 3, 3);
     mat2->display();
-    mat2->product(mat3);
+    mat2->dot(mat3);
     mat2->display();
 
     delete mat2, mat3;

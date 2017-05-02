@@ -179,7 +179,7 @@ bool DenseMatrixT<T>::extend(BaseMatrixT<T>* mat){
  * A(m,p) * B(p,n) = C(m,n)
  */
 template<class T>
-bool DenseMatrixT<T>::product(BaseMatrixT<T>* mat){
+bool DenseMatrixT<T>::dot(BaseMatrixT<T>* mat){
     uint row = mat->get_rows();
     uint col = mat->get_cols();
 
