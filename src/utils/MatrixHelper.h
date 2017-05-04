@@ -124,19 +124,42 @@ bool MatrixHelper::dot(ccma::algebra::BaseMatrixT<T1>* mat1,
     uint row2 = mat2->get_rows();
     uint col2 = mat2->get_cols();
 
+    bool is_same_type = (typeid(T1).name() == typeid(T2).name() && typeid(T2).name() == typeid(T3).name());
+
     if(col1 != row2){
         printf("MatrixHelper::dot, Matrix Dim ERROR:[%d-%d][%d-%d]\n", row1, col1, row2, col2);
         return false;
     }
 
     T3* data = new T3[row1 * col2];
-    for(int i = 0; i < row1; i++){
-        for(int j = 0; j < col2; j++){
-            T3 value = static_cast<T3>(0);
-            for(int k = 0; k < col1; k++){
-                value += static_cast<T3>(mat1->get_data(i, k) * mat2->get_data(k, j));
+    T1* data_1 = mat1->get_data();
+    T2* data_2 = mat2->get_data();
+
+    T3 zero = static_cast<T3>(0);
+    T3 value;
+
+    uint data_idx, data_1_init_idx, data_1_idx;
+    uint j, k;
+
+    for(uint i = 0; i < row1; i++){
+
+        data_idx = i * col2;
+        data_1_init_idx = i * col1;
+
+        for(j = 0; j < col2; j++){
+            value = zero;
+            data_1_idx = data_1_init_idx;
+
+            for(k = 0; k < col1; k++){
+                //data_1_idx++ == i * col1 + k
+                if(is_same_type){
+                    value += data_1[data_1_idx++] * data_2[k * col2 + j];
+                }else{
+                    value += static_cast<T3>(data_1[data_1_idx++] * data_2[k * col2 + j]);
+                }
             }
-            data[i * col2 + j] = value;
+            //data_idx++ == i * col2 + j
+            data[data_idx++] = value;
         }
     }
 
@@ -231,7 +254,7 @@ bool MatrixHelper::exp(ccma::algebra::BaseMatrixT<T1>* mat,
 
 template<class T>
 bool MatrixHelper::signmod(ccma::algebra::BaseMatrixT<T>* mat, ccma::algebra::BaseMatrixT<real>* result){
-    uint size = mat->get_rows() * mat->get_cols();
+    uint size = mat->get_size();
     real* data = new real[size];
     for(uint i = 0; i < size; i++){
         data[i] = 1.0f/(1.0f + std::exp(-mat->get_data(i)));
