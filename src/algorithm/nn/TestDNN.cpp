@@ -14,7 +14,7 @@ int main(int argc, char** argv){
 
     ccma::algorithm::nn::DNN* dnn = new ccma::algorithm::nn::DNN();
     dnn->add_layer(784);
-    dnn->add_layer(100);
+//    dnn->add_layer(100);
     dnn->add_layer(30);
     dnn->add_layer(10);
     dnn->init_networks_weights();

@@ -14,7 +14,6 @@ int main(int argc, char** argv){
     ccma::algebra::LabeledDenseMatrixT<real>* lmat = new ccma::algebra::LabeledDenseMatrixT<real>();
     ccma::utils::DenseFileOp* fo = new ccma::utils::DenseFileOp();
     if(fo->read_data("./data/ex0.txt", lmat)){
-//        lmat->display();
         ccma::algorithm::regression::LinearRegression* regression = new ccma::algorithm::regression::LinearRegression();
         ccma::algebra::DenseColMatrixT<real>* weights = new ccma::algebra::DenseColMatrixT<real>(lmat->get_cols(), 0.0);
         if(regression->standard_regression<real>(lmat, weights)){

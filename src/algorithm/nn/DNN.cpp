@@ -72,7 +72,7 @@ bool DNN::sgd(ccma::algebra::BaseMatrixT<real>* train_data,
     auto row_data           = new ccma::algebra::DenseMatrixT<real>();
     auto row_label          = new ccma::algebra::DenseMatrixT<real>();
 
-    for(int i = 0; i < epochs; i++){
+    for(uint i = 0; i < epochs; i++){
 
         clock_t start_time = clock();
 
@@ -98,16 +98,11 @@ bool DNN::sgd(ccma::algebra::BaseMatrixT<real>* train_data,
         printf("Epoch %d train runtime: %f ms\n", i, static_cast<double>(training_time - start_time)/CLOCKS_PER_SEC*1000);
 
         if(num_test_data > 0){
-            clock_t predict_time = clock();
-
-            int num_predict = evaluate(test_data, test_label);
-
-            printf("Epoch %d: %d / %d\n", i, num_predict, num_test_data);
-            printf("Epoch %d predict runtime: %f ms\n", i, static_cast<double>(clock() - predict_time)/CLOCKS_PER_SEC*1000);
+            printf("Epoch %d: %d / %d\n", i, evaluate(test_data, test_label), num_test_data);
+            printf("Epoch %d predict runtime: %f ms\n", i, static_cast<double>(clock() - training_time)/CLOCKS_PER_SEC*1000);
         }
 
-        clock_t end_time = clock();
-        printf("Epoch %d runtime: %f ms\n", i, static_cast<double>(end_time - start_time)/CLOCKS_PER_SEC*1000);
+        printf("Epoch %d runtime: %f ms\n", i, static_cast<double>(clock() - start_time)/CLOCKS_PER_SEC*1000);
     }
 
     delete row_data;
@@ -131,20 +126,19 @@ void DNN::feedforward(ccma::algebra::BaseMatrixT<real>* mat){
 
 int DNN::evaluate(ccma::algebra::BaseMatrixT<real>* test_data, ccma::algebra::BaseMatrixT<real>* test_label){
 
-    uint num             = 0;
+    uint num            = 0;
     auto predict_mat    = new ccma::algebra::DenseMatrixT<real>();
     uint num_test_data  = test_data->get_rows();
+    real max_value, value;
+    uint max_index;
 
-    clock_t start_time = clock();
     for(uint i = 0; i < num_test_data; i++){
-
         test_data->get_row_data(i, predict_mat);
 
         feedforward(predict_mat);
 
-        real max_value = 0;
-        real value;
-        uint max_index = 0;
+        max_value = 0;
+        max_index = 0;
 
         uint size = predict_mat->get_cols();
         for(uint j = 0; j < size; j++){
@@ -155,40 +149,10 @@ int DNN::evaluate(ccma::algebra::BaseMatrixT<real>* test_data, ccma::algebra::Ba
             }
         }
 
-        if(max_index == test_label->get_data(i, 0)){
+        if(max_index == test_label->get_data(i)){
             num++;
         }
     }
-    printf("%d:%f ms\n", num, static_cast<double>(clock() - start_time) / CLOCKS_PER_SEC * 1000);
-
-    /*
-
-    start_time = clock();
-    num = 0;
-    test_data->clone(predict_mat);
-    feedforward(predict_mat);
-    
-    real max_value, value;
-    uint max_index;
-    uint cols = predict_mat->get_cols();
-
-    for(uint i = 0; i < num_test_data; i++){
-        max_value = 0, value = 0;
-        max_index = 0;
-        for(uint j = 0; j < cols; j++){
-            value = predict_mat->get_data(i, j);
-            if(value > max_value){
-                max_value = value, max_index = j;
-            }
-        }
-
-        if(max_index == test_label->get_data(i, 0)){
-            num++;
-        }
-    }
-    printf("%d:%f ms\n", num, static_cast<double>(clock() - start_time) / CLOCKS_PER_SEC * 1000);
-    */
-
     delete predict_mat;
 
     return num;
