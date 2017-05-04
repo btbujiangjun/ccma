@@ -10,6 +10,7 @@
 #define _CCMA_ALGEBRA_BASEMATRIX_H_
 
 #include <cmath>
+#include <thread>
 #include <string.h>
 #include <unordered_map>
 #include "utils/TypeDef.h"
@@ -104,10 +105,28 @@ public:
 
     virtual bool operator==(BaseMatrixT<T>* mat) const = 0;
 
+    inline uint get_num_thread(uint size){
+        if(size <= _num_hardware_concurrency){
+            return 1;
+        }
+        if(_num_hardware_concurrency == 0){
+            return 2;
+        }else{
+            uint num =  size / _num_per_thread;
+            if( size % _num_per_thread != 0){
+                num += 1;
+            }
+            return std::min(num, _num_hardware_concurrency);
+        }
+    }
+
 protected:
     uint _rows;
     uint _cols;
 
+    uint _num_per_thread = 50;
+private:
+    const uint _num_hardware_concurrency = std::thread::hardware_concurrency();
 };//class BaseMatrixT
 
 
