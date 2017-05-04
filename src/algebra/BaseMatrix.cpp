@@ -23,17 +23,29 @@ bool BaseMatrixT<T>::add(const T value){
 }
 template<class T>
 bool BaseMatrixT<T>::add(BaseMatrixT<T>* mat){
-    if(_rows != mat->get_rows() || _cols != mat->get_cols()){
-        printf("Add matrix dim Error:[%d-%d][%d-%d]\n", _rows, _cols, mat->get_rows(), mat->get_cols());
+    uint row = mat->get_rows();
+    uint col = mat->get_cols();
+
+    if( (_rows != row && row != 1)
+            || _cols != col){
+        printf("Add matrix dim Error:[%d-%d][%d-%d]\n", _rows, _cols, row, col);
         return false;
     }
+
+    bool is_diff_rows = (_rows > row);
 
     uint size = get_size();
     T* data_a = get_data();
     T* data_b = mat->get_data();
 
-    for(uint i = 0; i < size; i++){
-        data_a[i] += data_b[i];
+    if(!is_diff_rows){
+        for(uint i = 0; i < size; i++){
+            data_a[i] += data_b[i];
+        }
+    }else{
+        for(uint i = 0; i < size; i++){
+            data_a[i] += data_b[i % col];
+        }
     }
 
     return true;
