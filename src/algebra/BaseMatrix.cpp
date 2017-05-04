@@ -13,55 +13,56 @@ namespace ccma{
 namespace algebra{
 
 template<class T>
-bool BaseMatrixT<T>::add(BaseMatrixT<T>* mat){
-    if(this->_rows != mat->get_rows() || this->_cols != mat->get_cols()){
-        printf("Add matrix dim Error:[%d-%d][%d-%d]\n", this->_rows, this->_cols, mat->get_rows(), mat->get_cols());
-        return false;
-    }
-
-    uint size = this->get_size();
-    for(int i = 0; i < size; i++){
-        T value = mat->get_data(i);
-        if(value != 0){
-            set_data(this->get_data(i) + value, i);
-        }
-    }
-
-    return true;
-}
-
-template<class T>
-bool BaseMatrixT<T>::subtract(BaseMatrixT<T>* mat){
-    if( this->_rows != mat->get_rows() || this->_cols != mat->get_cols()){
-        printf("Subtract matrix dim Error:[%d-%d][%d-%d]\n", this->_rows, this->_cols, mat->get_rows(), mat->get_cols());
-        return false;
-    }
-
-    uint size = this->get_size();
-    for(int i = 0; i < size; i++){
-        T value = mat->get_data(i);
-        if(value != 0){
-            set_data(get_data(i) - value, i);
-        }
-    }
-
-    return true;
-}
-
-template<class T>
 bool BaseMatrixT<T>::add(const T value){
-    uint size = this->get_size();
-    for(int i = 0; i < size; i++){
-        set_data(get_data(i) + value, i);
+    uint size = get_size();
+    T* data = get_data();
+    for(uint i = 0; i < size; i++){
+        data[i] += value;
+    }
+    return true;
+}
+template<class T>
+bool BaseMatrixT<T>::add(BaseMatrixT<T>* mat){
+    if(_rows != mat->get_rows() || _cols != mat->get_cols()){
+        printf("Add matrix dim Error:[%d-%d][%d-%d]\n", _rows, _cols, mat->get_rows(), mat->get_cols());
+        return false;
+    }
+
+    uint size = get_size();
+    T* data_a = get_data();
+    T* data_b = mat->get_data();
+
+    for(uint i = 0; i < size; i++){
+        data_a[i] += data_b[i];
     }
 
     return true;
 }
+
 template<class T>
 bool BaseMatrixT<T>::subtract(const T value){
-    uint size = this->get_size();
-    for(int i = 0; i < size; i++){
-        set_data(get_data(i) - value, i);
+    uint size = get_size();
+    T* data = get_data();
+    for(uint i = 0; i < size; i++){
+        data[i] -= value;
+    }
+
+    return true;
+}
+template<class T>
+bool BaseMatrixT<T>::subtract(BaseMatrixT<T>* mat){
+    if( _rows != mat->get_rows() || _cols != mat->get_cols()){
+        printf("Subtract matrix dim Error:[%d-%d][%d-%d]\n", _rows, _cols, mat->get_rows(), mat->get_cols());
+        return false;
+    }
+
+    uint size = get_size();
+
+    T* data_a = get_data();
+    T* data_b = mat->get_data();
+
+    for(uint i = 0; i < size; i++){
+        data_a[i] -= data_b[i];
     }
 
     return true;
@@ -69,27 +70,28 @@ bool BaseMatrixT<T>::subtract(const T value){
 
 template<class T>
 bool BaseMatrixT<T>::multiply(const T value){
-    uint size = this->get_size();
-    for(int i = 0; i < size; i++){
-        set_data(get_data(i) * value, i);
+    uint size = get_size();
+    T* data = get_data();
+
+    for(uint i = 0; i < size; i++){
+        data[i] *= value;
     }
 
     return true;
 }
-
 template<class T>
 bool BaseMatrixT<T>::multiply(BaseMatrixT<T>* mat){
     if(_rows != mat->get_rows() || _cols != mat->get_cols()){
-        printf("multiply matrix dim Error:[%d-%d][%d-%d]\n", this->_rows, this->_cols, mat->get_rows(), mat->get_cols());
+        printf("multiply matrix dim Error:[%d-%d][%d-%d]\n", _rows, _cols, mat->get_rows(), mat->get_cols());
         return false;
     }
 
-    uint size = this->get_size();
-    for(int i = 0; i < size; i++){
-        T value = mat->get_data(i);
-        if(value != 1){
-           set_data(get_data(i) * value, i);
-        }
+    uint size = get_size();
+    T* data_a = get_data();
+    T* data_b = mat->get_data();
+
+    for(uint i = 0; i < size; i++){
+        data_a[i] *= data_b[i];
     }
 
     return true;
@@ -97,9 +99,12 @@ bool BaseMatrixT<T>::multiply(BaseMatrixT<T>* mat){
 
 template<class T>
 bool BaseMatrixT<T>::division(const T value){
-    uint size = this->get_size();
-    for(int i = 0; i < size; i++){
-        set_data(get_data(i) / value, i);
+
+    uint size   = get_size();
+    T* data     = get_data();
+
+    for(uint i = 0; i < size; i++){
+        data[i] /=  value;
     }
 
     return true;
@@ -107,9 +112,13 @@ bool BaseMatrixT<T>::division(const T value){
 
 template<class T>
 bool BaseMatrixT<T>::sigmoid(){
-    uint size = this->get_size();
-    for(int i = 0; i < _rows * _cols; i++){
-        set_data(1/(1 + exp(-get_data(i))), i);
+
+    uint size   = get_size();
+    T one       = static_cast<T>(1);
+    T* data     = get_data();
+
+    for(uint i = 0; i < size; i++){
+        data[i] = one / (one + std::exp(-data[i]));
     }
 
     return true;
