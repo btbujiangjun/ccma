@@ -6,7 +6,7 @@ all:
 	g++ -o logistic_regression_test -std=c++11 algorithm/regression/TestLogisticRegress.cpp algebra/BaseMatrix.cpp algebra/DenseMatrix.cpp -pthread -g -I ./include/
 	g++ -o decision_tree_test -std=c++11 algorithm/tree/TestDecisionTree.cpp algorithm/tree/DecisionTree.cpp algebra/BaseMatrix.cpp algebra/DenseMatrix.cpp -pthread -g -I ./include/
 	g++ -o regression_tree_test -std=c++11 algorithm/tree/TestCART.cpp algorithm/tree/CART.cpp algebra/BaseMatrix.cpp algebra/DenseMatrix.cpp -pthread -g -I ./include/
-	g++ -o DNN_test -std=c++11 algorithm/nn/TestDNN.cpp algorithm/nn/DNN.cpp algebra/BaseMatrix.cpp algebra/DenseMatrix.cpp -g -pthread -Wall -I ./include/
+	g++ -o DNN_test -std=c++11 algorithm/nn/TestDNN.cpp algorithm/nn/DNN.cpp algebra/BaseMatrix.cpp algebra/DenseMatrix.cpp -g -pthread -Wall -O3 -I ./include/
 clean:
 	rm dense_matrix_test &
 	rm file_op_test &
