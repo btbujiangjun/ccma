@@ -106,7 +106,7 @@ public:
     virtual bool operator==(BaseMatrixT<T>* mat) const = 0;
 
     inline uint get_num_thread(uint size){
-        if(size <= _num_hardware_concurrency){
+        if(size <= _num_per_thread){
             return 1;
         }
         if(_num_hardware_concurrency == 0){
@@ -245,7 +245,7 @@ protected:
         if(*idx >= 0 && *idx < mat_size){
             return true;
         }else if(*idx < 0 && *idx + mat_size >= 0){
-            *idx =+ mat_size;
+            *idx += mat_size;
             return true;
         }
         return false;
