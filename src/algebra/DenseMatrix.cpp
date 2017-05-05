@@ -8,7 +8,6 @@
 
 #include "BaseMatrix.h"
 #include <stdio.h>
-#include <string.h>
 
 namespace ccma{
 namespace algebra{
