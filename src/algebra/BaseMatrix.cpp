@@ -63,7 +63,7 @@ bool BaseMatrixT<T>::add(BaseMatrixT<T>* mat){
                             for(uint ti = start_idx; ti < end_idx; ti++){
                                 data_a[ti] += data_b[ti];
                             }
-                        }, i * block_size , ((i+1) * block_size >= size) ? size : (i + 1) * block_size
+                        }, i * block_size , std::min(size, (i + 1) * block_size)
                     );
         }
 
@@ -175,7 +175,7 @@ bool BaseMatrixT<T>::sigmoid(){
                                             for(uint ti = start_idx; ti < end_idx; ti++){
                                                 data[ti] = one / (one + std::exp(-data[ti]));
                                             }
-                                        }, i * block_size, ((i + 1) * block_size > size) ? size : (i + 1) * block_size
+                                        }, i * block_size, std::min(size, (i + 1) * block_size)
                                     );
         }
 
