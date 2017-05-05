@@ -9,6 +9,7 @@
 #include "DNN.h"
 #include <random>
 #include <ctime>
+#include <thread>
 #include "utils/Shuffler.h"
 
 namespace ccma{
@@ -45,9 +46,9 @@ void DNN::init_networks_weights(){
 
 bool DNN::sgd(ccma::algebra::BaseMatrixT<real>* train_data,
               ccma::algebra::BaseMatrixT<real>* train_label,
-              int epochs,
+              uint epochs,
               real eta,
-              int mini_batch_size,
+              uint mini_batch_size,
               ccma::algebra::BaseMatrixT<real>* test_data,
               ccma::algebra::BaseMatrixT<real>* test_label){
 
@@ -169,6 +170,31 @@ bool DNN::mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch_data,
     uint row = mini_batch_data->get_rows();
     uint weight_size = _weights.size();
 
+    uint num_thread = 10;
+    if(num_thread > row){
+        num_thread = row;
+    }
+
+    /*
+    auto train_data  = new ccma::algebra::DenseMatrixT<real>[num_thread];
+    auto train_label = new ccma::algebra::DenseMatrixT<real>[num_thread];
+
+    for(uint i = 0; i < row; i++){
+        mini_batch_data->get_row_data(i, &train_data[i % num_thread]);
+        mini_batch_label->get_row_data(i, &train_label[i % num_thread]);
+
+        if(i % num_thread == num_thread - 1 || i == row - 1){
+            uint size = i % num_thread + 1;
+            for(uint k = 0; k < size; k++){
+//                std::thread t();
+            }
+        }
+    }
+
+    delete[] train_data;
+    delete[] train_label;
+    */
+
     auto train_data     = new ccma::algebra::DenseMatrixT<real>();
     auto train_label    = new ccma::algebra::DenseMatrixT<real>();
 
@@ -196,8 +222,9 @@ bool DNN::mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch_data,
     delete train_data;
     delete train_label;
 
+
     //batch update with average grad
-    for(int i = 0; i < weight_size; i++){
+    for(uint i = 0; i < weight_size; i++){
         batch_weights[i]->multiply(eta);
         batch_weights[i]->division(mini_batch_data->get_rows());
         _weights[i]->subtract(batch_weights[i]);

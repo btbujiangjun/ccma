@@ -35,7 +35,9 @@ int main(int argc, char** argv){
 
     dnn->sgd(train_data, train_label, 30, 3, 30, test_data, test_label);
 
-    delete train_data, train_label;
-    delete test_data, test_label;
+    delete train_data;
+    delete train_label;
+    delete test_data;
+    delete test_label;
     delete dnn;
 }
