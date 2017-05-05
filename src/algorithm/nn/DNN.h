@@ -53,7 +53,7 @@ public:
     int evaluate(ccma::algebra::BaseMatrixT<real>* test_data, ccma::algebra::BaseMatrixT<real>* test_label);
 
 private:
-    bool mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch_data,
+    void mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch_data,
                            ccma::algebra::BaseMatrixT<real>* mini_batch_label,
                            real eta);
 

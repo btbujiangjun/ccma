@@ -52,8 +52,8 @@ bool DNN::sgd(ccma::algebra::BaseMatrixT<real>* train_data,
               ccma::algebra::BaseMatrixT<real>* test_data,
               ccma::algebra::BaseMatrixT<real>* test_label){
 
-    int num_train_data = train_data->get_rows();
-    int num_test_data = 0;
+    uint num_train_data = train_data->get_rows();
+    uint num_test_data = 0;
     if(test_data != nullptr){
         num_test_data = test_data->get_rows();
     }
@@ -159,7 +159,7 @@ int DNN::evaluate(ccma::algebra::BaseMatrixT<real>* test_data, ccma::algebra::Ba
     return num;
 }
 
-bool DNN::mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch_data,
+void DNN::mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch_data,
                             ccma::algebra::BaseMatrixT<real>* mini_batch_label,
                             real eta){
 
