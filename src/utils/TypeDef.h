@@ -27,7 +27,7 @@ namespace utils{
     #define MIN_REAL FLT_MIN;
 #endif
 
-typedef size_t uint;
+//typedef size_t uint;
 #define MAX_INT INT_MAX;
 #define MIN_INT INT_MIN;
 
@@ -68,6 +68,6 @@ T get_min_value(){
 }//namespace ccma
 
 using ccma::utils::real;
-using ccma::utils::uint;
+//using ccma::utils::uint;
 
 #endif //_CCMA_UTILS_TYPEDEF_H_

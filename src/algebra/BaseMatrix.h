@@ -11,6 +11,7 @@
 
 #include <cmath>
 #include <thread>
+#include <iostream>
 #include <string.h>
 #include <unordered_map>
 #include "utils/TypeDef.h"
@@ -402,8 +403,8 @@ public:
                         const uint cols);
     ~LabeledDenseMatrixT();
 
-    inline T get_label(const uint idx) const{
-        uint index = idx;
+    inline T get_label(const int idx) const{
+        int index = idx;
         if(index < 0){
             index += this->_rows;
         }
@@ -415,8 +416,8 @@ public:
         }
     }
 
-    inline uint get_feature_name(const uint idx) const{
-        uint index = idx;
+    inline uint get_feature_name(const int idx) const{
+        int index = idx;
         if(index < 0){
             index += this->_rows;
         }
