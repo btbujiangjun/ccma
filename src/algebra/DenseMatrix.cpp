@@ -166,12 +166,14 @@ bool DenseMatrixT<T>::extend(BaseMatrixT<T>* mat){
     }
 
     T* data = new T[this->_rows * (this->_cols + col)];
-    for(int i = 0; i < this->_rows; i++){
+    for(uint i = 0; i < this->_rows; i++){
         memcpy(&data[i * (this->_cols + col)], &_data[i * this->_cols], sizeof(T) * this->_cols);
         memcpy(&data[(i+1) * (this->_cols + col) - this->_cols], &mat->get_data()[i * col], sizeof(T) * col);
     }
 
     set_shallow_data(data, this->_rows, (this->_cols + col));
+
+    return true;
 }
 
 
@@ -1003,11 +1005,11 @@ void LabeledDenseMatrixT<T>::clear_cache(){
 template<class T>
 bool LabeledDenseMatrixT<T>::operator==(LabeledDenseMatrixT<T>* mat){
     if(this->_rows == mat->get_rows() && this->_cols == mat->get_cols()){
-        for(int i = 0; i < this->_rows; i++){
+        for(uint i = 0; i < this->_rows; i++){
             if(this->get_label(i) == mat->get_label(i)){
                 return false;
             }
-            for(int j = 0; j < this->_cols; j++){
+            for(uint j = 0; j < this->_cols; j++){
                 if(this->get_data(i, j) != this->get_data(i, j)){
                     return false;
                 }
