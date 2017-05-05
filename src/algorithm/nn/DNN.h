@@ -41,9 +41,9 @@ public:
 
     bool sgd(ccma::algebra::BaseMatrixT<real>* train_data,
              ccma::algebra::BaseMatrixT<real>* train_label,
-             int epochs,
+             uint epochs,
              real eta,
-             int mini_batch_size = 1,
+             uint mini_batch_size = 1,
              ccma::algebra::BaseMatrixT<real>* test_data = nullptr,
              ccma::algebra::BaseMatrixT<real>* test_label = nullptr);
 
