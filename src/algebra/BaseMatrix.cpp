@@ -8,6 +8,8 @@
 
 #include "BaseMatrix.h"
 #include <cmath>
+#include <vector>
+#include <thread>
 
 namespace ccma{
 namespace algebra{
@@ -38,13 +40,35 @@ bool BaseMatrixT<T>::add(BaseMatrixT<T>* mat){
     T* data_a = get_data();
     T* data_b = mat->get_data();
 
-    if(!is_diff_rows){
-        for(uint i = 0; i < size; i++){
-            data_a[i] += data_b[i];
+    uint num_thread = get_num_thread(size);
+    if(num_thread == 1){
+        if(!is_diff_rows){
+            for(uint i = 0; i < size; i++){
+                data_a[i] += data_b[i];
+            }
+        }else{
+            for(uint i = 0; i < size; i++){
+                data_a[i] += data_b[i % col];
+            }
         }
     }else{
-        for(uint i = 0; i < size; i++){
-            data_a[i] += data_b[i % col];
+        uint block_size = size % num_thread == 0 ? size / num_thread : (size / num_thread + 1);
+
+//        printf("threads[%d]-block_size[%d]\n", num_thread, block_size);
+
+        std::vector<std::thread> threads(num_thread);
+        for(uint i = 0; i < num_thread; i++){
+            threads[i] = std::thread(
+                    [&data_a, &data_b](uint start_idx, uint end_idx){
+                            for(uint ti = start_idx; ti < end_idx; ti++){
+                                data_a[ti] += data_b[ti];
+                            }
+                        }, i * block_size , ((i+1) * block_size >= size) ? size : (i + 1) * block_size
+                    );
+        }
+
+        for(auto& thread : threads){
+            thread.join();
         }
     }
 
@@ -129,23 +153,36 @@ bool BaseMatrixT<T>::sigmoid(){
     T one       = static_cast<T>(1);
     T* data     = get_data();
 
+    /*
     for(uint i = 0; i < size; i++){
         data[i] = one / (one + std::exp(-data[i]));
     }
+    */
 
     uint num_thread = get_num_thread(size);
-    uint block_size = (size % num_thread == 0) ? size / num_thread : (size / num_thread + 1);
+    if(num_thread == 1){
+        for(uint i = 0; i < size; i++){
+            data[i] = one / (one + std::exp(-data[i]));
+        }
+    }else{
+        uint block_size = (size % num_thread == 0) ? size / num_thread : (size / num_thread + 1);
 
-    std::vector<std::thread> threads(num_thread);
-    for(uint i = 0; i < num_thread; i++){
-        threads[i] = std::thread([&data, &one](uint start_idx, uint end_idx){
-                                        for(uint ti = start_idx; ti < end_idx; ti++){
-                                            data[ti] = one / (one + std::exp(-data[ti]));
-                                        }
-                                    }, i * block_size, (i + 1) * block_size > size ? size : (i + 1) * block_size;
-                                );
+        printf("threads[%d]-block size[%d]\n", num_thread, block_size);
+
+        std::vector<std::thread> threads(num_thread);
+        for(uint i = 0; i < num_thread; i++){
+            threads[i] = std::thread([&data, &one](uint start_idx, uint end_idx){
+                                            for(uint ti = start_idx; ti < end_idx; ti++){
+                                                data[ti] = one / (one + std::exp(-data[ti]));
+                                            }
+                                        }, i * block_size, ((i + 1) * block_size > size) ? size : (i + 1) * block_size
+                                    );
+        }
+
+        for(auto& thread : threads){
+            thread.join();
+        }
     }
-
     return true;
 }
 
