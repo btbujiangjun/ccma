@@ -84,7 +84,8 @@ bool ClassificationAndRegressionTree::choose_best_split(ccma::algebra::LabeledDe
 
             mat->binary_split(i, split_value, lmat, rmat);
             if(lmat->get_rows() < min_sub_mat_rows || rmat->get_rows() < min_sub_mat_rows){
-                delete lmat, rmat;
+                delete lmat;
+		delete rmat;
                 continue;
             }
 
@@ -95,7 +96,8 @@ bool ClassificationAndRegressionTree::choose_best_split(ccma::algebra::LabeledDe
                 best_var_value = var_sum;
             }
 
-            delete lmat, rmat;
+            delete lmat;
+	    delete rmat;
         }
     }
 
@@ -127,7 +129,10 @@ bool ClassificationAndRegressionTree::linear_regression(ccma::algebra::LabeledDe
 
     T det = 0;
     if(!xTx->det(&det) || det == static_cast<T>(0)){
-        delete x, y, xT, xTx;
+        delete x;
+	delete y;
+	delete xT;
+	delete xTx;
         return false;
     }
 
@@ -162,7 +167,11 @@ bool ClassificationAndRegressionTree::model_error(ccma::algebra::LabeledDenseMat
 
         *error = y_diff->sum();
 
-        delete weights, x, y, y_predict, y_diff;
+        delete weights;
+	delete x;
+	delete y;
+	delete y_predict;
+	delete y_diff;
 
         return true;
     }

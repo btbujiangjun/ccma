@@ -28,13 +28,20 @@ bool LinearRegression::standard_regression(ccma::algebra::LabeledDenseMatrixT<T>
 
     ccma::algebra::BaseMatrixT<T>* xTx = new ccma::algebra::DenseMatrixT<T>();
     if(_helper->dot(xT, x, xTx)){
-        delete x, y, xT, xTx;
+        delete x;
+	delete y;
+	delete xT;
+	delete xTx;
         return false;
     }
 
     ccma::algebra::BaseMatrixT<real>* xTxI = new ccma::algebra::DenseMatrixT<real>();
     if(!xTx->inverse(xTxI)){
-        delete x, y, xT, xTx, xTxI;
+        delete x;
+	delete y;
+	delete xT;
+	delete xTx;
+	delete xTxI;
         return false;
     }
 
@@ -42,7 +49,12 @@ bool LinearRegression::standard_regression(ccma::algebra::LabeledDenseMatrixT<T>
     _helper->dot(xT, y, xTy);
     _helper->dot(xTxI, xTy, weights);
 
-    delete x, y, xT, xTx, xTy, xTxI;
+    delete x;
+    delete y;
+    delete xT;
+    delete xTx;
+    delete xTy;
+    delete xTxI;
 
     return true;
 }
@@ -88,7 +100,10 @@ bool LinearRegression::local_weight_logistic_regression(ccma::algebra::LabeledDe
 
             //personalized weight for every train data with gaussian kernal
             weight->set_data(exp((real)diff_mat_diff_mat_t->get_data(0, 0) / (-2.0 * k * k)), j, j);
-            delete train_row_mat, diff_mat, diff_mat_t, diff_mat_diff_mat_t;
+            delete train_row_mat;
+	    delete diff_mat;
+	    delete diff_mat_t;
+	    delete diff_mat_diff_mat_t;
         }
 
         ccma::algebra::DenseMatrixT<real>* weight_x = new ccma::algebra::DenseMatrixT<real>();
@@ -99,7 +114,12 @@ bool LinearRegression::local_weight_logistic_regression(ccma::algebra::LabeledDe
 
         real det = 0.0;
         if(!xTx->det(&det) || det == 0.0){
-            delete x, y, xT, weight_x, xTx, predict_row_mat;
+            delete x;
+	    delete y;
+	    delete xT;
+	    delete weight_x;
+	    delete xTx;
+	    delete predict_row_mat;
             return false;
         }
 
@@ -120,9 +140,18 @@ bool LinearRegression::local_weight_logistic_regression(ccma::algebra::LabeledDe
 
         labels[i] = predict_mat_i->get_data(0);
 
-        delete  weight_x, xTx, weight_y, xT_weight_y, xTxI, weight_i, predict_mat_i, predict_row_mat;
+        delete weight_x;
+	delete xTx;
+	delete weight_y;
+	delete xT_weight_y;
+	delete xTxI;
+	delete weight_i;
+	delete predict_mat_i;
+	delete predict_row_mat;
     }
-    delete x, y , xT;
+    delete x;
+    delete y;
+    delete xT;
 
     predict_labels->set_shallow_data(labels, predict_data->get_rows(), 1);
 
@@ -152,7 +181,11 @@ bool LinearRegression::ridge_regression(ccma::algebra::LabeledDenseMatrixT<T>* t
 
     real* result;
     if(!eye->det(result) || *result == 0.0){
-        delete x, y, xT, xTx, eye;
+        delete x;
+	delete y;
+	delete xT;
+	delete xTx;
+	delete eye;
 
         return false;
     }
@@ -165,7 +198,13 @@ bool LinearRegression::ridge_regression(ccma::algebra::LabeledDenseMatrixT<T>* t
 
     _helper->dot(eyeI, xTy, weights);
 
-    delete x, y, xT, xTx, eye, eyeI, xTy;
+    delete x;
+    delete y;
+    delete xT;
+    delete xTx;
+    delete eye;
+    delete eyeI;
+    delete xTy;
 
     return true;
 }
