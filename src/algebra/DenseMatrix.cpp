@@ -361,17 +361,17 @@ bool DenseMatrixT<T>::det(T* result){
     }
 
     T sum1 = static_cast<T>(0), sum2 = static_cast<T>(0);
-    for(int i = 0; i < this->_cols; i++){
+    for(uint i = 0; i < this->_cols; i++){
         T s = static_cast<T>(1);
-        for(int j = 0; j < this->_rows; j++){
+        for(uint j = 0; j < this->_rows; j++){
             s *= get_data(j, (i+ j) % this->_rows);
         }
         sum1 += s;
     }
 
-    for(int i = 0; i < this->_cols; i++){
+    for(uint i = 0; i < this->_cols; i++){
         T s = static_cast<T>(1);
-        for(int j = 0; j < this->_rows; j++){
+        for(uint j = 0; j < this->_rows; j++){
             int row = i - j;
             if(row < 0){
                 row += this->_rows;
@@ -470,9 +470,9 @@ bool DenseMatrixT<T>::inverse(BaseMatrixT<real>* result){
     delete eye_mat;
 
     //adjust row
-    for(int i = 0; i < extend_mat->get_rows(); i++){
+    for(uint i = 0; i < extend_mat->get_rows(); i++){
         if(extend_mat->get_data(i, i) == static_cast<T>(0)){
-            int j;
+            uint j;
             for(j = 0; j < extend_mat->get_rows(); j++){
                 if(extend_mat->get_data(j, i) != static_cast<T>(0)){
                     extend_mat->swap_row(i, j);
@@ -486,19 +486,19 @@ bool DenseMatrixT<T>::inverse(BaseMatrixT<real>* result){
     }
 
     //calc extend matrix
-    for(int i = 0; i < extend_mat->get_rows(); i++){
+    for(uint i = 0; i < extend_mat->get_rows(); i++){
 
         //all element div the first element,to make diagonal elemnt is 1
         real diagonal_element = extend_mat->get_data(i, i);
-        for(int j = 0; j < extend_mat->get_cols(); j++){
+        for(uint j = 0; j < extend_mat->get_cols(); j++){
             extend_mat->set_data(extend_mat->get_data(i, j)/diagonal_element, i, j);
         }
 
         //to make the element of other rows in col i is 0
-        for(int m = 0; m < extend_mat->get_rows(); m++){
+        for(uint m = 0; m < extend_mat->get_rows(); m++){
             if(m != i){//skip itself
                 real element = extend_mat->get_data(m, i);
-                for(int n = 0; n < extend_mat->get_cols(); n++){
+                for(uint n = 0; n < extend_mat->get_cols(); n++){
                     extend_mat->set_data(extend_mat->get_data(m, n) - extend_mat->get_data(i, n) * element, m, n);
                 }
             }
@@ -508,8 +508,8 @@ bool DenseMatrixT<T>::inverse(BaseMatrixT<real>* result){
     //calc inverse matrix
     data = new real[this->_rows * this->_cols];
     uint new_data_idx = 0;
-    for(int i = 0; i < extend_mat->get_rows(); i++){
-        for(int j = this->_cols; j < extend_mat->get_cols(); j++){
+    for(uint i = 0; i < extend_mat->get_rows(); i++){
+        for(uint j = this->_cols; j < extend_mat->get_cols(); j++){
             data[new_data_idx++] = extend_mat->get_data(i, j);
         }
     }
@@ -523,8 +523,8 @@ bool DenseMatrixT<T>::inverse(BaseMatrixT<real>* result){
 template<class T>
 bool DenseMatrixT<T>::operator==(BaseMatrixT<T>* mat) const{
     if(this->_rows == mat->get_rows() && this->_cols == mat->get_cols()){
-        int size = this->get_size();
-        for(int i = 0; i < size; i++){
+        uint size = this->get_size();
+        for(uint i = 0; i < size; i++){
             if(_data[i] != mat->get_data(i)){
                 return false;
             }
@@ -538,9 +538,9 @@ bool DenseMatrixT<T>::operator==(BaseMatrixT<T>* mat) const{
 template<class T>
 void DenseMatrixT<T>::display(const std::string& split){
     printf("[%d*%d][\n", this->_rows, this->_cols);
-    for(int i = 0; i < this->_rows; i++){
+    for(uint i = 0; i < this->_rows; i++){
         printf("row[%d][",i);
-        for(int j = 0; j < this->_cols; j++){
+        for(uint j = 0; j < this->_cols; j++){
             printf("%s", std::to_string(get_data(i, j)).c_str());
             if(j != this->_cols - 1){
                 printf("%s", split.c_str());
@@ -557,9 +557,9 @@ std::string* DenseMatrixT<T>::to_string(){
         return _cache_to_string;
     }
     std::string* str = new std::string("[" + std::to_string(this->_rows) + "*"+std::to_string(this->_cols)+"][");
-    for(int i = 0 ; i < this->_rows; i++){
+    for(uint i = 0 ; i < this->_rows; i++){
         str->append("[");
-        for(int j = 0; j < this->_cols; j++){
+        for(uint j = 0; j < this->_cols; j++){
             if(j > 0){
                 str->append(",");
             }
