@@ -249,7 +249,8 @@ bool DenseFileOp::read_data(const std::string& path,
         memcpy(new_label_data, label_data, sizeof(T) * row_cursor);
 
         mat->set_shallow_data(new_data, new_label_data, row_cursor, col_size);
-        delete[] data, label_data;
+        delete[] data;
+	delete[] label_data;
     }else{
         mat->set_shallow_data(data, label_data, row_cursor, col_size);
     }
