@@ -8,11 +8,11 @@ all:
 	g++ -o regression_tree_test -std=c++11 algorithm/tree/TestCART.cpp algorithm/tree/CART.cpp algebra/BaseMatrix.cpp algebra/DenseMatrix.cpp -pthread -g -I ./include/
 	g++ -o DNN_test -std=c++11 algorithm/nn/TestDNN.cpp algorithm/nn/DNN.cpp algebra/BaseMatrix.cpp algebra/DenseMatrix.cpp -g -pthread -Wall -O3 -I ./include/
 clean:
-	rm dense_matrix_test &
-	rm file_op_test &
-	rm MnistHelper_test &
-	rm linear_regress_test &
-	rm logistic_regression_test &
-	rm decision_tree_test &
-	rm regression_tree_test &
-	rm DNN_test &
+	rm -rf dense_matrix_test* &
+	rm -rf file_op_test* &
+	rm -rf MnistHelper_test* &
+	rm -rf linear_regress_test* &
+	rm -rf logistic_regression_test* &
+	rm -rf decision_tree_test* &
+	rm -rf regression_tree_test* &
+	rm -rf DNN_test* &
