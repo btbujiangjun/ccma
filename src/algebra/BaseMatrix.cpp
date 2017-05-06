@@ -52,14 +52,12 @@ bool BaseMatrixT<T>::add(BaseMatrixT<T>* mat){
             }
         }
     }else{
-        uint block_size = size % num_thread == 0 ? size / num_thread : (size / num_thread + 1);
-
-//        printf("threads[%d]-block_size[%d]\n", num_thread, block_size);
+        uint block_size = size % num_thread == 0 ? size/num_thread : (size/num_thread + 1);
 
         std::vector<std::thread> threads(num_thread);
         for(uint i = 0; i < num_thread; i++){
             threads[i] = std::thread(
-                    [&data_a, &data_b](uint start_idx, uint end_idx){
+                    [&data_a, &data_b, i](uint start_idx, uint end_idx){
                             for(uint ti = start_idx; ti < end_idx; ti++){
                                 data_a[ti] += data_b[ti];
                             }
@@ -171,11 +169,11 @@ bool BaseMatrixT<T>::sigmoid(){
 
         std::vector<std::thread> threads(num_thread);
         for(uint i = 0; i < num_thread; i++){
-            threads[i] = std::thread([&data, &one](uint start_idx, uint end_idx){
+            threads[i] = std::thread([&one](T* data, uint start_idx, uint end_idx){
                                             for(uint ti = start_idx; ti < end_idx; ti++){
                                                 data[ti] = one / (one + std::exp(-data[ti]));
                                             }
-                                        }, i * block_size, std::min(size, (i + 1) * block_size)
+                                        }, data, i * block_size, std::min(size, (i + 1) * block_size)
                                     );
         }
 
