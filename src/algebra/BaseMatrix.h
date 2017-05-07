@@ -125,7 +125,7 @@ protected:
     uint _rows;
     uint _cols;
 
-    uint _num_per_thread = 500;
+    uint _num_per_thread = 500000;
 private:
     const uint _num_hardware_concurrency = std::thread::hardware_concurrency();
 };//class BaseMatrixT
