@@ -11,6 +11,7 @@
 #define _CCMA_ALGORITHM_NN_DNN_H_
 
 #include <vector>
+#include <thread>
 #include "algebra/BaseMatrix.h"
 #include "utils/MatrixHelper.h"
 
@@ -57,6 +58,11 @@ private:
                            ccma::algebra::BaseMatrixT<real>* mini_batch_label,
                            real eta);
 
+    void back_propagation_thread(ccma::algebra::BaseMatrixT<real>* train_data,
+                          		 ccma::algebra::BaseMatrixT<real>* train_label,
+                          		 std::vector<ccma::algebra::BaseMatrixT<real>*>* batch_weights,
+                          		 std::vector<ccma::algebra::BaseMatrixT<real>*>* batch_biases);
+
     void back_propagation(ccma::algebra::BaseMatrixT<real>* train_data,
                           ccma::algebra::BaseMatrixT<real>* train_label,
                           std::vector<ccma::algebra::BaseMatrixT<real>*>* out_weights,
@@ -73,9 +79,11 @@ private:
 
     void sigmoid_derivative(ccma::algebra::BaseMatrixT<real>* z);
 private:
-    int _num_layers;
-
+    uint _num_layers;
     std::vector<uint> _sizes;
+
+    const uint _num_hardware_concurrency = std::thread::hardware_concurrency() == 0 ? 2 : std::thread::hardware_concurrency() * 2;
+
     std::vector<ccma::algebra::BaseMatrixT<real>*> _weights;
     std::vector<ccma::algebra::BaseMatrixT<real>*> _biases;
 

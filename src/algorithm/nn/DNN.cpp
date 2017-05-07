@@ -9,7 +9,6 @@
 #include "DNN.h"
 #include <random>
 #include <ctime>
-#include <thread>
 #include "utils/Shuffler.h"
 
 namespace ccma{
@@ -170,31 +169,43 @@ void DNN::mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch_data,
     uint row = mini_batch_data->get_rows();
     uint weight_size = _weights.size();
 
-    uint num_thread = 10;
+    uint num_thread = _num_hardware_concurrency;
     if(num_thread > row){
         num_thread = row;
     }
 
-    /*
-    auto train_data  = new ccma::algebra::DenseMatrixT<real>[num_thread];
-    auto train_label = new ccma::algebra::DenseMatrixT<real>[num_thread];
 
-    for(uint i = 0; i < row; i++){
-        mini_batch_data->get_row_data(i, &train_data[i % num_thread]);
-        mini_batch_label->get_row_data(i, &train_label[i % num_thread]);
 
-        if(i % num_thread == num_thread - 1 || i == row - 1){
-            uint size = i % num_thread + 1;
-            for(uint k = 0; k < size; k++){
-//                std::thread t();
-            }
-        }
+    uint thread_epochs = row / num_thread;
+    if(row % num_thread != 0){
+		thread_epochs += 1;
     }
 
-    delete[] train_data;
-    delete[] train_label;
-    */
+    for(uint i = 0; i < thread_epochs; i++){
+		uint thread_size = num_thread;
+       	if(i == thread_epochs - 1){
+			thread_size = row - i * num_thread;
+		}
 
+		std::vector<std::thread> threads(thread_size);
+    	auto train_data  = new ccma::algebra::DenseMatrixT<real>[thread_size];
+    	auto train_label = new ccma::algebra::DenseMatrixT<real>[thread_size];
+
+		for(uint j = 0; j < thread_size; j++){
+			mini_batch_data->get_row_data(i * num_thread + j, &train_data[j]);
+			mini_batch_label->get_row_data(i * num_thread + j, &train_label[j]);
+			threads[j] = std::thread(std::mem_fn(&DNN::back_propagation_thread), this,&train_data[j], &train_label[j], &batch_weights, &batch_biases);
+		}
+		
+		for(auto& thread : threads){
+			thread.join();
+		}
+
+		delete[] train_data;
+		delete[] train_label;
+	}
+
+	/*
     auto train_data     = new ccma::algebra::DenseMatrixT<real>();
     auto train_label    = new ccma::algebra::DenseMatrixT<real>();
 
@@ -221,7 +232,7 @@ void DNN::mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch_data,
 
     delete train_data;
     delete train_label;
-
+	*/
 
     //batch update with average grad
     for(uint i = 0; i < weight_size; i++){
@@ -236,6 +247,106 @@ void DNN::mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch_data,
 
     clear_parameter(&batch_weights);
     clear_parameter(&batch_biases);
+}
+
+void DNN::back_propagation_thread(ccma::algebra::BaseMatrixT<real>* train_data,
+                           		  ccma::algebra::BaseMatrixT<real>* train_label,
+                           		  std::vector<ccma::algebra::BaseMatrixT<real>*>* batch_weights,
+                           		  std::vector<ccma::algebra::BaseMatrixT<real>*>* batch_biases){
+
+	std::vector<ccma::algebra::BaseMatrixT<real>*> train_weights;
+	std::vector<ccma::algebra::BaseMatrixT<real>*> train_biases;
+    init_parameter(&train_weights, 0.0, &train_biases, 0.0);
+
+    std::vector<ccma::algebra::BaseMatrixT<real>*> zs;
+    std::vector<ccma::algebra::BaseMatrixT<real>*> activations;
+
+    auto activation = new ccma::algebra::DenseMatrixT<real>();
+    train_data->clone(activation);
+
+    auto as = new ccma::algebra::DenseMatrixT<real>();
+    activation->clone(as);
+    activations.push_back(as);//store all activation layer by layer
+
+    //feedforward
+    for(uint i = 0; i < _weights.size(); i++){
+
+        activation->dot(_weights[i]);
+        activation->add(_biases[i]);
+
+        auto a_clone = new ccma::algebra::DenseMatrixT<real>();
+        activation->clone(a_clone);
+        zs.push_back(a_clone);//store all z value(not sigmoid) layer by layer
+
+        activation->sigmoid();
+
+        auto as_clone = new ccma::algebra::DenseMatrixT<real>();
+        activation->clone(as_clone);
+        activations.push_back(as_clone);
+    }
+    delete activation;
+
+    //back pass
+
+    int last_layer = activations.size() - 1;
+
+    auto act = activations[last_layer];
+
+    //last layer, to calc cost func
+    cost_derivative(act, train_label);
+
+    //derivative of the sigmod funtion
+    sigmoid_derivative(zs[last_layer - 1]);
+
+    act->multiply(zs[last_layer - 1]);
+    auto delta = act;
+    train_biases[last_layer - 1]->set_data(delta);
+    delta = train_biases[last_layer - 1];
+
+    act = activations[last_layer - 1];
+    act->transpose();
+    act->dot(delta);
+    train_weights[last_layer - 1]->set_data(act);
+
+    auto mat = new ccma::algebra::DenseMatrixT<real>();
+    auto delta_weight = new ccma::algebra::DenseMatrixT<real>();
+    auto delta_bias = new ccma::algebra::DenseMatrixT<real>();
+
+    for(int i = _weights.size() - 2; i >= 0; i--){
+        sigmoid_derivative(zs[i]);
+
+        _weights[i + 1]->clone(delta_weight);
+        delta_weight->transpose();
+
+        train_biases[i + 1]->clone(delta_bias);
+
+        helper.dot(delta_bias, delta_weight, mat);
+        mat->multiply(zs[i]);
+        train_biases[i]->set_data(mat);
+
+        activations[i]->transpose();
+        helper.dot(activations[i], train_biases[i], mat);
+        train_weights[i]->set_data(mat);
+    }
+
+    delete mat;
+    delete delta_weight;
+    delete delta_bias;
+
+    clear_parameter(&zs);
+    clear_parameter(&activations);
+
+	//add
+	//train_mutex.lock();
+    //sum weights & biases
+    for(uint i = 0; i < _weights.size(); i++){
+		batch_weights->at(i)->add(train_weights[i]);
+        batch_biases->at(i)->add(train_biases[i]);
+    }
+	//train_mutex.unlock();
+
+    clear_parameter(&train_weights);
+    clear_parameter(&train_biases);;
 }
 
 void DNN::back_propagation(ccma::algebra::BaseMatrixT<real>* train_data,
@@ -323,6 +434,8 @@ void DNN::back_propagation(ccma::algebra::BaseMatrixT<real>* train_data,
     clear_parameter(&zs);
     clear_parameter(&activations);
 }
+
+
 void DNN::cost_derivative(ccma::algebra::BaseMatrixT<real>* output_activation, ccma::algebra::BaseMatrixT<real>* y){
     output_activation->subtract(y);
 }
