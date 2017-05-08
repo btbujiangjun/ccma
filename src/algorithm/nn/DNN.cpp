@@ -8,7 +8,6 @@
 
 #include "DNN.h"
 #include <random>
-#include <ctime>
 #include "utils/Shuffler.h"
 
 namespace ccma{
@@ -72,9 +71,11 @@ bool DNN::sgd(ccma::algebra::BaseMatrixT<real>* train_data,
     auto row_data           = new ccma::algebra::DenseMatrixT<real>();
     auto row_label          = new ccma::algebra::DenseMatrixT<real>();
 
+    auto now = []{return std::chrono::system_clock::now();};
+
     for(uint i = 0; i < epochs; i++){
 
-        clock_t start_time = clock();
+        auto start_time = now();
 
         shuffler->shuffle();
 
@@ -94,15 +95,15 @@ bool DNN::sgd(ccma::algebra::BaseMatrixT<real>* train_data,
             }
         }
 
-        clock_t training_time = clock();
-        printf("Epoch %d train runtime: %f ms\n", i, static_cast<double>(training_time - start_time)/CLOCKS_PER_SEC*1000);
+        auto training_time = now();
+        printf("Epoch %d train runtime: %lld ms\n", i, std::chrono::duration_cast<std::chrono::milliseconds>(training_time - start_time).count());
 
         if(num_test_data > 0){
             printf("Epoch %d: %d / %d\n", i, evaluate(test_data, test_label), num_test_data);
-            printf("Epoch %d predict runtime: %f ms\n", i, static_cast<double>(clock() - training_time)/CLOCKS_PER_SEC*1000);
+            printf("Epoch %d predict runtime: %lld ms\n", i, std::chrono::duration_cast<std::chrono::milliseconds>(now() - training_time).count());
         }
 
-        printf("Epoch %d runtime: %f ms\n", i, static_cast<double>(clock() - start_time)/CLOCKS_PER_SEC*1000);
+        printf("Epoch %d runtime: %lld ms\n", i, std::chrono::duration_cast<std::chrono::milliseconds>(now() - start_time).count());
     }
 
     delete row_data;
@@ -174,38 +175,45 @@ void DNN::mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch_data,
         num_thread = row;
     }
 
-
-
+    /*
+     * multithread parallel training
+     */
+    /*
     uint thread_epochs = row / num_thread;
     if(row % num_thread != 0){
-		thread_epochs += 1;
+        thread_epochs += 1;
     }
 
     for(uint i = 0; i < thread_epochs; i++){
-		uint thread_size = num_thread;
-       	if(i == thread_epochs - 1){
-			thread_size = row - i * num_thread;
-		}
+        uint thread_size = num_thread;
+        if(i == thread_epochs - 1){
+            thread_size = row - i * num_thread;
+        }
 
-		std::vector<std::thread> threads(thread_size);
-    	auto train_data  = new ccma::algebra::DenseMatrixT<real>[thread_size];
-    	auto train_label = new ccma::algebra::DenseMatrixT<real>[thread_size];
+        std::vector<std::thread> threads(thread_size);
+        auto train_data  = new ccma::algebra::DenseMatrixT<real>[thread_size];
+        auto train_label = new ccma::algebra::DenseMatrixT<real>[thread_size];
 
-		for(uint j = 0; j < thread_size; j++){
-			mini_batch_data->get_row_data(i * num_thread + j, &train_data[j]);
-			mini_batch_label->get_row_data(i * num_thread + j, &train_label[j]);
-			threads[j] = std::thread(std::mem_fn(&DNN::back_propagation_thread), this,&train_data[j], &train_label[j], &batch_weights, &batch_biases);
-		}
-		
-		for(auto& thread : threads){
-			thread.join();
-		}
+        for(uint j = 0; j < thread_size; j++){
+            mini_batch_data->get_row_data(i * num_thread + j, &train_data[j]);
+            mini_batch_label->get_row_data(i * num_thread + j, &train_label[j]);
+            threads[j] = std::thread(std::mem_fn(&DNN::back_propagation_thread), this,&train_data[j], &train_label[j], &batch_weights, &batch_biases);
+        }
 
-		delete[] train_data;
-		delete[] train_label;
-	}
+        for(auto& thread : threads){
+            thread.join();
+        }
 
-	/*
+        delete[] train_data;
+        delete[] train_label;
+    }
+    */
+
+
+    /*
+     * main thread training
+     */
+
     auto train_data     = new ccma::algebra::DenseMatrixT<real>();
     auto train_label    = new ccma::algebra::DenseMatrixT<real>();
 
@@ -232,7 +240,7 @@ void DNN::mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch_data,
 
     delete train_data;
     delete train_label;
-	*/
+
 
     //batch update with average grad
     for(uint i = 0; i < weight_size; i++){
