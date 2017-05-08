@@ -82,7 +82,7 @@ private:
     uint _num_layers;
     std::vector<uint> _sizes;
 
-    const uint _num_hardware_concurrency = std::thread::hardware_concurrency() == 0 ? 2 : std::thread::hardware_concurrency() * 2;
+    const uint _num_hardware_concurrency = std::thread::hardware_concurrency() == 0 ? 2 : std::thread::hardware_concurrency();
 
     std::vector<ccma::algebra::BaseMatrixT<real>*> _weights;
     std::vector<ccma::algebra::BaseMatrixT<real>*> _biases;
