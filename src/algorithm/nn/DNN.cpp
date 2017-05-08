@@ -170,15 +170,14 @@ void DNN::mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch_data,
     uint row = mini_batch_data->get_rows();
     uint weight_size = _weights.size();
 
+    /*
+     * multithread parallel training
+     */
     uint num_thread = _num_hardware_concurrency;
     if(num_thread > row){
         num_thread = row;
     }
 
-    /*
-     * multithread parallel training
-     */
-    /*
     uint thread_epochs = row / num_thread;
     if(row % num_thread != 0){
         thread_epochs += 1;
@@ -207,13 +206,13 @@ void DNN::mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch_data,
         delete[] train_data;
         delete[] train_label;
     }
-    */
 
 
     /*
      * main thread training
      */
 
+    /*
     auto train_data     = new ccma::algebra::DenseMatrixT<real>();
     auto train_label    = new ccma::algebra::DenseMatrixT<real>();
 
@@ -240,7 +239,7 @@ void DNN::mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch_data,
 
     delete train_data;
     delete train_label;
-
+    */
 
     //batch update with average grad
     for(uint i = 0; i < weight_size; i++){
