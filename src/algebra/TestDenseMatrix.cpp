@@ -61,4 +61,26 @@ int main(int argc, char** argv){
     mat2->display();
 
     delete mat2, mat3;
+
+    const uint size = 200000000;
+    real* add_data1 = new real[size];
+    real* add_data2 = new real[size];
+    for(int i = 0; i != size; i++){
+        add_data1[i] = i;
+        add_data2[i] = i;
+    }
+
+    auto add_mat1 = new ccma::algebra::DenseMatrixT<real>();
+    add_mat1->set_shallow_data(add_data1, 40000, 5000);
+    auto add_mat2 = new ccma::algebra::DenseMatrixT<real>();
+    add_mat2->set_shallow_data(add_data2, 40000, 5000);
+
+    auto now = []{return std::chrono::system_clock::now();};
+    auto s = now();
+    add_mat1->add(add_mat2);
+    add_mat1->add(add_mat2);
+    add_mat1->add(add_mat2);
+    printf("run time:[%lld]\n", std::chrono::duration_cast<std::chrono::milliseconds>(now() - s).count());
+    delete add_mat1;
+    delete add_mat2;
 }
