@@ -55,7 +55,7 @@ bool BaseMatrixT<T>::add(BaseMatrixT<T>* mat){
             block_size += 1;
         }
 
-        printf("size[%d]thread[%d]block_size[%d]\n", size, num_thread, block_size);
+        //printf("size[%d]thread[%d]block_size[%d]\n", size, num_thread, block_size);
         std::vector<std::thread> threads(num_thread);
         for(uint i = 0; i < num_thread; i++){
             threads[i] = std::thread(
