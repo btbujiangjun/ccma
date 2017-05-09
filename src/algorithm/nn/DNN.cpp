@@ -175,7 +175,6 @@ void DNN::mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch_data,
         num_thread = row;
     }
 
-    num_thread = 1;
     if(num_thread > 1){
         //multithread parallel training
         uint thread_epochs = row / num_thread;
@@ -236,7 +235,11 @@ void DNN::mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch_data,
         delete train_label;
     }
 
-    //batch update with average grad
+    /*
+     * batch update with average grad
+     * w_k --> w'_k = w_k - eta/m * batch_weights
+     * b_k --> b'_k = b_k - eta/m * batch_biases
+    */
     for(uint i = 0; i < weight_size; i++){
         batch_weights[i]->multiply(eta);
         batch_weights[i]->division(mini_batch_data->get_rows());
@@ -338,14 +341,11 @@ void DNN::back_propagation_thread(ccma::algebra::BaseMatrixT<real>* train_data,
     clear_parameter(&zs);
     clear_parameter(&activations);
 
-	//add
-	//train_mutex.lock();
     //sum weights & biases
     for(uint i = 0; i < _weights.size(); i++){
-		batch_weights->at(i)->add(train_weights[i]);
+        batch_weights->at(i)->add(train_weights[i]);
         batch_biases->at(i)->add(train_biases[i]);
     }
-	//train_mutex.unlock();
 
     clear_parameter(&train_weights);
     clear_parameter(&train_biases);;
@@ -368,7 +368,10 @@ void DNN::back_propagation(ccma::algebra::BaseMatrixT<real>* train_data,
     activation->clone(as);
     activations.push_back(as);//store all activation layer by layer
 
-    //feedforward
+    /*
+     * feedforward
+     * a_l = sigmoid(w_l * a_l-1 + b_l)
+     */
     for(uint i = 0; i < _weights.size(); i++){
 
         activation->dot(_weights[i]);
@@ -386,23 +389,33 @@ void DNN::back_propagation(ccma::algebra::BaseMatrixT<real>* train_data,
     }
     delete activation;
 
-    //back pass
-
+    /*
+     * backpropagation
+     */
+    /*
+     * L layer(last layer) Error
+     * Error δL = Derivative(Ca) * Derivative(sigmoid(z_L))
+     */
     int last_layer = activations.size() - 1;
-
     auto act = activations[last_layer];
 
-    //last layer, to calc cost func
+    //last layer, to calc cost func derivative
+    //to quadratic cost, it's (a_L - y)
     cost_derivative(act, train_label);
-
-    //derivative of the sigmod funtion
+    //derivative of the sigmod function
     sigmoid_derivative(zs[last_layer - 1]);
-
+    //Derivative(Ca) * Derivative(sigmoid(z_L))
     act->multiply(zs[last_layer - 1]);
+
+    //update bias: Derivative(Cb) = δ, so bias = act;
     auto delta = act;
     out_biases->at(last_layer - 1)->set_data(delta);
     delta = out_biases->at(last_layer - 1);
 
+    /*
+     * Derivative(Cw) = a_in * δ_out
+     * a_in = a_L-1, δ_out = delta
+     */
     act = activations[last_layer - 1];
     act->transpose();
     act->dot(delta);
@@ -412,18 +425,27 @@ void DNN::back_propagation(ccma::algebra::BaseMatrixT<real>* train_data,
     auto delta_weight = new ccma::algebra::DenseMatrixT<real>();
     auto delta_bias = new ccma::algebra::DenseMatrixT<real>();
 
+    /*
+     * δ_l = ( (w_l+1).T * δ_l+1 ) * Derivative(z_l)
+     */
     for(int i = _weights.size() - 2; i >= 0; i--){
-        sigmoid_derivative(zs[i]);
-
-        _weights[i + 1]->clone(delta_weight);
+        _weights[i+1]->clone(delta_weight);//w_l+1
         delta_weight->transpose();
 
-        out_biases->at(i+1)->clone(delta_bias);
+        out_biases->at(i+1)->clone(delta_bias);//δ_l+1
 
         helper.dot(delta_bias, delta_weight, mat);
-        mat->multiply(zs[i]);
-        out_biases->at(i)->set_data(mat);
 
+        sigmoid_derivative(zs[i]);//Derivative(z_l)
+        mat->multiply(zs[i]);
+
+        out_biases->at(i)->set_data(mat);//Derivative(Cb) = δ
+
+        /*
+         * Derivative(Cw) = a_in * δ_out
+         * a_in = a_l-1, δ_out = mat
+         * activations include input layer, so l-1 is i.
+         */
         activations[i]->transpose();
         helper.dot(activations[i], out_biases->at(i), mat);
         out_weights->at(i)->set_data(mat);
