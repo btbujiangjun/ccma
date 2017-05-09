@@ -28,7 +28,7 @@ void DNN::init_networks_weights(){
     //mean & stddev
     std::normal_distribution<real> distribution(0.0, 1.0);
 
-    uint len = _weights.size();
+    int len = _weights.size();
     for(uint i = 0; i < len; i++){
         uint size = _weights[i]->get_size();
         for(uint j = 0; j < size; j++){
@@ -170,76 +170,71 @@ void DNN::mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch_data,
     uint row = mini_batch_data->get_rows();
     uint weight_size = _weights.size();
 
-    /*
-     * multithread parallel training
-     */
     uint num_thread = _num_hardware_concurrency;
     if(num_thread > row){
         num_thread = row;
     }
 
-    uint thread_epochs = row / num_thread;
-    if(row % num_thread != 0){
-        thread_epochs += 1;
-    }
-
-    for(uint i = 0; i < thread_epochs; i++){
-        uint thread_size = num_thread;
-        if(i == thread_epochs - 1){
-            thread_size = row - i * num_thread;
+    num_thread = 1;
+    if(num_thread > 1){
+        //multithread parallel training
+        uint thread_epochs = row / num_thread;
+        if(row % num_thread != 0){
+            thread_epochs += 1;
         }
 
-        std::vector<std::thread> threads(thread_size);
-        auto train_data  = new ccma::algebra::DenseMatrixT<real>[thread_size];
-        auto train_label = new ccma::algebra::DenseMatrixT<real>[thread_size];
+        for(uint i = 0; i < thread_epochs; i++){
+            uint thread_size = num_thread;
+            if(i == thread_epochs - 1){
+                thread_size = row - i * num_thread;
+            }
 
-        for(uint j = 0; j < thread_size; j++){
-            mini_batch_data->get_row_data(i * num_thread + j, &train_data[j]);
-            mini_batch_label->get_row_data(i * num_thread + j, &train_label[j]);
-            threads[j] = std::thread(std::mem_fn(&DNN::back_propagation_thread), this,&train_data[j], &train_label[j], &batch_weights, &batch_biases);
+            std::vector<std::thread> threads(thread_size);
+            auto train_data  = new ccma::algebra::DenseMatrixT<real>[thread_size];
+            auto train_label = new ccma::algebra::DenseMatrixT<real>[thread_size];
+
+            for(uint j = 0; j < thread_size; j++){
+                mini_batch_data->get_row_data(i * num_thread + j, &train_data[j]);
+                mini_batch_label->get_row_data(i * num_thread + j, &train_label[j]);
+                threads[j] = std::thread(std::mem_fn(&DNN::back_propagation_thread), this,&train_data[j], &train_label[j], &batch_weights, &batch_biases);
+            }
+
+            for(auto& thread : threads){
+                thread.join();
+            }
+
+            delete[] train_data;
+            delete[] train_label;
         }
+    }else{
+        //main thread training
+        auto train_data     = new ccma::algebra::DenseMatrixT<real>();
+        auto train_label    = new ccma::algebra::DenseMatrixT<real>();
 
-        for(auto& thread : threads){
-            thread.join();
-        }
+        std::vector<ccma::algebra::BaseMatrixT<real>*> train_weight;
+        std::vector<ccma::algebra::BaseMatrixT<real>*> train_bias;
 
-        delete[] train_data;
-        delete[] train_label;
-    }
+        for(uint i = 0; i < row; i++){
 
+            mini_batch_data->get_row_data(i, train_data);
+            mini_batch_label->get_row_data(i, train_label);
 
-    /*
-     * main thread training
-     */
+            back_propagation(train_data, train_label, &train_weight, &train_bias);
 
-    /*
-    auto train_data     = new ccma::algebra::DenseMatrixT<real>();
-    auto train_label    = new ccma::algebra::DenseMatrixT<real>();
-
-    std::vector<ccma::algebra::BaseMatrixT<real>*> train_weight;
-    std::vector<ccma::algebra::BaseMatrixT<real>*> train_bias;
-
-    for(uint i = 0; i < row; i++){
-
-        mini_batch_data->get_row_data(i, train_data);
-        mini_batch_label->get_row_data(i, train_label);
-
-        back_propagation(train_data, train_label, &train_weight, &train_bias);
-
-        //sum weights & biases
-        for(uint i = 0; i < weight_size; i++){
-            batch_weights[i]->add(train_weight[i]);
-            batch_biases[i]->add(train_bias[i]);
-        }
+            //sum weights & biases
+            for(uint i = 0; i < weight_size; i++){
+                batch_weights[i]->add(train_weight[i]);
+                batch_biases[i]->add(train_bias[i]);
+            }
 
         //clear train_weight & train_bias
-        clear_parameter(&train_weight);
-        clear_parameter(&train_bias);
-    }
+            clear_parameter(&train_weight);
+            clear_parameter(&train_bias);
+        }
 
-    delete train_data;
-    delete train_label;
-    */
+        delete train_data;
+        delete train_label;
+    }
 
     //batch update with average grad
     for(uint i = 0; i < weight_size; i++){
