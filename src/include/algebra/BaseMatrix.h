@@ -273,7 +273,7 @@ protected:
     }
 
     inline void clear_cache(){
-        this->_cache_matrix_det = ccma::utils::get_max_value<T>();
+        _cache_matrix_det = ccma::utils::get_max_value<T>();
 
         if(_cache_to_string != nullptr){
             delete _cache_to_string;
