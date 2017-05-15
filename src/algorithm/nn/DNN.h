@@ -58,15 +58,10 @@ private:
                            ccma::algebra::BaseMatrixT<real>* mini_batch_label,
                            real eta);
 
-    void back_propagation_thread(ccma::algebra::BaseMatrixT<real>* train_data,
-                          		 ccma::algebra::BaseMatrixT<real>* train_label,
-                          		 std::vector<ccma::algebra::BaseMatrixT<real>*>* batch_weights,
-                          		 std::vector<ccma::algebra::BaseMatrixT<real>*>* batch_biases);
-
     void back_propagation(ccma::algebra::BaseMatrixT<real>* train_data,
                           ccma::algebra::BaseMatrixT<real>* train_label,
-                          std::vector<ccma::algebra::BaseMatrixT<real>*>* out_weights,
-                          std::vector<ccma::algebra::BaseMatrixT<real>*>* out_biases);
+                          std::vector<ccma::algebra::BaseMatrixT<real>*>* batch_weights,
+                          std::vector<ccma::algebra::BaseMatrixT<real>*>* batch_biases);
 
     void init_parameter(std::vector<ccma::algebra::BaseMatrixT<real>*>* weight_parameter,
                         real weight_init_value,
