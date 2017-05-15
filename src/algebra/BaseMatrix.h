@@ -242,7 +242,7 @@ protected:
     T* _data;
 
     inline bool check_range(int* idx){
-        int mat_size = this->get_rows() * this->get_cols();
+        int mat_size = this->_rows * this->_cols;
         if(*idx >= 0 && *idx < mat_size){
             return true;
         }else if(*idx < 0 && *idx + mat_size >= 0){
@@ -254,13 +254,13 @@ protected:
     inline bool check_range(int* row, int* col){
         int r = *row, c = *col;
         if(r < 0){
-            r += this->get_rows();
+            r += this->_rows;
         }
         if(c < 0){
-            c += this->get_cols();
+            c += this->_cols;
         }
 
-        if(r >= 0 && r < this->get_rows() && c >= 0 && c < this->get_cols()){
+        if(r >= 0 && r < this->_rows && c >= 0 && c < this->_cols){
             if(*row < 0){
                 *row = r;
             }
