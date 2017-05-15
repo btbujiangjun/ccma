@@ -175,6 +175,9 @@ void DNN::mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch_data,
         num_thread = row;
     }
 
+    auto train_data  = new ccma::algebra::DenseMatrixT<real>[num_thread];
+    auto train_label = new ccma::algebra::DenseMatrixT<real>[num_thread];
+
     if(num_thread > 1){
         //multithread parallel training
         uint thread_epochs = row / num_thread;
@@ -182,58 +185,36 @@ void DNN::mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch_data,
             thread_epochs += 1;
         }
 
+        std::vector<std::thread> threads(num_thread);
+
         for(uint i = 0; i < thread_epochs; i++){
             uint thread_size = num_thread;
             if(i == thread_epochs - 1){
                 thread_size = row - i * num_thread;
             }
 
-            std::vector<std::thread> threads(thread_size);
-            auto train_data  = new ccma::algebra::DenseMatrixT<real>[thread_size];
-            auto train_label = new ccma::algebra::DenseMatrixT<real>[thread_size];
-
             for(uint j = 0; j < thread_size; j++){
                 mini_batch_data->get_row_data(i * num_thread + j, &train_data[j]);
                 mini_batch_label->get_row_data(i * num_thread + j, &train_label[j]);
-                threads[j] = std::thread(std::mem_fn(&DNN::back_propagation_thread), this,&train_data[j], &train_label[j], &batch_weights, &batch_biases);
+                threads[j] = std::thread(std::mem_fn(&DNN::back_propagation), this, &train_data[j], &train_label[j], &batch_weights, &batch_biases);
             }
 
-            for(auto& thread : threads){
-                thread.join();
+            for(uint j = 0; j < thread_size; j++){
+                threads[j].join();
             }
-
-            delete[] train_data;
-            delete[] train_label;
         }
     }else{
         //main thread training
-        auto train_data     = new ccma::algebra::DenseMatrixT<real>();
-        auto train_label    = new ccma::algebra::DenseMatrixT<real>();
-
-        std::vector<ccma::algebra::BaseMatrixT<real>*> train_weight;
-        std::vector<ccma::algebra::BaseMatrixT<real>*> train_bias;
-
         for(uint i = 0; i < row; i++){
+            mini_batch_data->get_row_data(i, &train_data[0]);
+            mini_batch_label->get_row_data(i, &train_label[0]);
 
-            mini_batch_data->get_row_data(i, train_data);
-            mini_batch_label->get_row_data(i, train_label);
-
-            back_propagation(train_data, train_label, &train_weight, &train_bias);
-
-            //sum weights & biases
-            for(uint i = 0; i < weight_size; i++){
-                batch_weights[i]->add(train_weight[i]);
-                batch_biases[i]->add(train_bias[i]);
-            }
-
-        //clear train_weight & train_bias
-            clear_parameter(&train_weight);
-            clear_parameter(&train_bias);
+            back_propagation(&train_data[0], &train_label[0], &batch_weights, &batch_biases);
         }
-
-        delete train_data;
-        delete train_label;
     }
+
+    delete[] train_data;
+    delete[] train_label;
 
     /*
      * batch update with average grad
@@ -254,109 +235,14 @@ void DNN::mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch_data,
     clear_parameter(&batch_biases);
 }
 
-void DNN::back_propagation_thread(ccma::algebra::BaseMatrixT<real>* train_data,
-                           		  ccma::algebra::BaseMatrixT<real>* train_label,
-                           		  std::vector<ccma::algebra::BaseMatrixT<real>*>* batch_weights,
-                           		  std::vector<ccma::algebra::BaseMatrixT<real>*>* batch_biases){
-
-	std::vector<ccma::algebra::BaseMatrixT<real>*> train_weights;
-	std::vector<ccma::algebra::BaseMatrixT<real>*> train_biases;
-    init_parameter(&train_weights, 0.0, &train_biases, 0.0);
-
-    std::vector<ccma::algebra::BaseMatrixT<real>*> zs;
-    std::vector<ccma::algebra::BaseMatrixT<real>*> activations;
-
-    auto activation = new ccma::algebra::DenseMatrixT<real>();
-    train_data->clone(activation);
-
-    auto as = new ccma::algebra::DenseMatrixT<real>();
-    activation->clone(as);
-    activations.push_back(as);//store all activation layer by layer
-
-    //feedforward
-    for(uint i = 0; i < _weights.size(); i++){
-
-        activation->dot(_weights[i]);
-        activation->add(_biases[i]);
-
-        auto a_clone = new ccma::algebra::DenseMatrixT<real>();
-        activation->clone(a_clone);
-        zs.push_back(a_clone);//store all z value(not sigmoid) layer by layer
-
-        activation->sigmoid();
-
-        auto as_clone = new ccma::algebra::DenseMatrixT<real>();
-        activation->clone(as_clone);
-        activations.push_back(as_clone);
-    }
-    delete activation;
-
-    //back pass
-
-    int last_layer = activations.size() - 1;
-
-    auto act = activations[last_layer];
-
-    //last layer, to calc cost func
-    cost_derivative(act, train_label);
-
-    //derivative of the sigmod funtion
-    sigmoid_derivative(zs[last_layer - 1]);
-
-    act->multiply(zs[last_layer - 1]);
-    auto delta = act;
-    train_biases[last_layer - 1]->set_data(delta);
-    delta = train_biases[last_layer - 1];
-
-    act = activations[last_layer - 1];
-    act->transpose();
-    act->dot(delta);
-    train_weights[last_layer - 1]->set_data(act);
-
-    auto mat = new ccma::algebra::DenseMatrixT<real>();
-    auto delta_weight = new ccma::algebra::DenseMatrixT<real>();
-    auto delta_bias = new ccma::algebra::DenseMatrixT<real>();
-
-    for(int i = _weights.size() - 2; i >= 0; i--){
-        sigmoid_derivative(zs[i]);
-
-        _weights[i + 1]->clone(delta_weight);
-        delta_weight->transpose();
-
-        train_biases[i + 1]->clone(delta_bias);
-
-        helper.dot(delta_bias, delta_weight, mat);
-        mat->multiply(zs[i]);
-        train_biases[i]->set_data(mat);
-
-        activations[i]->transpose();
-        helper.dot(activations[i], train_biases[i], mat);
-        train_weights[i]->set_data(mat);
-    }
-
-    delete mat;
-    delete delta_weight;
-    delete delta_bias;
-
-    clear_parameter(&zs);
-    clear_parameter(&activations);
-
-    //sum weights & biases
-    for(uint i = 0; i < _weights.size(); i++){
-        batch_weights->at(i)->add(train_weights[i]);
-        batch_biases->at(i)->add(train_biases[i]);
-    }
-
-    clear_parameter(&train_weights);
-    clear_parameter(&train_biases);;
-}
-
 void DNN::back_propagation(ccma::algebra::BaseMatrixT<real>* train_data,
                            ccma::algebra::BaseMatrixT<real>* train_label,
-                           std::vector<ccma::algebra::BaseMatrixT<real>*>* out_weights,
-                           std::vector<ccma::algebra::BaseMatrixT<real>*>* out_biases){
+                           std::vector<ccma::algebra::BaseMatrixT<real>*>* batch_weights,
+                           std::vector<ccma::algebra::BaseMatrixT<real>*>* batch_biases){
 
-    init_parameter(out_weights, 0.0, out_biases, 0.0);
+    std::vector<ccma::algebra::BaseMatrixT<real>*> train_weights;
+    std::vector<ccma::algebra::BaseMatrixT<real>*> train_biases;
+    init_parameter(&train_weights, 0.0, &train_biases, 0.0);
 
     std::vector<ccma::algebra::BaseMatrixT<real>*> zs;
     std::vector<ccma::algebra::BaseMatrixT<real>*> activations;
@@ -391,8 +277,6 @@ void DNN::back_propagation(ccma::algebra::BaseMatrixT<real>* train_data,
 
     /*
      * backpropagation
-     */
-    /*
      * L layer(last layer) Error
      * Error δL = Derivative(Ca) * Derivative(sigmoid(z_L))
      */
@@ -402,15 +286,15 @@ void DNN::back_propagation(ccma::algebra::BaseMatrixT<real>* train_data,
     //last layer, to calc cost func derivative
     //to quadratic cost, it's (a_L - y)
     cost_derivative(act, train_label);
-    //derivative of the sigmod function
+    //derivative of the sigmoid function
     sigmoid_derivative(zs[last_layer - 1]);
     //Derivative(Ca) * Derivative(sigmoid(z_L))
     act->multiply(zs[last_layer - 1]);
 
     //update bias: Derivative(Cb) = δ, so bias = act;
     auto delta = act;
-    out_biases->at(last_layer - 1)->set_data(delta);
-    delta = out_biases->at(last_layer - 1);
+    train_biases[last_layer - 1]->set_data(delta);
+    delta = train_biases[last_layer - 1];
 
     /*
      * Derivative(Cw) = a_in * δ_out
@@ -419,7 +303,7 @@ void DNN::back_propagation(ccma::algebra::BaseMatrixT<real>* train_data,
     act = activations[last_layer - 1];
     act->transpose();
     act->dot(delta);
-    out_weights->at(last_layer - 1)->set_data(act);
+    train_weights[last_layer - 1]->set_data(act);
 
     auto mat = new ccma::algebra::DenseMatrixT<real>();
     auto delta_weight = new ccma::algebra::DenseMatrixT<real>();
@@ -429,17 +313,17 @@ void DNN::back_propagation(ccma::algebra::BaseMatrixT<real>* train_data,
      * δ_l = ( (w_l+1).T * δ_l+1 ) * Derivative(z_l)
      */
     for(int i = _weights.size() - 2; i >= 0; i--){
-        _weights[i+1]->clone(delta_weight);//w_l+1
+        _weights[i + 1]->clone(delta_weight);//w_l+1
         delta_weight->transpose();
 
-        out_biases->at(i+1)->clone(delta_bias);//δ_l+1
+        train_biases[i + 1]->clone(delta_bias);//δ_l+1
 
         helper.dot(delta_bias, delta_weight, mat);
 
         sigmoid_derivative(zs[i]);//Derivative(z_l)
         mat->multiply(zs[i]);
 
-        out_biases->at(i)->set_data(mat);//Derivative(Cb) = δ
+        train_biases[i]->set_data(mat);//Derivative(Cb) = δ
 
         /*
          * Derivative(Cw) = a_in * δ_out
@@ -447,8 +331,8 @@ void DNN::back_propagation(ccma::algebra::BaseMatrixT<real>* train_data,
          * activations include input layer, so l-1 is i.
          */
         activations[i]->transpose();
-        helper.dot(activations[i], out_biases->at(i), mat);
-        out_weights->at(i)->set_data(mat);
+        helper.dot(activations[i], train_biases[i], mat);
+        train_weights[i]->set_data(mat);
     }
 
     delete mat;
@@ -457,8 +341,16 @@ void DNN::back_propagation(ccma::algebra::BaseMatrixT<real>* train_data,
 
     clear_parameter(&zs);
     clear_parameter(&activations);
-}
 
+    //sum weights & biases
+    for(uint i = 0; i < _weights.size(); i++){
+        batch_weights->at(i)->add(train_weights[i]);
+        batch_biases->at(i)->add(train_biases[i]);
+    }
+
+    clear_parameter(&train_weights);
+    clear_parameter(&train_biases);;
+}
 
 void DNN::cost_derivative(ccma::algebra::BaseMatrixT<real>* output_activation, ccma::algebra::BaseMatrixT<real>* y){
     output_activation->subtract(y);
