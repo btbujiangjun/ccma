@@ -16,7 +16,7 @@ template<class T>
 bool BaseMatrixT<T>::add(const T value){
     uint size = get_size();
     T* data = get_data();
-    for(uint i = 0; i < size; i++){
+    for(uint i = 0; i != size; i++){
         data[i] += value;
     }
     return true;
@@ -41,11 +41,11 @@ bool BaseMatrixT<T>::add(BaseMatrixT<T>* mat){
     uint num_thread = get_num_thread(size);
     if(num_thread == 1){
         if(!is_diff_rows){
-            for(uint i = 0; i < size; i++){
+            for(uint i = 0; i != size; i++){
                 data_a[i] += data_b[i];
             }
         }else{
-            for(uint i = 0; i < size; i++){
+            for(uint i = 0; i != size; i++){
                 data_a[i] += data_b[i % col];
             }
         }
@@ -57,7 +57,7 @@ bool BaseMatrixT<T>::add(BaseMatrixT<T>* mat){
 
         //printf("size[%d]thread[%d]block_size[%d]\n", size, num_thread, block_size);
         std::vector<std::thread> threads(num_thread);
-        for(uint i = 0; i < num_thread; i++){
+        for(uint i = 0; i != num_thread; i++){
             threads[i] = std::thread(
                     [&data_a, &data_b](uint start_idx, uint end_idx){
                             for(uint ti = start_idx; ti < end_idx; ti++){
@@ -79,7 +79,7 @@ template<class T>
 bool BaseMatrixT<T>::subtract(const T value){
     uint size = get_size();
     T* data = get_data();
-    for(uint i = 0; i < size; i++){
+    for(uint i = 0; i != size; i++){
         data[i] -= value;
     }
 
@@ -97,7 +97,7 @@ bool BaseMatrixT<T>::subtract(BaseMatrixT<T>* mat){
     T* data_a = get_data();
     T* data_b = mat->get_data();
 
-    for(uint i = 0; i < size; i++){
+    for(uint i = 0; i != size; i++){
         data_a[i] -= data_b[i];
     }
 
@@ -109,7 +109,7 @@ bool BaseMatrixT<T>::multiply(const T value){
     uint size = get_size();
     T* data = get_data();
 
-    for(uint i = 0; i < size; i++){
+    for(uint i = 0; i != size; i++){
         data[i] *= value;
     }
 
@@ -126,7 +126,7 @@ bool BaseMatrixT<T>::multiply(BaseMatrixT<T>* mat){
     T* data_a = get_data();
     T* data_b = mat->get_data();
 
-    for(uint i = 0; i < size; i++){
+    for(uint i = 0; i != size; i++){
         data_a[i] *= data_b[i];
     }
 
@@ -139,7 +139,7 @@ bool BaseMatrixT<T>::division(const T value){
     uint size   = get_size();
     T* data     = get_data();
 
-    for(uint i = 0; i < size; i++){
+    for(uint i = 0; i != size; i++){
         data[i] /=  value;
     }
 
@@ -161,7 +161,7 @@ bool BaseMatrixT<T>::sigmoid(){
 
     uint num_thread = get_num_thread(size);
     if(num_thread == 1){
-        for(uint i = 0; i < size; i++){
+        for(uint i = 0; i != size; i++){
             data[i] = one / (one + std::exp(-data[i]));
         }
     }else{
@@ -170,9 +170,9 @@ bool BaseMatrixT<T>::sigmoid(){
         printf("threads[%d]-block size[%d]\n", num_thread, block_size);
 
         std::vector<std::thread> threads(num_thread);
-        for(uint i = 0; i < num_thread; i++){
+        for(uint i = 0; i != num_thread; i++){
             threads[i] = std::thread([&data, &one](uint start_idx, uint end_idx){
-                                            for(uint ti = start_idx; ti < end_idx; ti++){
+                                            for(uint ti = start_idx; ti != end_idx; ti++){
                                                 data[ti] = one / (one + std::exp(-data[ti]));
                                             }
                                         }, i * block_size, std::min(size, (i + 1) * block_size)
