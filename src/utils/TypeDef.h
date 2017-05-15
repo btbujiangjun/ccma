@@ -49,10 +49,12 @@ bool ccma_type_compare(){
 
 template<class T>
 T get_max_value(){
-    if(typeid(T) == typeid(int)){
-        return MAX_INT;
+    if(typeid(T) == typeid(float)){
+        return static_cast<T>(FLT_MAX);
+    }else if(typeid(T) == typeid(double)){
+        return static_cast<T>(DBL_MAX);
     }else{
-        return MAX_REAL;
+        return static_cast<T>(INT_MAX);
     }
 }
 template<class T>
