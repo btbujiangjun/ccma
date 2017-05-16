@@ -7,7 +7,7 @@ all:
 	${CC} -o logistic_regression_test -std=c++11 algorithm/regression/TestLogisticRegress.cpp algebra/BaseMatrix.cpp algebra/DenseMatrix.cpp -pthread -g -I ./include/
 	${CC} -o decision_tree_test -std=c++11 algorithm/tree/TestDecisionTree.cpp algorithm/tree/DecisionTree.cpp algebra/BaseMatrix.cpp algebra/DenseMatrix.cpp -pthread -g -I ./include/
 	${CC} -o regression_tree_test -std=c++11 algorithm/tree/TestCART.cpp algorithm/tree/CART.cpp algebra/BaseMatrix.cpp algebra/DenseMatrix.cpp -pthread -g -I ./include/
-	${CC} -o DNN_test -std=c++11 algorithm/nn/TestDNN.cpp algorithm/nn/DNN.cpp algebra/BaseMatrix.cpp algebra/DenseMatrix.cpp -g -pthread -Wall -O3 -I ./include/
+	${CC} -o DNN_test -std=c++11 algorithm/nn/TestDNN.cpp algorithm/nn/DNN.cpp algebra/BaseMatrix.cpp algebra/DenseMatrix.cpp algorithm/nn/Cost.cpp -g -pthread -Wall -O3 -I ./include/
 clean:
 	rm -rf dense_matrix_test* &
 	rm -rf file_op_test* &
