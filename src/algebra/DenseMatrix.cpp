@@ -188,7 +188,7 @@ bool DenseMatrixT<T>::dot(BaseMatrixT<T>* mat){
     uint col_b = mat->get_cols();
 
     if(col_a != row_b){
-        printf("Product Matrix Dim Error[%d:%d][%d:%d]\n", row_a,col_a, row_b, col_b);
+        printf("Dot Matrix Dim Error[%d:%d][%d:%d]\n", row_a,col_a, row_b, col_b);
         return false;
     }
 
@@ -200,12 +200,12 @@ bool DenseMatrixT<T>::dot(BaseMatrixT<T>* mat){
     T* data_a = _data;
     T* data_b = mat->get_data();
 
-    for(uint i = 0; i < row_a; i++){
+    for(uint i = 0; i != row_a; i++){
         a_init_idx = i * col_a;
-        for(j = 0; j < col_b; j++){
+        for(j = 0; j != col_b; j++){
             value = zero;
             a_idx = a_init_idx;
-            for(k = 0; k < col_a; k++){
+            for(k = 0; k != col_a; k++){
                 //a_idx  == i * col_a + k
                 value += data_a[a_idx++] * data_b[k * col_b + j];
             }
