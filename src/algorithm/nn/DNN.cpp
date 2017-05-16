@@ -81,6 +81,10 @@ bool DNN::sgd(ccma::algebra::BaseMatrixT<real>* train_data,
 
         for(uint j = 0; j < num_train_data; j++){
 
+            if( j % 100 == 0){
+                printf("Epoch[%d][%d/%d]training...\r", i, j, num_train_data);
+            }
+
             train_data->get_row_data(shuffler->get_row(j), row_data);
             mini_batch_data->set_row_data(row_data, j % mini_batch_size);
 
@@ -278,32 +282,25 @@ void DNN::back_propagation(ccma::algebra::BaseMatrixT<real>* train_data,
     /*
      * backpropagation
      * L layer(last layer) Error
-     * Error δL = Derivative(Ca) * Derivative(sigmoid(z_L))
+     * Error δL = cost->delta
      */
     int last_layer = activations.size() - 1;
-    auto act = activations[last_layer];
+    auto delta = new ccma::algebra::DenseMatrixT<real>();
 
-    //last layer, to calc cost func derivative
-    //to quadratic cost, it's (a_L - y)
-    cost_derivative(act, train_label);
-    //derivative of the sigmoid function
-    sigmoid_derivative(zs[last_layer - 1]);
-    //Derivative(Ca) * Derivative(sigmoid(z_L))
-    act->multiply(zs[last_layer - 1]);
+    _cost->delta(zs[last_layer -1], activations[last_layer], train_label, delta);
 
-    //update bias: Derivative(Cb) = δ, so bias = act;
-    auto delta = act;
     train_biases[last_layer - 1]->set_data(delta);
-    delta = train_biases[last_layer - 1];
 
     /*
      * Derivative(Cw) = a_in * δ_out
      * a_in = a_L-1, δ_out = delta
      */
-    act = activations[last_layer - 1];
+    auto act = activations[last_layer - 1];
     act->transpose();
     act->dot(delta);
     train_weights[last_layer - 1]->set_data(act);
+
+    delete delta;
 
     auto mat = new ccma::algebra::DenseMatrixT<real>();
     auto delta_weight = new ccma::algebra::DenseMatrixT<real>();
@@ -320,7 +317,7 @@ void DNN::back_propagation(ccma::algebra::BaseMatrixT<real>* train_data,
 
         helper.dot(delta_bias, delta_weight, mat);
 
-        sigmoid_derivative(zs[i]);//Derivative(z_l)
+        _cost->derivative_sigmoid(zs[i]);//Derivative(z_l)
         mat->multiply(zs[i]);
 
         train_biases[i]->set_data(mat);//Derivative(Cb) = δ
@@ -350,25 +347,6 @@ void DNN::back_propagation(ccma::algebra::BaseMatrixT<real>* train_data,
 
     clear_parameter(&train_weights);
     clear_parameter(&train_biases);;
-}
-
-void DNN::cost_derivative(ccma::algebra::BaseMatrixT<real>* output_activation, ccma::algebra::BaseMatrixT<real>* y){
-    output_activation->subtract(y);
-}
-
-void DNN::sigmoid_derivative(ccma::algebra::BaseMatrixT<real>* z){
-
-    //sigmod(z)*(1-sigmod(z))
-    z->sigmoid();
-
-    auto mat = new ccma::algebra::DenseMatrixT<real>();
-    z->clone(mat);
-
-    mat->multiply(-1);
-    mat->add(1);
-    z->multiply(mat);
-
-    delete mat;
 }
 
 void DNN::init_parameter(std::vector<ccma::algebra::BaseMatrixT<real>*>* weight_parameter,
