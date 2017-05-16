@@ -12,6 +12,7 @@
 
 #include <vector>
 #include <thread>
+#include "Cost.h"
 #include "algebra/BaseMatrix.h"
 #include "utils/MatrixHelper.h"
 
@@ -24,6 +25,7 @@ class DNN{
 public:
     DNN(){
          _num_layers = 0;
+         _cost = new CrossEntropyCost();
     }
 
     ~DNN(){
@@ -34,6 +36,8 @@ public:
 
         clear_parameter(&_biases);
         _biases.clear();
+
+        delete _cost;
     }
 
     int add_layer(int neural_size);
@@ -58,15 +62,10 @@ private:
                            ccma::algebra::BaseMatrixT<real>* mini_batch_label,
                            real eta);
 
-    void back_propagation_thread(ccma::algebra::BaseMatrixT<real>* train_data,
-                          		 ccma::algebra::BaseMatrixT<real>* train_label,
-                          		 std::vector<ccma::algebra::BaseMatrixT<real>*>* batch_weights,
-                          		 std::vector<ccma::algebra::BaseMatrixT<real>*>* batch_biases);
-
     void back_propagation(ccma::algebra::BaseMatrixT<real>* train_data,
                           ccma::algebra::BaseMatrixT<real>* train_label,
-                          std::vector<ccma::algebra::BaseMatrixT<real>*>* out_weights,
-                          std::vector<ccma::algebra::BaseMatrixT<real>*>* out_biases);
+                          std::vector<ccma::algebra::BaseMatrixT<real>*>* batch_weights,
+                          std::vector<ccma::algebra::BaseMatrixT<real>*>* batch_biases);
 
     void init_parameter(std::vector<ccma::algebra::BaseMatrixT<real>*>* weight_parameter,
                         real weight_init_value,
@@ -75,12 +74,10 @@ private:
 
     void clear_parameter(std::vector<ccma::algebra::BaseMatrixT<real>*>* parameters);
 
-    void cost_derivative(ccma::algebra::BaseMatrixT<real>* output_activation,ccma::algebra::BaseMatrixT<real>* y);
-
-    void sigmoid_derivative(ccma::algebra::BaseMatrixT<real>* z);
 private:
     uint _num_layers;
     std::vector<uint> _sizes;
+    Cost* _cost;
 
     const uint _num_hardware_concurrency = std::thread::hardware_concurrency() == 0 ? 1 : std::thread::hardware_concurrency();
 
