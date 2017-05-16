@@ -153,12 +153,6 @@ bool BaseMatrixT<T>::sigmoid(){
     T one       = static_cast<T>(1);
     T* data     = get_data();
 
-    /*
-    for(uint i = 0; i < size; i++){
-        data[i] = one / (one + std::exp(-data[i]));
-    }
-    */
-
     uint num_thread = get_num_thread(size);
     if(num_thread == 1){
         for(uint i = 0; i != size; i++){
