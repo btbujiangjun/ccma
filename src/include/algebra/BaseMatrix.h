@@ -78,6 +78,8 @@ public:
     bool sigmoid();
 
     virtual T sum() const = 0;
+    void x_sum();
+    void y_sum();
 
     virtual bool swap(const uint a_row,
                       const uint a_col,
