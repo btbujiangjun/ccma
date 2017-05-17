@@ -49,6 +49,7 @@ public:
              ccma::algebra::BaseMatrixT<real>* train_label,
              uint epochs,
              real eta,
+             real lamda = 0.0,
              uint mini_batch_size = 1,
              ccma::algebra::BaseMatrixT<real>* test_data = nullptr,
              ccma::algebra::BaseMatrixT<real>* test_label = nullptr);
@@ -61,7 +62,9 @@ public:
 private:
     void mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch_data,
                            ccma::algebra::BaseMatrixT<real>* mini_batch_label,
-                           real eta);
+                           real eta,
+                           real lamda,
+                           uint num_train_data);
 
     void back_propagation(ccma::algebra::BaseMatrixT<real>* train_data,
                           ccma::algebra::BaseMatrixT<real>* train_label,
