@@ -46,6 +46,7 @@ bool DNN::sgd(ccma::algebra::BaseMatrixT<real>* train_data,
               ccma::algebra::BaseMatrixT<real>* train_label,
               uint epochs,
               real eta,
+              real lamda,
               uint mini_batch_size,
               ccma::algebra::BaseMatrixT<real>* test_data,
               ccma::algebra::BaseMatrixT<real>* test_label){
@@ -92,7 +93,7 @@ bool DNN::sgd(ccma::algebra::BaseMatrixT<real>* train_data,
             mini_batch_label->set_row_data(row_label, j % mini_batch_size);
 
             if( j % mini_batch_size == mini_batch_size - 1 || j == (num_train_data - 1) ){
-                mini_batch_update(mini_batch_data, mini_batch_label, eta);
+                mini_batch_update(mini_batch_data, mini_batch_label, eta, lamda, num_train_data);
 
                 mini_batch_data->clear_matrix();
                 mini_batch_label->clear_matrix();
@@ -165,7 +166,9 @@ int DNN::evaluate(ccma::algebra::BaseMatrixT<real>* test_data, ccma::algebra::Ba
 
 void DNN::mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch_data,
                             ccma::algebra::BaseMatrixT<real>* mini_batch_label,
-                            real eta){
+                            real eta,
+                            real lamda,
+                            uint n){
 
     std::vector<ccma::algebra::BaseMatrixT<real>*> batch_weights;
     std::vector<ccma::algebra::BaseMatrixT<real>*> batch_biases;
@@ -225,9 +228,11 @@ void DNN::mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch_data,
      * w_k --> w'_k = w_k - eta/m * batch_weights
      * b_k --> b'_k = b_k - eta/m * batch_biases
     */
+    real weight_decay = 1.0 - eta * (lamda / n);
     for(uint i = 0; i < weight_size; i++){
         batch_weights[i]->multiply(eta);
         batch_weights[i]->division(mini_batch_data->get_rows());
+        _weights[i]->multiply(weight_decay);
         _weights[i]->subtract(batch_weights[i]);
 
         batch_biases[i]->multiply(eta);
