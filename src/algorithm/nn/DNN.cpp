@@ -181,7 +181,7 @@ void DNN::mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch_data,
 
     auto train_data  = new ccma::algebra::DenseMatrixT<real>[num_thread];
     auto train_label = new ccma::algebra::DenseMatrixT<real>[num_thread];
-
+    num_thread = 1;
     if(num_thread > 1){
         //multithread parallel training
         uint thread_epochs = row / num_thread;
