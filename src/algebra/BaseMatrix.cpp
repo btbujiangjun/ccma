@@ -32,7 +32,7 @@ bool BaseMatrixT<T>::add(BaseMatrixT<T>* mat){
         return false;
     }
 
-    bool is_diff_rows = (_rows > row);
+    bool is_diff_rows = (_rows != row);
 
     uint size = get_size();
     T* data_a = get_data();
@@ -55,14 +55,19 @@ bool BaseMatrixT<T>::add(BaseMatrixT<T>* mat){
             block_size += 1;
         }
 
-        //printf("size[%d]thread[%d]block_size[%d]\n", size, num_thread, block_size);
         std::vector<std::thread> threads(num_thread);
         for(uint i = 0; i != num_thread; i++){
             threads[i] = std::thread(
-                    [&data_a, &data_b](uint start_idx, uint end_idx){
+                    [&data_a, &data_b, is_diff_rows, col](uint start_idx, uint end_idx){
+                        if(!is_diff_rows){
                             for(uint ti = start_idx; ti < end_idx; ti++){
                                 data_a[ti] += data_b[ti];
                             }
+                        }else{
+                            for(uint ti = start_idx; ti < end_idx; ti++){
+                                data_a[ti] += data_b[ti % col];
+                            }
+                        }
                         }, i * block_size , std::min(size, (i + 1) * block_size)
                     );
         }
@@ -87,8 +92,10 @@ bool BaseMatrixT<T>::subtract(const T value){
 }
 template<class T>
 bool BaseMatrixT<T>::subtract(BaseMatrixT<T>* mat){
-    if( _rows != mat->get_rows() || _cols != mat->get_cols()){
-        printf("Subtract matrix dim Error:[%d-%d][%d-%d]\n", _rows, _cols, mat->get_rows(), mat->get_cols());
+    uint row = mat->get_rows();
+    uint col = mat->get_cols();
+    if((_rows != row && row != 1) || _cols != col){
+        printf("Subtract matrix dim Error:[%d-%d][%d-%d]\n", _rows, _cols, row, col);
         return false;
     }
 
@@ -97,8 +104,15 @@ bool BaseMatrixT<T>::subtract(BaseMatrixT<T>* mat){
     T* data_a = get_data();
     T* data_b = mat->get_data();
 
-    for(uint i = 0; i != size; i++){
-        data_a[i] -= data_b[i];
+    bool is_diff_row = (_rows != row);
+    if(!is_diff_row){
+        for(uint i = 0; i != size; i++){
+            data_a[i] -= data_b[i];
+        }
+    }else{
+        for(uint i = 0; i != size; i++){
+            data_a[i] -= data_b[i % col];
+        }
     }
 
     return true;
@@ -117,8 +131,10 @@ bool BaseMatrixT<T>::multiply(const T value){
 }
 template<class T>
 bool BaseMatrixT<T>::multiply(BaseMatrixT<T>* mat){
-    if(_rows != mat->get_rows() || _cols != mat->get_cols()){
-        printf("multiply matrix dim Error:[%d-%d][%d-%d]\n", _rows, _cols, mat->get_rows(), mat->get_cols());
+    uint row = mat->get_rows();
+    uint col = mat->get_cols();
+    if((_rows != row && row != 1) || _cols != col){
+        printf("multiply matrix dim Error:[%d-%d][%d-%d]\n", _rows, _cols, row, col);
         return false;
     }
 
@@ -126,8 +142,15 @@ bool BaseMatrixT<T>::multiply(BaseMatrixT<T>* mat){
     T* data_a = get_data();
     T* data_b = mat->get_data();
 
-    for(uint i = 0; i != size; i++){
-        data_a[i] *= data_b[i];
+    bool is_diff_row = (_rows != row);
+    if(!is_diff_row){
+        for(uint i = 0; i != size; i++){
+            data_a[i] *= data_b[i];
+        }
+    }else{
+        for(uint i = 0; i != size; i++){
+            data_a[i] *= data_b[i % col];
+        }
     }
 
     return true;
@@ -178,6 +201,34 @@ bool BaseMatrixT<T>::sigmoid(){
         }
     }
     return true;
+}
+
+
+template<class T>
+void BaseMatrixT<T>::x_sum(){
+    if(_rows > 1){
+        T* data = get_data();
+        T* new_data = new T[_cols];
+        for(int i = 0; i != _cols; i++){
+            for(int j = 0; j != _rows; j++){
+                new_data[i] += j * _cols + i;
+            }
+        }
+        set_shallow_data(new_data, 1, _cols);
+    }
+}
+template<class T>
+void BaseMatrixT<T>::y_sum(){
+    if(_cols > 1){
+        T* data = get_data();
+        T* new_data = new T[_rows];
+        for(int i = 0; i != _rows; i++){
+            for(int j = 0; j != _cols; j++){
+                new_data[i] += i * _cols + j;
+            }
+        }
+        set_shallow_data(new_data, _rows, 1);
+    }
 }
 
 
