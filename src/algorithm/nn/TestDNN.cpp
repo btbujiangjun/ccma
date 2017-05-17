@@ -32,7 +32,7 @@ int main(int argc, char** argv){
     auto test_label     = new ccma::algebra::DenseMatrixT<real>();
     helper.read_label("data/mnist/t10k-labels-idx1-ubyte", test_label, -1);
 
-    dnn->sgd(train_data, train_label, 30, 3, 30, test_data, test_label);
+    dnn->sgd(train_data, train_label, 30, 3, 0.1, 30, test_data, test_label);
 
     delete train_data;
     delete train_label;
