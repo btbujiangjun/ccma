@@ -25,7 +25,6 @@ class DNN{
 public:
     DNN(){
          _num_layers = 0;
-//         _cost = new QuadraticCost();
          _cost = new CrossEntropyCost();
     }
 
