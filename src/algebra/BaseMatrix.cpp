@@ -6,7 +6,7 @@
 * Description: Implemention of BaseMatrixT
 **********************************************/
 
-#include "BaseMatrix.h"
+#include "algebra/BaseMatrix.h"
 #include <vector>
 
 namespace ccma{

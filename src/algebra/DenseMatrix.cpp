@@ -6,7 +6,7 @@
 * Description: Dense Data Structure of training/predict data
 **********************************************/
 
-#include "BaseMatrix.h"
+#include "algebra/BaseMatrix.h"
 #include <stdio.h>
 
 namespace ccma{
