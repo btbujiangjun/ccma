@@ -5,7 +5,7 @@
 * Filename: CART.cpp
 * Description: implement classify and regress tree
 **********************************************/
-#include "CART.h"
+#include "algorithm/tree/CART.h"
 
 namespace ccma{
 namespace algorithm{

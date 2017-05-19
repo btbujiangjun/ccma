@@ -6,7 +6,7 @@
 * Description: 
 **********************************************/
 
-#include "DNN.h"
+#include "algorithm/nn/DNN.h"
 #include <random>
 #include "utils/Shuffler.h"
 

@@ -6,7 +6,7 @@
 * Description:  decision tree model
 **********************************************/
 
-#include "DecisionTree.h"
+#include "algorithm/tree/DecisionTree.h"
 
 namespace ccma{
 namespace algorithm{

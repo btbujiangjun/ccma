@@ -5,7 +5,7 @@
 * Filename: LinearRegress.h
 * Description:linear regression
 **********************************************/
-#include "LinearRegress.h"
+#include "algorithm/regression/LinearRegress.h"
 #include <stdio.h>
 #include "utils/MatrixHelper.h"
 

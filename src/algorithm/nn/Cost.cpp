@@ -6,7 +6,7 @@
 * Description: Implemention of nn cost
 **********************************************/
 
-#include "Cost.h"
+#include "algorithm/nn/Cost.h"
 
 namespace ccma{
 namespace algorithm{
