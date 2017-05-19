@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "BaseMatrix.h"
+#include "algebra/BaseMatrix.h"
 
 int main(int argc, char** argv){
     float d[4] =  {1, 3, 2, 5};

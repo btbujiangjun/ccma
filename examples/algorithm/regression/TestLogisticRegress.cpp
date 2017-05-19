@@ -10,7 +10,7 @@
 #include <fstream>
 #include <iostream>
 #include <string.h>
-#include "LogisticRegress.h"
+#include "algorithm/regression/LogisticRegress.h"
 
 int main(int argc, char** argv){
     real* a = new real[300];

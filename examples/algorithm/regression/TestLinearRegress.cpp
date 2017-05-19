@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "utils/FileOp.h"
-#include "LinearRegress.h"
+#include "algorithm/regression/LinearRegress.h"
 
 int main(int argc, char** argv){
     auto lmat = new ccma::algebra::LabeledDenseMatrixT<real>();

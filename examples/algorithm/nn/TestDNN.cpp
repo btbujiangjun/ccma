@@ -6,8 +6,8 @@
 * Description: DNN test
 **********************************************/
 
-#include "DNN.h"
 #include <iostream>
+#include "algorithm/nn/DNN.h"
 #include "utils/MnistHelper.h"
 
 int main(int argc, char** argv){
