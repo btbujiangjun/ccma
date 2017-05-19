@@ -20,7 +20,7 @@ class Shuffler{
 public:
     Shuffler(uint size);
 
-    ~Shuffler();
+    ~Shuffler(){ _shuffler_idx.clear();}
 
     void shuffle();
 
@@ -34,14 +34,9 @@ private:
 
 Shuffler::Shuffler(uint size){
     _size = size;
-    std::vector<int> idx;
-    for(int i = 0; i < _size; i++){
+    for(int i = 0; i != _size; i++){
         _shuffler_idx.push_back(i);
     }
-}
-
-Shuffler::~Shuffler(){
-    _shuffler_idx.clear();
 }
 
 void Shuffler::shuffle(){
@@ -49,7 +44,7 @@ void Shuffler::shuffle(){
     std::random_device rd;
     uint random_idx, value;
 
-    for(int i = _size - 1; i > 0 ; i--){
+    for(int i = _size - 1; i != 0 ; i--){
         random_idx = rd() % i;
         value =  _shuffler_idx[random_idx];
 
