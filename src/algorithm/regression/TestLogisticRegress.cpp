@@ -13,8 +13,6 @@
 #include "LogisticRegress.h"
 
 int main(int argc, char** argv){
-//    real a[15] = {1, 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 2, 1, 0};
-//    real b[5] = {1, 1, 0, 0, 0};
     real* a = new real[300];
     real* b = new real[100];
 
