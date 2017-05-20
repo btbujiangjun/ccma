@@ -19,7 +19,8 @@ int main(int argc, char** argv){
     d1->display();
     d1->extend(d1);
     d1->display();
-    delete d1, dm;
+    delete d1;
+	delete dm;
 
     ccma::algebra::BaseMatrixT<int>* mn = new ccma::algebra::DenseMatrixMNT<int>(2, 3, 5);
     mn->display();
@@ -60,7 +61,8 @@ int main(int argc, char** argv){
     mat2->dot(mat3);
     mat2->display();
 
-    delete mat2, mat3;
+    delete mat2;
+   	delete mat3;
 
     const uint size = 200000000;
     real* add_data1 = new real[size];
