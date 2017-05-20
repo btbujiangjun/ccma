@@ -82,7 +82,7 @@ bool DNN::sgd(ccma::algebra::BaseMatrixT<real>* train_data,
 
         for(uint j = 0; j < num_train_data; j++){
 
-            if( j % 100 == 0){
+            if( j % 1000 == 0){
                 printf("Epoch[%d][%d/%d]training...\r", i, j, num_train_data);
             }
 
