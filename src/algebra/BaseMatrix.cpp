@@ -211,7 +211,7 @@ void BaseMatrixT<T>::x_sum(){
         T* new_data = new T[_cols];
         for(int i = 0; i != _cols; i++){
             for(int j = 0; j != _rows; j++){
-                new_data[i] += j * _cols + i;
+                new_data[i] += data[j * _cols + i];
             }
         }
         set_shallow_data(new_data, 1, _cols);
@@ -224,7 +224,7 @@ void BaseMatrixT<T>::y_sum(){
         T* new_data = new T[_rows];
         for(int i = 0; i != _rows; i++){
             for(int j = 0; j != _cols; j++){
-                new_data[i] += i * _cols + j;
+                new_data[i] += data[i * _cols + j];
             }
         }
         set_shallow_data(new_data, _rows, 1);
