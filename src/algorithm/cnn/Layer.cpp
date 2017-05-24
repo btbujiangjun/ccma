@@ -90,7 +90,17 @@ void ConvolutionLayer::feed_ward(Layer* pre_layer){
         /*
          * sum all of feature maps of pre_layer.
          */
+        auto a = new ccma::algebra::BaseMatrixT<real>();
         for(uint j = 0; j != this->_in_map_size; j++){
+            pre_layer->get_activations()[j]->clone(a);
+        }
+    }
+}
+
+void ConvolutionLayer::convolute(ccma::algebra::BaseMatrixT<real>* mat){
+    real* data = new real[this->_rows * this->_cols];
+    for(uint i = 0; i != this->_rows; i++){
+        for(uint j = 0; j != this->_cols; j++){
         }
     }
 }
