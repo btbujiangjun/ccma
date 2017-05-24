@@ -119,6 +119,8 @@ public:
         _kernal_size = kernal_size;
         _stride = stride;
     }
+private:
+     void convolute();
 
 protected:
     uint _stride;
