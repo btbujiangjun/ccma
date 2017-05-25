@@ -53,6 +53,11 @@ public:
             delete activation;
         }
         _activations.clear();
+
+        for(auto delta : _deltas){
+            delete delta;
+        }
+        _deltas.clear();
     }
 
     virtual bool initialize(Layer* pre_layer) = 0;
@@ -76,6 +81,8 @@ public:
 
     inline std::vector<ccma::algebra::BaseMatrixT<real>*> get_activations(){return _activations;}
 
+    inline std::vector<ccma::algebra::BaseMatrixT<real>*> get_deltas(){return _deltas;}
+
     inline std::vector<ccma::algebra::BaseMatrixT<real>*> get_weights(){return _weights;}
 
     inline void set_bias(ccma::algebra::BaseMatrixT<real>* bias){
@@ -93,7 +100,8 @@ protected:
     uint _out_map_size;/* cur_layer feature map size*/
 
 private:
-    std::vector<ccma::algebra::BaseMatrixT<real>*> activations;
+    std::vector<ccma::algebra::BaseMatrixT<real>*> _activations;
+    std::vector<ccma::algebra::BaseMatrixT<real>*> _deltas;
     std::vector<ccma::algebra::BaseMatrixT<real>*> _weights;
     ccma::algebra::BaseMatrixT<real>* _bias;
 };//class Layer
@@ -101,6 +109,26 @@ private:
 class DataLayer:public Layer{
 public:
     DataLayer(uint rows, uint cols):Layer(rows, cols, 1, 1){}
+    ~DataLayer(){
+        Layer::~Layer();
+        if(_x != nullptr){
+            delete _x;
+            _x = nullptr;
+        }
+    }
+
+    bool set_x(ccma::algebra::BaseMatrixT<real>* x){
+        if(x->get_rows() == this->_rows && x->get_cols()){
+            if(_x != nullptr){
+                delete _x;
+            }
+            _x = x;
+            return true;
+        }
+        return false;
+    }
+private:
+    ccma::algebra::BaseMatrixT<real>* x;
 };//class DataLayer
 
 class SubSamplingLayer:public Layer{
@@ -120,7 +148,7 @@ public:
         _stride = stride;
     }
 private:
-     void convolute();
+     void convolute(ccma::algebra::BaseMatrixT<real>* mat, ccma::algebra::BaseMatrixT<real>* shared_weight);
 
 protected:
     uint _stride;
@@ -129,7 +157,28 @@ protected:
 
 class FullConnectionLayer:public Layer{
 public:
-    FullConnectionLayer(uint rows, uint cols):(rows, cols, 0, 0){}
+    FullConnectionLayer(uint rows):(rows, 0, 0, 1){}
+    ~FullConnectionLayer(){
+        Layer::~Layer();
+        if(_y != nullptr){
+            delete _y;
+            _y = nullptr;
+        }
+    }
+
+    bool set_y(ccma::algebra::BaseMatrixT<real>* y){
+        if(y->get_rows() == _rows){
+            if(_y != nullptr){
+                delete _y;
+            }
+            _y = y;
+            return true;
+        }
+        return false;
+    }
+private:
+    ccma::algebra::BaseMatrixT<real>* _y;
+    ccma::algebra::BaseMatrixT<real>* _error;
 };//class FullConnectionLayer
 
 
