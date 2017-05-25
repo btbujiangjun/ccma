@@ -75,7 +75,8 @@ public:
     bool multiply(BaseMatrixT<T>* mat);
     bool division(const T value);
 
-    bool sigmoid();
+    void sigmoid();
+    void derivative_sigmoid();
 
     virtual T sum() const = 0;
     void x_sum();
@@ -89,6 +90,15 @@ public:
     virtual bool swap_col(const uint a, const uint b) = 0;
 
     virtual void transpose() = 0;
+
+    bool reshape(uint row, uint col){
+        if(row * col == _rows * _cols){
+            _rows = row;
+            _cols = col;
+            return true;
+        }
+        return false;
+    }
 
     virtual void add_x0() = 0;
     virtual void add_x0(BaseMatrixT<T>* result) = 0;
