@@ -170,7 +170,7 @@ bool BaseMatrixT<T>::division(const T value){
 }
 
 template<class T>
-bool BaseMatrixT<T>::sigmoid(){
+void BaseMatrixT<T>::sigmoid(){
 
     uint size   = get_size();
     T one       = static_cast<T>(1);
@@ -200,9 +200,24 @@ bool BaseMatrixT<T>::sigmoid(){
             thread.join();
         }
     }
-    return true;
 }
 
+/*
+ *sigmoid(z) * (1-sigmoid(z)
+ */
+template<class T>
+void BaseMatrixT<T>::derivative_sigmoid(){
+    sigmoid();
+
+    auto clone_mat = new ccma::algebra::DenseMatrixT<T>();
+    this->clone(clone_mat);
+
+    clone_mat->multiply(-1);
+    clone_mat->add(1);
+
+    multiply(clone_mat);
+    delete clone_mat;
+}
 
 template<class T>
 void BaseMatrixT<T>::x_sum(){
