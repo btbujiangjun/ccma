@@ -322,7 +322,8 @@ void DNN::back_propagation(ccma::algebra::BaseMatrixT<real>* train_data,
 
         helper.dot(delta_bias, delta_weight, mat);
 
-        _cost->derivative_sigmoid(zs[i]);//Derivative(z_l)
+        //_cost->derivative_sigmoid(zs[i]);//Derivative(z_l)
+        zs[i]->derivative_sigmoid();//Derivative(z_l)
         mat->multiply(zs[i]);
 
         train_biases[i]->set_data(mat);//Derivative(Cb) = δ
