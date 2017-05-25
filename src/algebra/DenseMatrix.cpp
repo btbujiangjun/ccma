@@ -166,6 +166,13 @@ bool DenseMatrixT<T>::extend(BaseMatrixT<T>* mat){
     uint row = mat->get_rows();
     uint col = mat->get_cols();
 
+    if(this->_rows == 0){
+        T* data = new T[row * col];
+        memcpy(data, mat->get_data(), sizeof(T) * row * col);
+        this->set_shallow_data(data, row, col);
+        return true;
+    }
+
     if(this->_rows != row){
         return false;
     }
