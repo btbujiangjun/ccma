@@ -121,7 +121,7 @@ void ConvolutionLayer::feed_ward(Layer* pre_layer){
         auto a = new ccma::algebra::BaseMatrixT<real>();
         for(uint j = 0; j != this->_in_map_size; j++){
             pre_layer->get_activations()[j]->clone(a);
-            convalute(a, this->get_weights()[i * this->_in_map_size + j]);
+            a->convn(this->get_weights()[i * this->_in_map_size + j], _stride, "valid");
             //sum all feature maps of pre_layer.
             z->add(a);
         }
@@ -162,6 +162,10 @@ void ConvolutionLayer::back_prapagation(Layer* back_layer){
              */
             d->expand(scale, scale);
 
+			/*
+			 * back layer error sharing
+			 */
+			d->division(scale*scale);
             /*
              * delta_l = derivative_sigmoid * delta_l+1(recover dim)
              */
@@ -173,36 +177,6 @@ void ConvolutionLayer::back_prapagation(Layer* back_layer){
         }
     }
 }
-
-void ConvolutionLayer::convolute(ccma::algebra::BaseMatrixT<real>* mat, ccma::algebra::BaseMatrixT<real>* shared_weight){
-    real* data   = new real[this->_rows * this->_cols];
-    memset(data, 0, sizeof(real)*this->_rows * this->_cols);
-
-    uint mat_row = mat->get_rows();
-    uint mat_col = mat->get_cols();
-
-    for(uint i = 0; i != this->_rows; i++){
-        for(uint j = 0; j != this->_cols; j++){
-
-            real sum = 0.0;
-            for(uint k_i = 0; k_i != _kernal_size; k_i++){
-                for(uint k_j = 0; k_j != _kernal_size; k_j++){
-                    uint row = _stride * i + k_i;
-                    uint col = _stride * j + k_j;
-                    //fill 0, so ingore out of mat range
-                    if(row < mat_row && col < mat_col){
-                        sum += mat->get_data(row, col) * shared_weight->get_data(k_i, k_j);
-                    }
-                }
-            }
-            data[i * this->_cols + j] = sum;
-
-        }
-    }
-
-    mat->set_shallow_data(data, this->_rows, this->_col);
-}
-
 
 bool FullConnectionLayer::initialize(Layer* pre_layer){
     _cols = pre_layer->get_rows() * pre_layer->get_cols() * pre_layer->get_out_map_size();
