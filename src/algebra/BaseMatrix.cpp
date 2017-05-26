@@ -246,6 +246,22 @@ void BaseMatrixT<T>::y_sum(){
     }
 }
 
+template<class T>
+void BaseMatrixT<T>::expand(uint row_dim, uint col_dim){
+    if(row_dim > 0 && col_dim > 0){
+        T* data = get_data();
+        T* new_data = new T[_rows * _cols * row_dim * col_dim];
+        uint row = _rows * row_dim;
+        uint col = _cols * col_dim;
+        for(uint i = 0; i != row; i++){
+            for(uint j = 0; j != col; j++){
+                new_data[i * col + j] = data[i/row_dim * _cols + j/col_dim];
+            }
+        }
+        set_shallow_data(new_data, row, col);
+    }
+}
+
 
 template class BaseMatrixT<int>;
 template class BaseMatrixT<real>;
