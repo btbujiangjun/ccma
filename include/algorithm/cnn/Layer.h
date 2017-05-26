@@ -150,8 +150,6 @@ public:
         _kernal_size = kernal_size;
         _stride = stride;
     }
-private:
-     void convolute(ccma::algebra::BaseMatrixT<real>* mat, ccma::algebra::BaseMatrixT<real>* shared_weight);
 
 protected:
     uint _stride;
