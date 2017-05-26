@@ -44,25 +44,14 @@ public:
             _bias = nullptr;
         }
 
-        for(auto weight : _weights){
-            delete weight;
-        }
-        _weights.clear();
-
-        for(auto activation : _activations){
-            delete activation;
-        }
-        _activations.clear();
-
-        for(auto delta : _deltas){
-            delete delta;
-        }
-        _deltas.clear();
+        clear_vector_matrix(&_weights);
+        clear_vector_matrix(&_activations);
+        clear_vector_matrix(&_deltas);
     }
 
-    virtual bool initialize(Layer* pre_layer) = 0;
-    virtual void feed_forward(Layer* pre_layer) = 0;
-    virtual void back_propagation() = 0;
+    virtual bool initialize(Layer* pre_layer = nullptr) = 0;
+    virtual void feed_forward(Layer* pre_layer = nullptr) = 0;
+    virtual void back_propagation(Layer* back_layer = nullptr) = 0;
 
     inline void set_rows(uint rows){_rows = rows;}
     inline uint get_rows(){return _rows;}
@@ -76,6 +65,9 @@ public:
     inline void set_in_map_size(uint in_map_size){_in_map_size = in_map_size;}
     inline uint get_in_map_size(){return _in_map_size;}
 
+    /*
+     * back_layer feature map size
+     */
     inline void set_out_map_size(uint out_map_size){_out_map_size = out_map_size;}
     inline uint get_out_map_size(){return _out_map_size;}
 
@@ -92,6 +84,15 @@ public:
         _bias = bias;
     }
     inline ccma::algebra::BaseMatrixT<real> get_bias(){ return _bias;}
+
+private:
+    void clear_vector_matrix(std::vector<ccma::algebra::BaseMatrixT<real>*>* vec_mat){
+        for(auto mat : vec_mat){
+            delete mat;
+            mat = nullptr;
+        }
+        vec_mat->clear();
+    }
 
 protected:
     uint _rows;
@@ -137,6 +138,8 @@ public:
         _scale = scale;
     }
 
+    uint get_scale(){return _scale;}
+
 protected:
     uint _scale;
 };//class SubsamplingLayer
@@ -163,6 +166,10 @@ public:
         if(_y != nullptr){
             delete _y;
             _y = nullptr;
+        }
+        if(_error != nullptr){
+            delete _error;
+            _error = nullptr;
         }
     }
 
