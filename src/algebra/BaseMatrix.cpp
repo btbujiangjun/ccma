@@ -224,6 +224,8 @@ void BaseMatrixT<T>::x_sum(){
     if(_rows > 1){
         T* data = get_data();
         T* new_data = new T[_cols];
+        memset(new_data, 0, sizeof(T)*_cols);
+
         for(int i = 0; i != _cols; i++){
             for(int j = 0; j != _rows; j++){
                 new_data[i] += data[j * _cols + i];
@@ -237,6 +239,8 @@ void BaseMatrixT<T>::y_sum(){
     if(_cols > 1){
         T* data = get_data();
         T* new_data = new T[_rows];
+        memset(new_data, 0, sizeof(T)*_rows);
+
         for(int i = 0; i != _rows; i++){
             for(int j = 0; j != _cols; j++){
                 new_data[i] += data[i * _cols + j];
@@ -251,6 +255,8 @@ void BaseMatrixT<T>::expand(uint row_dim, uint col_dim){
     if(row_dim * col_dim > 1){//not allowed 0 and all of 1
         T* data = get_data();
         T* new_data = new T[_rows * _cols * row_dim * col_dim];
+        memset(new_data, 0, sizeof(T)*_rows * _cols * row_dim * col_dim);
+
         uint row = _rows * row_dim;
         uint col = _cols * col_dim;
         for(uint i = 0; i != row; i++){
@@ -262,6 +268,70 @@ void BaseMatrixT<T>::expand(uint row_dim, uint col_dim){
     }
 }
 
+template<class T>
+bool BaseMatrixT<T>::convn(ccma::algebra::BaseMatrixT<T>* kernal,
+                           uint stride,
+                           std::string shape){
+    uint kernal_row = kernal->get_rows();
+    uint kernal_col = kernal->get_cols();
+
+    uint data_row;
+    uint data_col;
+
+    T* data;
+    T* new_data;
+    T* src_data = get_data();
+
+    if(shape == "fill" && kernal_row * kernal_col != 1){//padding 0, size is kernel_row - 1 and kernel_col - 1
+        data_row = _rows + 2 * (kernal_row - 1);
+        data_col = _cols + 2 * (kernal_col - 1);
+
+        data = new T[data_row * data_col];
+        memset(data, 0, sizeof(T)*data_row*data_col);
+        for(uint i = 0; i != _rows; i++){
+            memcpy(&data[(i + kernal_row - 1) * data_col + kernal_col - 1], &src_data[i * _cols], sizeof(T)* _cols);
+        }
+
+    }else{//"valid"
+        if(data_row < kernal_row || data_col < kernal_col){
+            printf("Convn error: kernel dim large than mat.\n");
+            return false;
+        }
+        data_row = _rows;
+        data_col = _cols;
+        data     = src_data;
+    }
+
+    uint conv_row = (data_row - kernal_row) % stride == 0 ? (data_row - kernal_row) / stride + 1 : (data_row - kernal_row) / stride + 2;
+    uint conv_col = (data_col - kernal_col) % stride == 0 ? (data_col - kernal_col) / stride + 1 : (data_col - kernal_col) / stride + 2;
+
+    new_data = new T[conv_row * conv_col];
+    T* kernal_data = kernal->get_data();
+
+    for(uint i = 0; i != conv_row; i++){
+        for(uint j = 0; j != conv_col; j++){
+            T sum = 0;
+            for(uint k_i = 0; k_i != kernal_row; k_i++){
+                uint row = i * stride + k_i;
+                for(uint k_j = 0; k_j != kernal_col; k_j++){
+                    uint col = j * stride + k_j;
+                    //skip out of range, in other word, fill 0
+                    if(row < data_row && col < data_col){
+                        T a = data[row * data_col + col];
+                        T b = kernal_data[k_i * kernal_col + k_i];
+                        if(a != 0 && b != 0){
+                            sum += a * b;
+                        }
+                    }
+                }
+            }
+            new_data[i * conv_col + j] = sum;
+        }
+    }
+    this->set_shallow_data(new_data, conv_row, conv_col);
+
+    return true;
+}
 
 template class BaseMatrixT<int>;
 template class BaseMatrixT<real>;
