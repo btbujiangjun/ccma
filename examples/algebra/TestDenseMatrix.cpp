@@ -61,9 +61,13 @@ int main(int argc, char** argv){
     mat2->dot(mat3);
     mat2->display();
 
+    mat2->expand(2,3);
+    mat2->display();
+
     delete mat2;
    	delete mat3;
 
+    /*
     const uint size = 200000000;
     real* add_data1 = new real[size];
     real* add_data2 = new real[size];
@@ -85,4 +89,5 @@ int main(int argc, char** argv){
     printf("run time:[%lld]\n", std::chrono::duration_cast<std::chrono::milliseconds>(now() - s).count());
     delete add_mat1;
     delete add_mat2;
+    */
 }
