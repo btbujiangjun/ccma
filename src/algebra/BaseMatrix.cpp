@@ -248,7 +248,7 @@ void BaseMatrixT<T>::y_sum(){
 
 template<class T>
 void BaseMatrixT<T>::expand(uint row_dim, uint col_dim){
-    if(row_dim > 0 && col_dim > 0){
+    if(row_dim * col_dim > 1){//not allowed 0 and all of 1
         T* data = get_data();
         T* new_data = new T[_rows * _cols * row_dim * col_dim];
         uint row = _rows * row_dim;
