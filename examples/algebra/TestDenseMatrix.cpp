@@ -70,11 +70,15 @@ int main(int argc, char** argv){
     int data_c1[9] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
     int data_c2[4] = {1, 4, 7, 2};
     auto mat_c1 = new ccma::algebra::DenseMatrixT<int>(data_c1, 3, 3);
+    auto mat_c3 = new ccma::algebra::DenseMatrixT<int>();
+	mat_c1->clone(mat_c3);
     auto mat_c2 = new ccma::algebra::DenseMatrixT<int>(data_c2, 2, 2);
     mat_c1->display();
     mat_c2->display();
-    mat_c1->convn(mat_c2);
+    mat_c1->convn(mat_c2, 2);
+	mat_c3->convn(mat_c2,1, "valid");
     mat_c1->display();
+    mat_c3->display();
     /*
     const uint size = 200000000;
     real* add_data1 = new real[size];
