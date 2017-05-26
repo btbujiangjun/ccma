@@ -100,6 +100,8 @@ public:
         return false;
     }
 
+    void expand(uint row_dim, uint col_dim);
+
     virtual void add_x0() = 0;
     virtual void add_x0(BaseMatrixT<T>* result) = 0;
 
