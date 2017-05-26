@@ -102,6 +102,13 @@ public:
 
     void expand(uint row_dim, uint col_dim);
 
+    /*
+     * shape is fill or valid
+     */
+    bool convn(ccma::algebra::BaseMatrixT<T>* kernal,
+               uint stride = 1,
+               std::string shape = "fill");
+
     virtual void add_x0() = 0;
     virtual void add_x0(BaseMatrixT<T>* result) = 0;
 
