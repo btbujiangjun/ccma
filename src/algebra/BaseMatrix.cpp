@@ -318,7 +318,7 @@ bool BaseMatrixT<T>::convn(ccma::algebra::BaseMatrixT<T>* kernal,
                     //skip out of range, in other word, fill 0
                     if(row < data_row && col < data_col){
                         T a = data[row * data_col + col];
-                        T b = kernal_data[k_i * kernal_col + k_i];
+                        T b = kernal_data[k_i * kernal_col + k_j];
                         if(a != 0 && b != 0){
                             sum += a * b;
                         }
