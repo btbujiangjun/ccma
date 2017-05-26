@@ -65,6 +65,7 @@ void SubSamplingLayer::feed_back(Layer* pre_layer){
 
         auto a = pre_layer->get_activations()[i];
         real* data = new real[this->_rows * this->_cols];
+        memset(data, 0, sizeof(real)*this->_rows * this->_cols);
 
         for(uint j = 0; j != this->_rows; j++){
             for(uint k = 0; k != this->_cols; k++){
@@ -82,6 +83,12 @@ void SubSamplingLayer::feed_back(Layer* pre_layer){
         auto activation = new ccma::algebra::BaseMatrixT<real>();
         activation->set_shallow_data(data, this->_rows, this->_cols);
         this->get_activations().push_back(activation);
+    }
+}
+
+void SubSamplingLayer::back_prapagation(Layer* back_layer){
+    if(typeid(*back_layer) == typeid(ConvolutionLayer)){
+        
     }
 }
 
@@ -128,12 +135,49 @@ void ConvolutionLayer::feed_ward(Layer* pre_layer){
 }
 
 void ConvolutionLayer::back_prapagation(Layer* back_layer){
-    for(uint i = 0; i != this->_in_map_size; i++){
+    if(typeid(*back_layer) == typeid(SubSamplingLayer)){
+        for(uint i = 0; i != this->_in_map_size; i++){
+            /*
+             * derivative_sigmoid: 
+             *  sigmoid(z)*(1-sigmoid(z))
+             *  a = sigmoid(z)
+             */
+            auto a1 = new ccma::algebra::DenseMatrixT<real>();
+            auto a2 = new ccma::algebra::DenseMatrixT<real>();
+            back_layer->get_activitions()[i]->clone(a1);
+            a1->clone(a2);
+
+            a2->multiply(-1);
+            a2->add(1);
+            a1->multiply(a2);
+            delete a2;
+
+            auto d = new ccma::algebra::DenseMatrixT<real>();
+            back_layer->get_deltas()[i]->clone(d);
+
+            SubSamplingLayer* sub_layer = (SubSamplingLayer*)back_layer;
+            uint scale = sum_layer->get_scale();
+            /*
+             * subsampling layer reduced matrix dim, so recover it by expand function
+             */
+            d->expand(scale, scale);
+
+            /*
+             * delta_l = derivative_sigmoid * delta_l+1(recover dim)
+             */
+            a1->multiply(d);
+
+            delete d;
+
+            this->_deltas.push_back(a1);
+        }
     }
 }
 
 void ConvolutionLayer::convolute(ccma::algebra::BaseMatrixT<real>* mat, ccma::algebra::BaseMatrixT<real>* shared_weight){
     real* data   = new real[this->_rows * this->_cols];
+    memset(data, 0, sizeof(real)*this->_rows * this->_cols);
+
     uint mat_row = mat->get_rows();
     uint mat_col = mat->get_cols();
 
