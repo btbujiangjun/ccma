@@ -305,7 +305,7 @@ protected:
 private:
     T _cache_matrix_det;
     std::string* _cache_to_string = nullptr;
-};//class tenseMatrixT
+};//class DenseMatrixT
 
 
 template<class T>
