@@ -53,7 +53,6 @@ void DenseMatrixT<T>::clone(BaseMatrixT<T>* out_mat){
 
 template<class T>
 void DenseMatrixT<T>::clear_matrix(){
-    //if(_data != nullptr && this->_rows > 0){
     if(_data != nullptr){
         delete[] _data;
         _data = nullptr;
@@ -70,7 +69,6 @@ void DenseMatrixT<T>::set_data(const T* data,
                                const uint rows,
                                const uint cols){
 
-    //if(_data != nullptr && this->_rows > 0){
     if(_data != nullptr){
         delete[] _data;
         _data = nullptr;
@@ -88,8 +86,6 @@ template<class T>
 void DenseMatrixT<T>::set_shallow_data(T* data,
                                        const uint rows,
                                        const uint cols){
-
-    //if(_data != nullptr && this->_rows > 0){
     if(_data != nullptr){
         delete[] _data;
         _data = nullptr;
@@ -146,7 +142,6 @@ bool DenseMatrixT<T>::set_row_data(BaseMatrixT<T>* mat, const int row_id){
         memcpy(&data[(r + mat->get_rows()) * this->_cols], &_data[this->_cols * r], sizeof(T) * (this->_rows - r) * this->_cols);
     }
 
-    //if(_data != nullptr && this->_rows > 0){
     if(_data != nullptr){
         delete[] _data;
         _data = nullptr;
