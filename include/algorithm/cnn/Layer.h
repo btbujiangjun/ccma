@@ -86,17 +86,17 @@ public:
     }
 
     //delta size equal out_map_size
-    inline void set_delta(uint in_map_id, ccma::algebra::BaseMatrixT<real>* delta){
-        if(_deltas.size() > in_map_id){
-            auto d = _deltas[in_map_id];
+    inline void set_delta(uint out_map_id, ccma::algebra::BaseMatrixT<real>* delta){
+        if(_deltas.size() > out_map_id){
+            auto d = _deltas[out_map_id];
             delete d;
             d = delta;
         }else{
             _deltas.push_back(delta);
         }
     }
-    inline ccma::algebra::BaseMatrixT<real>* get_delta(uint in_map_id){
-        return _deltas[in_map_id];
+    inline ccma::algebra::BaseMatrixT<real>* get_delta(uint out_map_id){
+        return _deltas[out_map_id];
     }
 
     //weight size equal out_map_size * in_map_size
@@ -124,7 +124,7 @@ public:
     inline ccma::algebra::BaseMatrixT<real> get_bias(){ return _bias;}
 
 private:
-    void clear_vector_matrix(std::vector<ccma::algebra::BaseMatrixT<real>*>* vec_mat){
+    inline void clear_vector_matrix(std::vector<ccma::algebra::BaseMatrixT<real>*>* vec_mat){
         for(auto mat : vec_mat){
             delete mat;
             mat = nullptr;
@@ -157,19 +157,9 @@ private:
 class DataLayer:public Layer{
 public:
     DataLayer(uint rows, uint cols):Layer(rows, cols, 1, 1){}
-    ~DataLayer(){
-        Layer::~Layer();
-        if(_x != nullptr){
-            delete _x;
-            _x = nullptr;
-        }
-    }
 
     bool set_x(ccma::algebra::BaseMatrixT<real>* x){
-        if(x->get_rows() == this->_rows && x->get_cols()){
-            if(_x != nullptr){
-                delete _x;
-            }
+        if(x->get_rows() == this->_rows && x->get_cols() == this->_cols){
             _x = x;
             return true;
         }
@@ -208,9 +198,9 @@ public:
     FullConnectionLayer(uint rows):(rows, 0, 0, 1){}
     ~FullConnectionLayer(){
         Layer::~Layer();
-        if(_y != nullptr){
-            delete _y;
-            _y = nullptr;
+        if(_z != nullptr){
+            delete _z;
+            _z = nullptr;
         }
         if(_error != nullptr){
             delete _error;
@@ -220,17 +210,25 @@ public:
 
     bool set_y(ccma::algebra::BaseMatrixT<real>* y){
         if(y->get_rows() == _rows){
-            if(_y != nullptr){
-                delete _y;
-            }
             _y = y;
             return true;
         }
         return false;
     }
+	
+	ccma::algebra::BaseMatrixT<real>* get_z(){
+		return _z;
+	
+	}
+
+	real get_loss() const{
+		return _loss;
+	}
 private:
     ccma::algebra::BaseMatrixT<real>* _y;
+    ccma::algebra::BaseMatrixT<real>* _z;
     ccma::algebra::BaseMatrixT<real>* _error;
+	real _loss;
 };//class FullConnectionLayer
 
 
