@@ -51,7 +51,7 @@ public:
 
     virtual bool initialize(Layer* pre_layer = nullptr) = 0;
     virtual void feed_forward(Layer* pre_layer = nullptr) = 0;
-    virtual void back_propagation(Layer* back_layer = nullptr) = 0;
+    virtual void back_propagation(Layer* pre_layer, Layer* back_layer = nullptr) = 0;
 
     inline void set_rows(uint rows){_rows = rows;}
     inline uint get_rows(){return _rows;}
@@ -66,16 +66,54 @@ public:
     inline uint get_in_map_size(){return _in_map_size;}
 
     /*
-     * back_layer feature map size
+     * current_layer feature map size
      */
     inline void set_out_map_size(uint out_map_size){_out_map_size = out_map_size;}
     inline uint get_out_map_size(){return _out_map_size;}
 
-    inline std::vector<ccma::algebra::BaseMatrixT<real>*> get_activations(){return _activations;}
+    //activation size equal out_map_size
+    inline void set_activation(uint out_map_id, ccma::algebra::BaseMatrixT<real>* activation){
+        if(_activations.size() > out_map_id){
+            auto a = _activations[out_map_id];
+            delete a;
+            a = activation;
+        }else{
+            _activations.push_back(activation);
+        }
+    }
+    inline ccma::algebra::BaseMatrixT<real>* get_activations(uint out_map_id){
+        return _activations[out_map_id];
+    }
 
-    inline std::vector<ccma::algebra::BaseMatrixT<real>*> get_deltas(){return _deltas;}
+    //delta size equal out_map_size
+    inline void set_delta(uint in_map_id, ccma::algebra::BaseMatrixT<real>* delta){
+        if(_deltas.size() > in_map_id){
+            auto d = _deltas[in_map_id];
+            delete d;
+            d = delta;
+        }else{
+            _deltas.push_back(delta);
+        }
+    }
+    inline ccma::algebra::BaseMatrixT<real>* get_delta(uint in_map_id){
+        return _deltas[in_map_id];
+    }
 
-    inline std::vector<ccma::algebra::BaseMatrixT<real>*> get_weights(){return _weights;}
+    //weight size equal out_map_size * in_map_size
+    inline void set_weight(uint out_map_id,
+                           uint in_map_id,
+                           ccma::algebra::BaseMatrixT<real>* weight){
+        if(_weights.size() > out_map_id * this->_in_map_size + in_map_id){
+            auto w = _weights[out_map_id * this->_in_map_size + in_map_id];
+            delete w;
+            w = weight;
+        }else{
+            _weights.push_back(weight);
+        }
+    }
+    inline ccma::algebra::BaseMatrixT<real>* get_weight(uint out_map_id, uint in_map_id){
+        return _weights[out_map_id * this->_in_map_size + in_map_id];
+    }
 
     inline void set_bias(ccma::algebra::BaseMatrixT<real>* bias){
         if(_bias != nullptr){
@@ -94,11 +132,20 @@ private:
         vec_mat->clear();
     }
 
+    /*
+    inline initalize_weight_bias(){
+        _weights = new ccma::algebra::DenseMatrixT<real>()[_out_map_size * _in_map_size];
+        _bias = new ccma::algebra::DenseMatrixT<real>(_out_map_size, 0.0);
+    }
+    */
+
 protected:
     uint _rows;
     uint _cols;
-    uint _in_map_size;/*pre_layer feature map size*/
-    uint _out_map_size;/* cur_layer feature map size*/
+    /*pre_layer feature map size*/
+    uint _in_map_size;
+    /* current_layer feature map size*/
+    uint _out_map_size;
 
 private:
     std::vector<ccma::algebra::BaseMatrixT<real>*> _activations;
