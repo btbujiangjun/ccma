@@ -109,6 +109,13 @@ public:
                uint stride = 1,
                std::string shape = "fill");
 
+    /*
+     * convert dim
+     * 1 is row dim, 2 is col dim
+     */
+    void flipdim(uint dim = 1);
+    void flip180();
+
     virtual void add_x0() = 0;
     virtual void add_x0(BaseMatrixT<T>* result) = 0;
 
