@@ -37,39 +37,45 @@ bool Layers::add_layer(Layer* layer){
 bool DataLayer::initialize(Layer* pre_layer){
     return true;
 }
-void DataLayer::feed_back(Layer* pre_layer){
+void DataLayer::feed_forward(Layer* pre_layer){
+}
+void DataLayer::back_propagation(Layer* pre_layer, Layer* back_layer){
 }
 
 bool SubSamplingLayer::initialize(Layer* pre_layer){
     uint pre_rows = pre_layer->get_rows();
     uint pre_cols = pre_layer->get_cols();
 
-    if(pre_rows%_scale != 0 || pre_cols%_scale != 0){
+    if(pre_rows % _scale != 0 || pre_cols % _scale != 0){
         printf("SubSampling Layer scale error.\n");
         return false;
     }else{
-        this->_rows = pre_rows/_scale;
-        this->_cols = pre_cols/_scale;
+        this->_rows = pre_rows / _scale;
+        this->_cols = pre_cols / _scale;
+        //can't change feature map size.
         this->_in_map_size = this->_out_map_size = pre_layer->get_out_map_size();
         /*
-         * pre_layer, each feature map share a bias.
+         * pre_layer, each feature map share a bias and initialize value is zero.
+         * no pooling weight.
          */
-        set_bias(new ccma::algebra::ColMatrixT<real>(pre_layer->get_out_map_size(), 0.0));
+        set_bias(new ccma::algebra::ColMatrixT<real>(this->_in_map_size, 0.0));
+
         return true;
     }
 }
-void SubSamplingLayer::feed_back(Layer* pre_layer){
-    uint pooling_size = _scale * scale;
+void SubSamplingLayer::feed_forward(Layer* pre_layer){
 
-    for(uint i = 0; i != this->_out_map_size; i++){
+    uint pooling_size = _scale * _scale;
 
-        auto a = pre_layer->get_activations()[i];
+    // in_map size equal out_map size to subsampling layer.
+    for(uint i = 0; i != this->_in_map_size; i++){
+
+        auto a = pre_layer->get_activation(i);
         real* data = new real[this->_rows * this->_cols];
-        memset(data, 0, sizeof(real)*this->_rows * this->_cols);
 
         for(uint j = 0; j != this->_rows; j++){
             for(uint k = 0; k != this->_cols; k++){
-                //mean pooling
+                //average pooling
                 real pooling_value = 0;
                 for(uint m = 0; m != _scale; m++){
                     for(uint n = 0; n != _scale; n++){
@@ -82,13 +88,28 @@ void SubSamplingLayer::feed_back(Layer* pre_layer){
 
         auto activation = new ccma::algebra::BaseMatrixT<real>();
         activation->set_shallow_data(data, this->_rows, this->_cols);
-        this->get_activations().push_back(activation);
+        this->set_activation(i, activation);
     }
 }
-
-void SubSamplingLayer::back_prapagation(Layer* back_layer){
+void SubSamplingLayer::back_propagation(Layer* pre_layer, Layer* back_layer){
     if(typeid(*back_layer) == typeid(ConvolutionLayer)){
-        
+        uint stride = ((ConvolutionLayer*)back_layer)->get_stride();
+        for(uint i = 0 ; i != this->_out_map_size; i++){
+            auto z = new ccma::algebra::DenseMatrixT<real>(this->_rows, this->_cols);
+            for(uint j = 0; j != back_layer->get_in_map_size(); j++){
+                auto d = new ccma::algebra::DenseMatrixT<real>();
+                back_layer->get_deltas(j)->clone(d);
+                auto w = new ccma::algebra::DenseMatrixT<real>();
+                back_layer->get_weight(i, j)->clone(w);
+                w->flip180();
+
+                d->convn(w, stride, "full");
+                z->add(d);
+                delete d;
+                delete w;
+            }
+            this->set_delta(i, z);
+        }
     }
 }
 
@@ -104,8 +125,9 @@ bool ConvolutionLayer::initialize(Layer* pre_layer){
     auto weights = new ccam::algebra::BaseMatrixT<real>(_kernal_size, _kernal_size)[this->_in_map_size * this->_out_map_size];
     for(auto weight : weights){
         //todo random initialize
-        this->get_weights().push_back(weight);
     }
+
+    this->_weights = weights;
     /*
      * feature map shared the same bias of current layer.
      */
@@ -114,14 +136,15 @@ bool ConvolutionLayer::initialize(Layer* pre_layer){
     return true;
 }
 
-void ConvolutionLayer::feed_ward(Layer* pre_layer){
+void ConvolutionLayer::feed_forward(Layer* pre_layer){
 
+    //foreach output feature map
     for(uint i = 0; i != this->_out_map_size; i++){
         auto z = new ccma::algebra::BaseMatrixT<real>(this->_rows, this->_cols);
         auto a = new ccma::algebra::BaseMatrixT<real>();
         for(uint j = 0; j != this->_in_map_size; j++){
-            pre_layer->get_activations()[j]->clone(a);
-            a->convn(this->get_weights()[i * this->_in_map_size + j], _stride, "valid");
+            pre_layer->get_activation(j)->clone(a);
+            a->convn(this->get_weight(i, j), _stride, "valid");
             //sum all feature maps of pre_layer.
             z->add(a);
         }
@@ -130,13 +153,17 @@ void ConvolutionLayer::feed_ward(Layer* pre_layer){
         //if sigmoid activative function.
         z->sigmoid();
 
-        this->get_activations().push_back(z);
+        this->set_activation(i, z);
     }
 }
 
-void ConvolutionLayer::back_prapagation(Layer* back_layer){
+void ConvolutionLayer::back_propagation(Layer* pre_layer, Layer* back_layer){
     if(typeid(*back_layer) == typeid(SubSamplingLayer)){
-        for(uint i = 0; i != this->_in_map_size; i++){
+
+        SubSamplingLayer* sub_layer = (SubSamplingLayer*)back_layer;
+        uint scale = sub_layer->get_scale();
+
+        for(uint i = 0; i != this->_out_map_size; i++){
             /*
              * derivative_sigmoid: 
              *  sigmoid(z)*(1-sigmoid(z))
@@ -144,7 +171,7 @@ void ConvolutionLayer::back_prapagation(Layer* back_layer){
              */
             auto a1 = new ccma::algebra::DenseMatrixT<real>();
             auto a2 = new ccma::algebra::DenseMatrixT<real>();
-            back_layer->get_activitions()[i]->clone(a1);
+            back_layer->get_activition(i)->clone(a1);
             a1->clone(a2);
 
             a2->multiply(-1);
@@ -152,28 +179,30 @@ void ConvolutionLayer::back_prapagation(Layer* back_layer){
             a1->multiply(a2);
             delete a2;
 
-            auto d = new ccma::algebra::DenseMatrixT<real>();
-            back_layer->get_deltas()[i]->clone(d);
+            auto delta = new ccma::algebra::DenseMatrixT<real>();
+            back_layer->get_delta(i)->clone(delta);
 
-            SubSamplingLayer* sub_layer = (SubSamplingLayer*)back_layer;
-            uint scale = sum_layer->get_scale();
             /*
              * subsampling layer reduced matrix dim, so recover it by expand function
              */
-            d->expand(scale, scale);
+            delta->expand(scale, scale);
 
-			/*
-			 * back layer error sharing
-			 */
-			d->division(scale*scale);
+            /*
+             * back layer error sharing
+             */
+            delta->division(scale*scale);
             /*
              * delta_l = derivative_sigmoid * delta_l+1(recover dim)
              */
-            a1->multiply(d);
+            a1->multiply(delta);
+            delete delta;
 
-            delete d;
+            this->set_delta(i, a1);
 
-            this->_deltas.push_back(a1);
+            //calc grad and update weight/bias
+            for(uint j = 0; j != this->_in_map_size; j++){
+//                auto 
+            }
         }
     }
 }
@@ -185,33 +214,32 @@ bool FullConnectionLayer::initialize(Layer* pre_layer){
     this->set_bias(new ccma::algebra::ColMatrixT<real>(_rows, 0.0));
     auto weight = new ccma::algebra::DenseMatrixT<real>(this->_rows, this->_cols);
     //todo initialize weight
-    this->get_weights().push_back(weight);
+    this->set_weight(1, weight);
     return true;
 }
-
-void FullConnectionLayer::feed_back(Layer* pre_layer){
+void FullConnectionLayer::feed_forward(Layer* pre_layer){
     auto activation = new ccma::algebra::DenseMatrixT<real>();
 
     auto a = new ccma::algebra::BaseMatrixT<real>();
     for(uint i = 0; i != this->_in_map_size; i++){
         auto a = new ccma::algebra::BaseMatrixT<real>();
-        pre_layer->get_activations()[i]->clone(a);
+        pre_layer->get_activation(i)->clone(a);
         a->reshape(1, this->_cols);
         activation->extend(a);
     }
     delete a;
 
     auto z = new ccma::algebra::DenseMatrixT<real>();
-    this->get_weights()[0]->clone(z);
+    this->get_weight(0)->clone(z);
     z->dot(activation);
     z->add(this->get_bias());
     delete activation;
     //if sigmoid activative function
     z->sigmoid();
-    this->get_activations()->push_back(z);
+    this->set_activation(0, z);
 }
 
-void FullConnectionLayer::back_propagation(Layer* back_layer){
+void FullConnectionLayer::back_propagation(Layer* pre_layer, Layer* back_layer){
 }
 
 }//namespace cnn
