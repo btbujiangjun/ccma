@@ -163,6 +163,10 @@ void ConvolutionLayer::back_propagation(Layer* pre_layer, Layer* back_layer){
         SubSamplingLayer* sub_layer = (SubSamplingLayer*)back_layer;
         uint scale = sub_layer->get_scale();
 
+		//todo alpha
+		real alpha = 0.1;
+		real* derivate_bias_data = new real[this->_out_map_size];
+
         for(uint i = 0; i != this->_out_map_size; i++){
             /*
              * derivative_sigmoid: 
@@ -199,11 +203,31 @@ void ConvolutionLayer::back_propagation(Layer* pre_layer, Layer* back_layer){
 
             this->set_delta(i, a1);
 
-            //calc grad and update weight/bias
+            /*
+			 * calc grad and update weight/bias
+			 * only for online learning, if batch learning
+			 * need to average weight and bias
+			 */
             for(uint j = 0; j != this->_in_map_size; j++){
-//                auto 
+                auto derivate_kernal = ccma::algebra::DenseMatrixT<real>();
+				pre_layer->get_activation(j)->clone(derivate_kernal);
+				derivate_kernal->flip180();
+				derivate_kernal->convn(_deltas[i], _stride, "valid");
+				/*
+				 * update grad: w -= alpha * new_w
+				 */
+				derivate_kernal->multiply(alpha);
+				this->get_weight(i, j)->subtract(derivate_kernal);
+				delete derivate_kernal;	
             }
+			//update bias
+			derivate_bias_data[i] = _deltas[i]->sum();
         }
+		auto derivate_bias = new ccma::algebra::DenseMatrixT<real>();
+		derivate_bias->set_shallow_data(derivate_bias_data, this->_in_map_size, i);
+		derivate_bias->multiply(alpha);
+		this->_bias->subtract(derivate_bias);
+		delete derivate_bias;
     }
 }
 
@@ -214,15 +238,16 @@ bool FullConnectionLayer::initialize(Layer* pre_layer){
     this->set_bias(new ccma::algebra::ColMatrixT<real>(_rows, 0.0));
     auto weight = new ccma::algebra::DenseMatrixT<real>(this->_rows, this->_cols);
     //todo initialize weight
-    this->set_weight(1, weight);
+    this->set_weight(0, weight);
     return true;
 }
 void FullConnectionLayer::feed_forward(Layer* pre_layer){
     auto activation = new ccma::algebra::DenseMatrixT<real>();
-
-    auto a = new ccma::algebra::BaseMatrixT<real>();
-    for(uint i = 0; i != this->_in_map_size; i++){
-        auto a = new ccma::algebra::BaseMatrixT<real>();
+    auto a = new ccma::algebra::DenseMatrixT<real>();
+    /*
+	 * convert pre_layer's all feature map mat to a row_mat
+	 */
+	for(uint i = 0; i != this->_in_map_size; i++){
         pre_layer->get_activation(i)->clone(a);
         a->reshape(1, this->_cols);
         activation->extend(a);
@@ -233,13 +258,59 @@ void FullConnectionLayer::feed_forward(Layer* pre_layer){
     this->get_weight(0)->clone(z);
     z->dot(activation);
     z->add(this->get_bias());
-    delete activation;
+    if(_z != nullptr){
+		_z = z;
+	}
     //if sigmoid activative function
-    z->sigmoid();
-    this->set_activation(0, z);
+    z->clone(activation);
+	activation->sigmoid();
+    this->set_activation(0, activation);
 }
 
 void FullConnectionLayer::back_propagation(Layer* pre_layer, Layer* back_layer){
+	if(_error == nullptr){
+		_error = new ccma::algebra::DenseMatrixT<real>();
+	}
+	_activations[0]->clone(_error);
+	_error->subtract(_y);
+
+	/* loss function, mse mean square error
+	 * 1/2 sum(error*error)/size
+	 * the size is 1 right here
+	 */
+	auto mse_mat = new ccma::algebra::DenseMatrixT<real>();
+	_error->clone(mse_mat);
+	mse_mat->multiply(mse_mat);
+	_loss = mse_mat->sum()/2;
+	delete mse_mat;
+
+	/*
+	 * error * derivate_of_output
+	 * derivate_of_output is activation * (1-activation)
+	 */
+	auto derivate_output = ccma::algebra::DenseMatrixT<real>();
+	_activations[0]->clone(derivate_output);
+
+	auto derivate_output_b = ccma::algebra::DenseMatrixT<real>();
+	derivate_output->clone(derivate_output_b);
+	derivate_output_b->multiply(-1);
+	derivate_output_b->add(1);
+
+	derivate_output->multiply(derivate_output_b);
+	derivate_output->multiply(_error);
+	
+	delete derivate_output_b;
+
+	/*
+	 * calc delta: weight * derivate_output
+	 */
+	auto delta = ccma::algebra::DenseMatrixT<real>();
+	this->_weights[0]->clone(delta);
+	delta->transpose();
+	delta->dot(derivate_output);
+	this->set_delta(delta, 0);
+
+	delete derivate_output);
 }
 
 }//namespace cnn
