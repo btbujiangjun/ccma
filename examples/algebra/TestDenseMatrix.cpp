@@ -79,6 +79,25 @@ int main(int argc, char** argv){
 	mat_c3->convn(mat_c2,1, "valid");
     mat_c1->display();
     mat_c3->display();
+    mat_c1->flipdim(1);
+    mat_c1->display();
+    mat_c1->flipdim(2);
+    mat_c1->display();
+    mat_c1->flip180();
+    mat_c1->display();
+    mat_c1->flip180();
+    mat_c1->display();
+    delete mat_c1;
+
+    int conv_data[25] = {17, 24, 1, 8, 15, 23, 5, 7, 14, 16, 4, 6, 13, 20, 22, 10, 12, 19, 21, 3, 11, 18, 25, 2, 9};
+    int kernal_data[9] = {1, 2, 1, 0, 2, 0, 3, 1, 3};
+
+    auto c_mat = new ccma::algebra::DenseMatrixT<int>(conv_data, 5, 5);
+    auto k_mat = new ccma::algebra::DenseMatrixT<int>(kernal_data, 3, 3);
+    c_mat->display();
+    c_mat->convn(k_mat);
+    c_mat->display();
+
     /*
     const uint size = 200000000;
     real* add_data1 = new real[size];
