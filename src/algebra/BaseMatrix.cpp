@@ -306,6 +306,8 @@ bool BaseMatrixT<T>::convn(ccma::algebra::BaseMatrixT<T>* kernal,
     uint conv_col = (data_col - kernal_col) % stride == 0 ? (data_col - kernal_col) / stride + 1 : (data_col - kernal_col) / stride + 2;
 
     new_data = new T[conv_row * conv_col];
+
+    kernal->flip180();
     T* kernal_data = kernal->get_data();
 
     for(uint i = 0; i != conv_row; i++){
@@ -329,9 +331,59 @@ bool BaseMatrixT<T>::convn(ccma::algebra::BaseMatrixT<T>* kernal,
         }
     }
     this->set_shallow_data(new_data, conv_row, conv_col);
+    kernal->flip180();
 
     return true;
 }
+
+template<class T>
+void BaseMatrixT<T>::flipdim(uint dim){
+    T* data = new T[_rows * _cols];
+    T* src_data = this->get_data();
+
+    for(uint i = 0; i != _rows; i++){
+        for(uint j = 0; j != _cols; j++){
+            uint idx;
+            if(dim == 1){//row convert
+                int new_row = i + 1 - _rows;
+                if(new_row < 0){
+                    new_row = -new_row;
+                }
+                idx = new_row * _cols + j;
+            }else{//col convert
+                int new_col = j + 1 - _cols;
+                if(new_col < 0){
+                    new_col = -new_col;
+                }
+                idx = i * _cols + new_col;
+            }
+            data[idx] = src_data[i * _cols + j];
+        }
+    }
+    this->set_shallow_data(data, _rows, _cols);
+}
+
+template<class T>
+void BaseMatrixT<T>::flip180(){
+    T* data = new T[_rows * _cols];
+    T* src_data = this->get_data();
+
+    for(uint i = 0; i != _rows; i++){
+        for(uint j = 0; j != _cols; j++){
+            int new_row = i + 1 - _rows;
+            if(new_row < 0){
+                new_row = -new_row;
+            }
+            int new_col = j + 1 - _cols;
+            if(new_col < 0){
+                new_col = -new_col;
+            }
+            data[new_row * _rows + new_col] = src_data[i * _cols + j];
+        }
+    }
+    this->set_shallow_data(data, _rows, _cols);
+}
+
 
 template class BaseMatrixT<int>;
 template class BaseMatrixT<real>;
