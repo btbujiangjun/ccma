@@ -12,10 +12,8 @@ namespace ccma{
 namespace algorithm{
 namespace cnn{
 
+/*
 bool Layers::add_layer(Layer* layer){
-    /*
-     * the first layer must be DataLayer
-     */
     if(_layer.size() == 0){
         if(typeid(*layer) != typeid(DataLayer)){
             printf("The first layer must be DataLayer.\n");
@@ -33,6 +31,7 @@ bool Layers::add_layer(Layer* layer){
         return false;
     }
 }
+*/
 
 bool DataLayer::initialize(Layer* pre_layer){
     return true;
@@ -110,6 +109,20 @@ void SubSamplingLayer::back_propagation(Layer* pre_layer, Layer* back_layer){
             }
             this->set_delta(i, z);
         }
+    }else if(typeid(*back_layer) == typeid(FullConnectionLayer)){
+        auto av = back_layer->get_av();
+        if(this->_out_map_size * this->_rows * this->_cols == av->get_cols()){
+            real* data = av->get_data();
+            for(int i = 0; i != this->_out_map_size){
+                auto delta = new ccma::algebra::DenseMatrixT<real>();
+                real* d = new real[_rows * _cols];
+                memset(d, &data[i * _rows * _cols], sizeof(real) * _rows * _cols);
+                delta->set_shallow_data(d, _rows, _cols);
+                this->set_delta(delta, i);
+            }
+        }else{
+            printf("SubSamplingLayer back_propagation Size Erorr.\n");
+        }
     }
 }
 
@@ -163,9 +176,9 @@ void ConvolutionLayer::back_propagation(Layer* pre_layer, Layer* back_layer){
         SubSamplingLayer* sub_layer = (SubSamplingLayer*)back_layer;
         uint scale = sub_layer->get_scale();
 
-		//todo alpha
-		real alpha = 0.1;
-		real* derivate_bias_data = new real[this->_out_map_size];
+        //todo alpha
+        real alpha = 0.1;
+        real* derivate_bias_data = new real[this->_out_map_size];
 
         for(uint i = 0; i != this->_out_map_size; i++){
             /*
@@ -190,7 +203,6 @@ void ConvolutionLayer::back_propagation(Layer* pre_layer, Layer* back_layer){
              * subsampling layer reduced matrix dim, so recover it by expand function
              */
             delta->expand(scale, scale);
-
             /*
              * back layer error sharing
              */
@@ -204,30 +216,44 @@ void ConvolutionLayer::back_propagation(Layer* pre_layer, Layer* back_layer){
             this->set_delta(i, a1);
 
             /*
-			 * calc grad and update weight/bias
-			 * only for online learning, if batch learning
-			 * need to average weight and bias
-			 */
+             * calc grad and update weight/bias
+             * only for online learning, if batch learning
+             * need to average weight and bias
+             */
+            auto derivate_kernal = ccma::algebra::DenseMatrixT<real>();
             for(uint j = 0; j != this->_in_map_size; j++){
-                auto derivate_kernal = ccma::algebra::DenseMatrixT<real>();
-				pre_layer->get_activation(j)->clone(derivate_kernal);
-				derivate_kernal->flip180();
-				derivate_kernal->convn(_deltas[i], _stride, "valid");
-				/*
-				 * update grad: w -= alpha * new_w
-				 */
-				derivate_kernal->multiply(alpha);
-				this->get_weight(i, j)->subtract(derivate_kernal);
-				delete derivate_kernal;	
+                pre_layer->get_activation(j)->clone(derivate_kernal);
+                derivate_kernal->flip180();
+                derivate_kernal->convn(_deltas[i], _stride, "valid");
+                /*
+                 * update grad: w -= alpha * new_w
+                 */
+                derivate_kernal->multiply(alpha);
+                this->get_weight(i, j)->subtract(derivate_kernal);
             }
-			//update bias
-			derivate_bias_data[i] = _deltas[i]->sum();
+            delete derivate_kernal;
+            //update bias
+            derivate_bias_data[i] = _deltas[i]->sum();
         }
-		auto derivate_bias = new ccma::algebra::DenseMatrixT<real>();
-		derivate_bias->set_shallow_data(derivate_bias_data, this->_in_map_size, i);
-		derivate_bias->multiply(alpha);
-		this->_bias->subtract(derivate_bias);
-		delete derivate_bias;
+        auto derivate_bias = new ccma::algebra::DenseMatrixT<real>();
+        derivate_bias->set_shallow_data(derivate_bias_data, this->_in_map_size, i);
+        derivate_bias->multiply(alpha);
+        this->_bias->subtract(derivate_bias);
+        delete derivate_bias;
+    }else if(typeid(*back_layer) == typeid(FullConnectionLayer)){
+        auto av = back_layer->get_av();
+        if(this->_out_map_size * this->_rows * this->_cols == av->get_cols()){
+            real* data = av->get_data();
+            for(int i = 0; i != this->_out_map_size){
+                auto delta = new ccma::algebra::DenseMatrixT<real>();
+                real* d = new real[_rows * _cols];
+                memset(d, &data[i * _rows * _cols], sizeof(real) * _rows * _cols);
+                delta->set_shallow_data(d, _rows, _cols);
+                this->set_delta(delta, i);
+            }
+        }else{
+            printf("ConvoluationLayer back_propagation Size Erorr.\n");
+        }
     }
 }
 
@@ -242,75 +268,118 @@ bool FullConnectionLayer::initialize(Layer* pre_layer){
     return true;
 }
 void FullConnectionLayer::feed_forward(Layer* pre_layer){
-    auto activation = new ccma::algebra::DenseMatrixT<real>();
-    auto a = new ccma::algebra::DenseMatrixT<real>();
     /*
-	 * convert pre_layer's all feature map mat to a row_mat
-	 */
-	for(uint i = 0; i != this->_in_map_size; i++){
+     * concatenate pre_layer's all feature map mat into vector
+     */
+    auto a = new ccma::algebra::DenseMatrixT<real>();
+    auto av = new ccma::algebra::DenseMatrixT<real>();
+    for(uint i = 0; i != this->_in_map_size; i++){
         pre_layer->get_activation(i)->clone(a);
         a->reshape(1, this->_cols);
-        activation->extend(a);
+        av->extend(a);
     }
     delete a;
+    if(_av != nullptr){
+        delete _av;
+    }
+    _av = av;
 
-    auto z = new ccma::algebra::DenseMatrixT<real>();
-    this->get_weight(0)->clone(z);
-    z->dot(activation);
-    z->add(this->get_bias());
-    if(_z != nullptr){
-		_z = z;
-	}
+    auto activation = new ccma::algebra::DenseMatrixT<real>();
+    this->get_weight(0)->clone(activation);
+    activation->dot(av);
+    activation->add(this->get_bias());
     //if sigmoid activative function
-    z->clone(activation);
-	activation->sigmoid();
+    activation->sigmoid();
     this->set_activation(0, activation);
 }
 
 void FullConnectionLayer::back_propagation(Layer* pre_layer, Layer* back_layer){
-	if(_error == nullptr){
-		_error = new ccma::algebra::DenseMatrixT<real>();
-	}
-	_activations[0]->clone(_error);
-	_error->subtract(_y);
+    if(_error == nullptr){
+        _error = new ccma::algebra::DenseMatrixT<real>();
+    }
+    _activations[0]->clone(_error);
+    _error->subtract(_y);
 
-	/* loss function, mse mean square error
-	 * 1/2 sum(error*error)/size
-	 * the size is 1 right here
-	 */
-	auto mse_mat = new ccma::algebra::DenseMatrixT<real>();
-	_error->clone(mse_mat);
-	mse_mat->multiply(mse_mat);
-	_loss = mse_mat->sum()/2;
-	delete mse_mat;
+    /* loss function, mse mean square error
+     * 1/2 sum(error*error)/size
+     * the size is 1 right here
+     */
+    auto mse_mat = new ccma::algebra::DenseMatrixT<real>();
+    _error->clone(mse_mat);
+    mse_mat->multiply(mse_mat);
+    _loss = mse_mat->sum()/2;
+    delete mse_mat;
 
-	/*
-	 * error * derivate_of_output
-	 * derivate_of_output is activation * (1-activation)
-	 */
-	auto derivate_output = ccma::algebra::DenseMatrixT<real>();
-	_activations[0]->clone(derivate_output);
+    /*
+     * error * derivate_of_output
+     * derivate_of_output is activation * (1-activation)
+     */
+    auto derivate_output = ccma::algebra::DenseMatrixT<real>();
+    _activations[0]->clone(derivate_output);
 
-	auto derivate_output_b = ccma::algebra::DenseMatrixT<real>();
-	derivate_output->clone(derivate_output_b);
-	derivate_output_b->multiply(-1);
-	derivate_output_b->add(1);
+    auto derivate_output_b = ccma::algebra::DenseMatrixT<real>();
+    derivate_output->clone(derivate_output_b);
+    derivate_output_b->multiply(-1);
+    derivate_output_b->add(1);
 
-	derivate_output->multiply(derivate_output_b);
-	derivate_output->multiply(_error);
-	
-	delete derivate_output_b;
+    derivate_output->multiply(derivate_output_b);
+    derivate_output->multiply(_error);
 
-	/*
-	 * calc delta: weight * derivate_output
-	 */
-	auto delta = ccma::algebra::DenseMatrixT<real>();
-	this->_weights[0]->clone(delta);
-	delta->transpose();
-	delta->dot(derivate_output);
-	this->set_delta(delta, 0);
+    delete derivate_output_b;
 
-	delete derivate_output);
+    /*
+     * calc delta: weight.T * derivate_output
+     */
+    auto delta = ccma::algebra::DenseMatrixT<real>();
+    this->_weights[0]->clone(delta);
+    delta->transpose();
+    delta->dot(derivate_output);
+    this->set_delta(delta, 0);
+
+    //if pre_layer is ConvolutionLayer, has sigmoid function
+    if(typeid(*pre_layer) == typeid(ConvolutionLayer)){
+        auto av1 = ccma::algebra::DenseMatrixT<real>();
+        auto av2 = ccma::algebra::DenseMatrixT<real>();
+        _av->clone(av1);
+        _av->clone(av2);
+        /*
+         * derivate_sigmoid: z * (1-z)
+         */
+        av2->multiply(-1);
+        av2->add(1);
+        av1->multiply(av2);
+        this->get_delta->multiply(av1);
+
+        delete av1;
+        delete av2;
+    }
+
+    /*
+     * derivate_weight = derivate_output * av.T
+     * derivate_bias = derviate_output
+     */
+    auto derivate_weight = ccma::algebra::DenseMatrixT<real>();
+    auto derivate_bias   = ccma::algebra::DenseMatrixT<real>();
+    auto avt             = ccma::algebra::DenseMatrixT<real>();
+    derivate_output->clone(derivate_weight);
+    derivate_output->clone(derivate_bias);
+    avt->clone(_av);
+
+    avt->transpose();
+    derivate_weight->dot(avt);
+    delete avt;
+
+    /*
+     * update weight & bias
+     */
+    //todo set alpha
+    real alpha = 0.1;
+    derivate_weight->multiply(alpha);
+    derivate_bias->multiply(alpha);
+    this->_weights[0]->subtract(derivate_weight);
+    this->_bias->subtract(derivate_bias);
+    delete derivate_weight;
+    delete derivate_bias;
 }
 
 }//namespace cnn

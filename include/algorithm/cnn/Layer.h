@@ -16,8 +16,15 @@ namespace ccma{
 namespace algorithm{
 namespace cnn{
 
+/*
 class Layers{
 public:
+    ~Layers(){
+        for(auto layer : _layers){
+            delete layer;
+        }
+        _layers.clear();
+    }
     bool add_layer(Layer* layer);
     bool init_network();
     void feed_forward(ccma::algebra::BaseMatrixT<real>* data);
@@ -26,7 +33,7 @@ public:
 private:
     std::vector<Layer*> _layers;
 }; //class Layers
-
+*/
 
 class Layer{
 public:
@@ -198,9 +205,9 @@ public:
     FullConnectionLayer(uint rows):(rows, 0, 0, 1){}
     ~FullConnectionLayer(){
         Layer::~Layer();
-        if(_z != nullptr){
-            delete _z;
-            _z = nullptr;
+        if(_av != nullptr){
+            delete _av;
+            _av = nullptr;
         }
         if(_error != nullptr){
             delete _error;
@@ -215,20 +222,19 @@ public:
         }
         return false;
     }
-	
-	ccma::algebra::BaseMatrixT<real>* get_z(){
-		return _z;
-	
-	}
 
-	real get_loss() const{
-		return _loss;
-	}
+    ccma::algebra::BaseMatrixT<real>* get_av(){
+        return _av;
+    }
+
+    real get_loss() const{
+        return _loss;
+    }
 private:
     ccma::algebra::BaseMatrixT<real>* _y;
-    ccma::algebra::BaseMatrixT<real>* _z;
+    ccma::algebra::BaseMatrixT<real>* _av;//pre_layer activations' vector
     ccma::algebra::BaseMatrixT<real>* _error;
-	real _loss;
+    real _loss;
 };//class FullConnectionLayer
 
 
