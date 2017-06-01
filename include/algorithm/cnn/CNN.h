@@ -31,7 +31,10 @@ public:
                uint epoch = 1,
                ccma::algebra::BaseMatrixT<real>* test_data = nullptr,
                ccma::algebra::BaseMatrixT<real>* test_label = nullptr);
-    void feedforward(ccma::algebra::BaseMatrixT<real>* mat);
+    void feed_forward(ccma::algebra::BaseMatrixT<real>* mat);
+
+private:
+    bool check(uint size);
 
 private:
     std::vector<Layer*> _layers;
