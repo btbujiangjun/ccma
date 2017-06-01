@@ -16,25 +16,6 @@ namespace ccma{
 namespace algorithm{
 namespace cnn{
 
-/*
-class Layers{
-public:
-    ~Layers(){
-        for(auto layer : _layers){
-            delete layer;
-        }
-        _layers.clear();
-    }
-    bool add_layer(Layer* layer);
-    bool init_network();
-    void feed_forward(ccma::algebra::BaseMatrixT<real>* data);
-    void back_propagation();
-
-private:
-    std::vector<Layer*> _layers;
-}; //class Layers
-*/
-
 class Layer{
 public:
     Layer(uint rows,
@@ -88,7 +69,7 @@ public:
             _activations.push_back(activation);
         }
     }
-    inline ccma::algebra::BaseMatrixT<real>* get_activations(uint out_map_id){
+    inline ccma::algebra::BaseMatrixT<real>* get_activation(uint out_map_id){
         return _activations[out_map_id];
     }
 
@@ -128,23 +109,16 @@ public:
         }
         _bias = bias;
     }
-    inline ccma::algebra::BaseMatrixT<real> get_bias(){ return _bias;}
+    inline ccma::algebra::BaseMatrixT<real>* get_bias(){ return _bias;}
 
 private:
     inline void clear_vector_matrix(std::vector<ccma::algebra::BaseMatrixT<real>*>* vec_mat){
-        for(auto mat : vec_mat){
+        for(auto mat : *vec_mat){
             delete mat;
             mat = nullptr;
         }
         vec_mat->clear();
     }
-
-    /*
-    inline initalize_weight_bias(){
-        _weights = new ccma::algebra::DenseMatrixT<real>()[_out_map_size * _in_map_size];
-        _bias = new ccma::algebra::DenseMatrixT<real>(_out_map_size, 0.0);
-    }
-    */
 
 protected:
     uint _rows;
@@ -157,6 +131,7 @@ protected:
 private:
     std::vector<ccma::algebra::BaseMatrixT<real>*> _activations;
     std::vector<ccma::algebra::BaseMatrixT<real>*> _deltas;
+protected:
     std::vector<ccma::algebra::BaseMatrixT<real>*> _weights;
     ccma::algebra::BaseMatrixT<real>* _bias;
 };//class Layer
@@ -164,16 +139,20 @@ private:
 class DataLayer:public Layer{
 public:
     DataLayer(uint rows, uint cols):Layer(rows, cols, 1, 1){}
+    bool initialize(Layer* pre_layer = nullptr);
+    void feed_forward(Layer* pre_layer = nullptr);
+    void back_propagation(Layer* pre_layer, Layer* back_layer = nullptr);
 
     bool set_x(ccma::algebra::BaseMatrixT<real>* x){
         if(x->get_rows() == this->_rows && x->get_cols() == this->_cols){
             _x = x;
             return true;
         }
+        printf("DataLayer mat dim error\n");
         return false;
     }
 private:
-    ccma::algebra::BaseMatrixT<real>* x;
+    ccma::algebra::BaseMatrixT<real>* _x;
 };//class DataLayer
 
 class SubSamplingLayer:public Layer{
@@ -181,6 +160,9 @@ public:
     SubSamplingLayer(uint scale):Layer(0, 0, 0, 0){
         _scale = scale;
     }
+    bool initialize(Layer* pre_layer = nullptr);
+    void feed_forward(Layer* pre_layer = nullptr);
+    void back_propagation(Layer* pre_layer, Layer* back_layer = nullptr);
 
     uint get_scale(){return _scale;}
 
@@ -194,6 +176,11 @@ public:
         _kernal_size = kernal_size;
         _stride = stride;
     }
+    inline uint get_stride()const {return _stride;}
+
+    bool initialize(Layer* pre_layer = nullptr);
+    void feed_forward(Layer* pre_layer = nullptr);
+    void back_propagation(Layer* pre_layer, Layer* back_layer = nullptr);
 
 protected:
     uint _stride;
@@ -202,9 +189,8 @@ protected:
 
 class FullConnectionLayer:public Layer{
 public:
-    FullConnectionLayer(uint rows):(rows, 0, 0, 1){}
+    FullConnectionLayer(uint rows):Layer(rows, 0, 0, 1){}
     ~FullConnectionLayer(){
-        Layer::~Layer();
         if(_av != nullptr){
             delete _av;
             _av = nullptr;
@@ -214,6 +200,9 @@ public:
             _error = nullptr;
         }
     }
+    bool initialize(Layer* pre_layer = nullptr);
+    void feed_forward(Layer* pre_layer = nullptr);
+    void back_propagation(Layer* pre_layer, Layer* back_layer = nullptr);
 
     bool set_y(ccma::algebra::BaseMatrixT<real>* y){
         if(y->get_rows() == _rows){
