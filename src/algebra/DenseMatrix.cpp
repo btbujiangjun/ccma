@@ -157,7 +157,7 @@ bool DenseMatrixT<T>::set_row_data(BaseMatrixT<T>* mat, const int row_id){
 }
 
 template<class T>
-bool DenseMatrixT<T>::extend(BaseMatrixT<T>* mat){
+bool DenseMatrixT<T>::extend(BaseMatrixT<T>* mat, bool col_dim){
     uint row = mat->get_rows();
     uint col = mat->get_cols();
 
@@ -168,19 +168,30 @@ bool DenseMatrixT<T>::extend(BaseMatrixT<T>* mat){
         return true;
     }
 
-    if(this->_rows != row){
-        return false;
+    if(col_dim){
+        if(this->_rows != row){
+            return false;
+        }
+
+        T* data = new T[this->_rows * (this->_cols + col)];
+        for(uint i = 0; i < this->_rows; i++){
+            memcpy(&data[i * (this->_cols + col)], &_data[i * this->_cols], sizeof(T) * this->_cols);
+            memcpy(&data[(i+1) * (this->_cols + col) - this->_cols], &mat->get_data()[i * col], sizeof(T) * col);
+        }
+
+        set_shallow_data(data, this->_rows, (this->_cols + col));
+
+        return true;
+    }else{
+        if(this->_cols != col){
+            return false;
+        }
+        T* data = new T[(this->_rows + row) * this->_cols];
+        memcpy(data, _data, sizeof(T) * this->_rows * this->_cols);
+        memcpy(&data[this->_rows * this->_cols], mat->get_data(), sizeof(T)* row * col);
+        set_shallow_data(data, this->_rows + row, col);
+        return true;
     }
-
-    T* data = new T[this->_rows * (this->_cols + col)];
-    for(uint i = 0; i < this->_rows; i++){
-        memcpy(&data[i * (this->_cols + col)], &_data[i * this->_cols], sizeof(T) * this->_cols);
-        memcpy(&data[(i+1) * (this->_cols + col) - this->_cols], &mat->get_data()[i * col], sizeof(T) * col);
-    }
-
-    set_shallow_data(data, this->_rows, (this->_cols + col));
-
-    return true;
 }
 
 
@@ -473,7 +484,7 @@ bool DenseMatrixT<T>::inverse(BaseMatrixT<real>* result){
 
     //extend eye matrix
     DenseEyeMatrixT<real>* eye_mat = new DenseEyeMatrixT<real>(this->_rows);
-    extend_mat->extend(eye_mat);
+    extend_mat->extend(eye_mat, true);
     delete eye_mat;
 
     //adjust row
