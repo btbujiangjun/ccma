@@ -8,6 +8,7 @@ all:
 	${CC} -o decision_tree_test -std=c++11 examples/algorithm/tree/TestDecisionTree.cpp src/algorithm/tree/DecisionTree.cpp src/algebra/BaseMatrix.cpp src/algebra/DenseMatrix.cpp -pthread -g -I ./include/
 	${CC} -o regression_tree_test -std=c++11 examples/algorithm/tree/TestCART.cpp src/algorithm/tree/CART.cpp src/algebra/BaseMatrix.cpp src/algebra/DenseMatrix.cpp -pthread -g -I ./include/
 	${CC} -o DNN_test -std=c++11 examples/algorithm/nn/TestDNN.cpp src/algorithm/nn/DNN.cpp src/algebra/BaseMatrix.cpp src/algebra/DenseMatrix.cpp src/algorithm/nn/Cost.cpp -g -pthread -Wall -O3 -I ./include/
+	${CC} -o CNN_test -std=c++11 examples/algorithm/nn/TestCNN.cpp src/algorithm/cnn/CNN.cpp src/algorithm/cnn/Layer.cpp src/algebra/BaseMatrix.cpp src/algebra/DenseMatrix.cpp -g -pthread -Wall -O3 -I ./include/
 clean:
 	rm -rf dense_matrix_test* &
 	rm -rf file_op_test* &
@@ -17,3 +18,4 @@ clean:
 	rm -rf decision_tree_test* &
 	rm -rf regression_tree_test* &
 	rm -rf DNN_test* &
+	rm -rf CNN_test* &
