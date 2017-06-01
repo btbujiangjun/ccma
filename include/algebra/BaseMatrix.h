@@ -12,6 +12,7 @@
 #include <cmath>
 #include <thread>
 #include <iostream>
+#include <random>
 #include <string.h>
 #include <unordered_map>
 #include "utils/TypeDef.h"
@@ -61,7 +62,7 @@ public:
     virtual bool get_row_data(const int row, BaseMatrixT<T>* out_mat) = 0;
     virtual bool set_row_data(BaseMatrixT<T>* mat, const int row) = 0;
 
-    virtual bool extend(BaseMatrixT<T>* mat) = 0;
+    virtual bool extend(BaseMatrixT<T>* mat, bool col_dim = true) = 0;
 
     bool add(BaseMatrixT<T>* mat);
     bool subtract(BaseMatrixT<T>* mat);
@@ -230,7 +231,7 @@ public:
     bool get_row_data(const int row, BaseMatrixT<T>* out_mat);
     bool set_row_data(BaseMatrixT<T>* mat, int row);
 
-    bool extend(BaseMatrixT<T>* mat);
+    bool extend(BaseMatrixT<T>* mat, bool col_dim = true);
 
     bool pow(const T exponent);
 
@@ -314,6 +315,18 @@ private:
     std::string* _cache_to_string = nullptr;
 };//class DenseMatrixT
 
+template<class T>
+class DenseRandomMatrixT :public DenseMatrixT<T>{
+public:
+    DenseRandomMatrixT(uint rows, uint cols, const T mean_value, const T stddev) : DenseMatrixT<T>(rows, cols){
+        std::default_random_engine engine(time(0));
+        std::normal_distribution<T> distribution(mean_value, stddev);
+        uint size = rows * cols;
+        for(uint i = 0; i != size; i++){
+            this->_data[i] = static_cast<T>(distribution(engine));
+        }
+    }
+};//class DenseRandomMatrixT
 
 template<class T>
 class DenseMatrixMNT : public DenseMatrixT<T>{
