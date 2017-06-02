@@ -61,34 +61,8 @@ void CNN::train(ccma::algebra::BaseMatrixT<real>* train_data,
         for(uint j = 0; j != num_train_data; j++){
             train_data->get_row_data(j, mini_batch_data);
             train_label->get_row_data(j, mini_batch_label);
-            int layer_size = _layers.size();
-            for(uint k = 0; k < layer_size; k++){
-                auto layer = _layers[k];
-                Layer* pre_layer = nullptr;
-                if(k == 0){
-                    mini_batch_data->reshape(layer->get_rows(), layer->get_cols());
-                    ((DataLayer*)layer)->set_x(mini_batch_data);
-                }
-                if(k == _layers.size() - 1){
-                    mini_batch_label->transpose();
-                    ((FullConnectionLayer*)_layers[k])->set_y(mini_batch_label);
-                }
-                pre_layer = _layers[k - 1];
-                layer->feed_forward(pre_layer);
-            }//end feed_forward
-
-            for(int k = layer_size - 1; k >= 0; k--){
-                auto layer = _layers[k];
-                Layer* pre_layer = nullptr;
-                Layer* back_layer = nullptr;
-                if(k > 0){
-                    pre_layer = _layers[k - 1];
-                }
-                if(k < layer_size -1){
-                    back_layer = _layers[k + 1];
-                }
-                layer->back_propagation(pre_layer, back_layer);
-            }//end back_propagation
+            feed_forward(mini_batch_data);
+            back_propagation(mini_batch_label);
 
             if(j % 100 == 0){
                 printf("Epoch[%d][%d/%d]training...\r", i, j, num_train_data);
@@ -98,8 +72,17 @@ void CNN::train(ccma::algebra::BaseMatrixT<real>* train_data,
         auto training_time = now();
         printf("Epoch %d training run time: %lld ms\n", i, std::chrono::duration_cast<std::chrono::milliseconds>(training_time - start_time).count());
 
-        if(num_test_data > 0){
+        int cnt = 0;
+        for(int k = 0; k != num_test_data; k++){
+            test_data->get_row_data(k, mini_batch_data);
+            test_label->get_row_data(k, mini_batch_label);
+            if(evaluate(mini_batch_data, mini_batch_label)){
+                cnt++;
+            }
         }
+
+        printf("Epoch %d %d/%d\n", i, cnt, num_test_data);
+        printf("Epoch %d predict run time: %lld ms\n", i, std::chrono::duration_cast<std::chrono::milliseconds>(now() - training_time).count());
     }//end all epoch
 
     delete mini_batch_data;
@@ -107,7 +90,56 @@ void CNN::train(ccma::algebra::BaseMatrixT<real>* train_data,
 }
 
 void CNN::feed_forward(ccma::algebra::BaseMatrixT<real>* mat){
+    int layer_size = _layers.size();
+    for(uint k = 0; k < layer_size; k++){
+        auto layer = _layers[k];
+        Layer* pre_layer = nullptr;
+        if(k == 0){
+            mat->reshape(layer->get_rows(), layer->get_cols());
+            ((DataLayer*)layer)->set_x(mat);
+        }
+        pre_layer = _layers[k - 1];
+        layer->feed_forward(pre_layer);
+    }//end feed_forward
 }
+
+void CNN::back_propagation(ccma::algebra::BaseMatrixT<real>* mat){
+    int layer_size = _layers.size();
+    for(int k = layer_size - 1; k >= 0; k--){
+        auto layer = _layers[k];
+        Layer* pre_layer = nullptr;
+        Layer* back_layer = nullptr;
+        if(k > 0){
+            pre_layer = _layers[k - 1];
+        }
+        if(k < layer_size -1){
+            back_layer = _layers[k + 1];
+        }
+        if(typeid(*layer) == typeid(FullConnectionLayer)){
+            mat->transpose();
+            ((FullConnectionLayer*)_layers[k])->set_y(mat);
+        }
+        layer->back_propagation(pre_layer, back_layer);
+    }//end back_propagation
+}
+
+bool CNN::evaluate(ccma::algebra::BaseMatrixT<real>* data, ccma::algebra::BaseMatrixT<real>* label){
+    feed_forward(data);
+    auto layer = _layers[_layers.size() - 1];
+    auto predict_mat = layer->get_activation(0);
+    int max_value = 0;
+    int max_idx = 0;
+    uint rows = predict_mat->get_rows();
+    for(int i = 0; i != rows; i++){
+        real value = predict_mat->get_data(i);
+        if(i == 0 || value > max_value){
+            max_value = value;
+            max_idx = i;
+        }
+    }
+    return max_idx == label->get_data(0);
+}
+
 
 bool CNN::check(uint size){
     if(_layers.size() <= 2){
