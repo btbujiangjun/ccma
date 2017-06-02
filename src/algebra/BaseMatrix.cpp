@@ -287,19 +287,19 @@ bool BaseMatrixT<T>::convn(ccma::algebra::BaseMatrixT<T>* kernal,
         data_col = _cols + 2 * (kernal_col - 1);
 
         data = new T[data_row * data_col];
-        memset(data, 0, sizeof(T)*data_row*data_col);
+        memset(data, 0, sizeof(T) * data_row * data_col);//padding 0
         for(uint i = 0; i != _rows; i++){
             memcpy(&data[(i + kernal_row - 1) * data_col + kernal_col - 1], &src_data[i * _cols], sizeof(T)* _cols);
         }
 
     }else{//"valid"
+        data_row = _rows;
+        data_col = _cols;
+        data     = src_data;
         if(data_row < kernal_row || data_col < kernal_col){
             printf("Convn error: kernel dim large than mat.\n");
             return false;
         }
-        data_row = _rows;
-        data_col = _cols;
-        data     = src_data;
     }
 
     uint conv_row = (data_row - kernal_row) % stride == 0 ? (data_row - kernal_row) / stride + 1 : (data_row - kernal_row) / stride + 2;
