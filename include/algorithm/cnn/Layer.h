@@ -61,13 +61,7 @@ public:
 
     //activation size equal out_map_size
     inline void set_activation(uint out_map_id, ccma::algebra::BaseMatrixT<real>* activation){
-        if(_activations.size() > out_map_id){
-            auto a = _activations[out_map_id];
-            delete a;
-            a = activation;
-        }else{
-            _activations.push_back(activation);
-        }
+        set_vec_mat(&_activations, out_map_id, activation);
     }
     inline ccma::algebra::BaseMatrixT<real>* get_activation(uint out_map_id){
         return _activations[out_map_id];
@@ -75,13 +69,7 @@ public:
 
     //delta size equal out_map_size
     inline void set_delta(uint out_map_id, ccma::algebra::BaseMatrixT<real>* delta){
-        if(_deltas.size() > out_map_id){
-            auto d = _deltas[out_map_id];
-            delete d;
-            d = delta;
-        }else{
-            _deltas.push_back(delta);
-        }
+        set_vec_mat(&_deltas, out_map_id, delta);
     }
     inline ccma::algebra::BaseMatrixT<real>* get_delta(uint out_map_id){
         return _deltas[out_map_id];
@@ -91,13 +79,7 @@ public:
     inline void set_weight(uint out_map_id,
                            uint in_map_id,
                            ccma::algebra::BaseMatrixT<real>* weight){
-        if(_weights.size() > out_map_id * this->_in_map_size + in_map_id){
-            auto w = _weights[out_map_id * this->_in_map_size + in_map_id];
-            delete w;
-            w = weight;
-        }else{
-            _weights.push_back(weight);
-        }
+        set_vec_mat(&_weights, out_map_id * this->_in_map_size + in_map_id, weight);
     }
     inline ccma::algebra::BaseMatrixT<real>* get_weight(uint out_map_id, uint in_map_id){
         return _weights[out_map_id * this->_in_map_size + in_map_id];
@@ -120,6 +102,18 @@ private:
         vec_mat->clear();
     }
 
+    inline void set_vec_mat(std::vector<ccma::algebra::BaseMatrixT<real>*>* vec_mat, uint idx, ccma::algebra::BaseMatrixT<real>* mat){
+        uint size = vec_mat->size();
+        if(size > idx){
+            clear_vector_matrix(vec_mat);
+        }
+        if(vec_mat->size() == idx){
+            vec_mat->push_back(mat);
+        }else{
+            printf("set_vec_mat error:[%d/%d]\n", size, idx);
+        }
+    }
+
 protected:
     uint _rows;
     uint _cols;
@@ -127,18 +121,19 @@ protected:
     uint _in_map_size;
     /* current_layer feature map size*/
     uint _out_map_size;
-
+    std::vector<ccma::algebra::BaseMatrixT<real>*> _weights;
+    ccma::algebra::BaseMatrixT<real>* _bias;
 private:
     std::vector<ccma::algebra::BaseMatrixT<real>*> _activations;
     std::vector<ccma::algebra::BaseMatrixT<real>*> _deltas;
-protected:
-    std::vector<ccma::algebra::BaseMatrixT<real>*> _weights;
-    ccma::algebra::BaseMatrixT<real>* _bias;
 };//class Layer
 
 class DataLayer:public Layer{
 public:
     DataLayer(uint rows, uint cols):Layer(rows, cols, 1, 1){}
+    ~DataLayer(){
+        _x = nullptr; //out pointer,no delete
+    }
     bool initialize(Layer* pre_layer = nullptr);
     void feed_forward(Layer* pre_layer = nullptr);
     void back_propagation(Layer* pre_layer, Layer* back_layer = nullptr);
@@ -199,6 +194,8 @@ public:
             delete _error;
             _error = nullptr;
         }
+
+        _y = nullptr;//out pointer, not delete data.
     }
     bool initialize(Layer* pre_layer = nullptr);
     void feed_forward(Layer* pre_layer = nullptr);
