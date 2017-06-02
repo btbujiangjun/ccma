@@ -101,14 +101,14 @@ bool DNN::sgd(ccma::algebra::BaseMatrixT<real>* train_data,
         }
 
         auto training_time = now();
-        printf("Epoch %d train runtime: %lld ms\n", i, std::chrono::duration_cast<std::chrono::milliseconds>(training_time - start_time).count());
+        printf("Epoch %d train run time: %lld ms\n", i, std::chrono::duration_cast<std::chrono::milliseconds>(training_time - start_time).count());
 
         if(num_test_data > 0){
             printf("Epoch %d: %d / %d\n", i, evaluate(test_data, test_label), num_test_data);
-            printf("Epoch %d predict runtime: %lld ms\n", i, std::chrono::duration_cast<std::chrono::milliseconds>(now() - training_time).count());
+            printf("Epoch %d predict run time: %lld ms\n", i, std::chrono::duration_cast<std::chrono::milliseconds>(now() - training_time).count());
         }
 
-        printf("Epoch %d runtime: %lld ms\n", i, std::chrono::duration_cast<std::chrono::milliseconds>(now() - start_time).count());
+        printf("Epoch %d run time: %lld ms\n", i, std::chrono::duration_cast<std::chrono::milliseconds>(now() - start_time).count());
     }
 
     delete row_data;
