@@ -18,11 +18,7 @@ bool DataLayer::initialize(Layer* pre_layer){
 void DataLayer::feed_forward(Layer* pre_layer){
     auto activation = new ccma::algebra::DenseMatrixT<real>();
     _x->clone(activation);
-    if(activation->get_rows() == this->_rows && activation->get_cols() == this->_cols){
-        this->set_activation(0, activation);
-    }else{
-        printf("DataLayer feed_forward: dim error.\n");
-    }
+    this->set_activation(0, activation);
 }
 void DataLayer::back_propagation(Layer* pre_layer, Layer* back_layer){
 }
@@ -34,19 +30,17 @@ bool SubSamplingLayer::initialize(Layer* pre_layer){
     if(pre_rows % _scale != 0 || pre_cols % _scale != 0){
         printf("SubSampling Layer scale error.\n");
         return false;
-    }else{
-        this->_rows = pre_rows / _scale;
-        this->_cols = pre_cols / _scale;
-        //can't change feature map size.
-        this->_in_map_size = this->_out_map_size = pre_layer->get_out_map_size();
-        /*
-         * pre_layer, each feature map share a bias and initialize value is zero.
-         * no pooling weight.
-         */
-        set_bias(new ccma::algebra::DenseColMatrixT<real>(this->_in_map_size, 0.0));
-
-        return true;
     }
+    this->_rows = pre_rows / _scale;
+    this->_cols = pre_cols / _scale;
+    //can't change out feature map size.
+    this->_in_map_size = this->_out_map_size = pre_layer->get_out_map_size();
+    /*
+     * pre_layer, each feature map share a bias and initialize value is zero.
+     * no pooling weight.
+     */
+    set_bias(new ccma::algebra::DenseColMatrixT<real>(this->_in_map_size, 0.0));
+    return true;
 }
 void SubSamplingLayer::feed_forward(Layer* pre_layer){
 
@@ -54,12 +48,11 @@ void SubSamplingLayer::feed_forward(Layer* pre_layer){
 
     // in_map size equal out_map size to subsampling layer.
     for(uint i = 0; i != this->_in_map_size; i++){
-
         auto a = pre_layer->get_activation(i);
         real* data = new real[this->_rows * this->_cols];
-
         for(uint j = 0; j != this->_rows; j++){
             for(uint k = 0; k != this->_cols; k++){
+
                 //average pooling
                 real pooling_value = 0;
                 for(uint m = 0; m != _scale; m++){
@@ -68,9 +61,9 @@ void SubSamplingLayer::feed_forward(Layer* pre_layer){
                     }
                 }
                 data[j * this->_cols + k] = pooling_value / pooling_size;
+
             }
         }
-
         auto activation = new ccma::algebra::DenseMatrixT<real>();
         activation->set_shallow_data(data, this->_rows, this->_cols);
         this->set_activation(i, activation);
@@ -227,6 +220,7 @@ void ConvolutionLayer::back_propagation(Layer* pre_layer, Layer* back_layer){
         derivate_bias->set_shallow_data(derivate_bias_data, this->_out_map_size, 1);
         derivate_bias->multiply(alpha);
         this->get_bias()->subtract(derivate_bias);
+        derivate_bias->display();
         delete derivate_bias;
 
     }else if(typeid(*back_layer) == typeid(FullConnectionLayer)){
