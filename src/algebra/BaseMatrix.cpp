@@ -282,7 +282,7 @@ bool BaseMatrixT<T>::convn(ccma::algebra::BaseMatrixT<T>* kernal,
     T* new_data;
     T* src_data = get_data();
 
-    if(shape == "fill" && kernal_row * kernal_col != 1){//padding 0, size is kernel_row - 1 and kernel_col - 1
+    if(shape == "full" && kernal_row * kernal_col != 1){//padding 0, size is kernel_row - 1 and kernel_col - 1
         data_row = _rows + 2 * (kernal_row - 1);
         data_col = _cols + 2 * (kernal_col - 1);
 
