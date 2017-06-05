@@ -104,11 +104,11 @@ public:
     void expand(uint row_dim, uint col_dim);
 
     /*
-     * shape is fill or valid
+     * shape is full or valid, default full.
      */
     bool convn(ccma::algebra::BaseMatrixT<T>* kernal,
                uint stride = 1,
-               std::string shape = "fill");
+               std::string shape = "full");
 
     /*
      * convert dim
