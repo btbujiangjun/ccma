@@ -26,6 +26,11 @@ bool BaseMatrixT<T>::add(BaseMatrixT<T>* mat){
     uint row = mat->get_rows();
     uint col = mat->get_cols();
 
+    if(_rows == 0 && _cols == 0){
+        set_data(mat->get_data(), row, col);
+        return true;
+    }
+
     if( (_rows != row && row != 1)
             || _cols != col){
         printf("Add matrix dim Error:[%d-%d][%d-%d]\n", _rows, _cols, row, col);
@@ -307,7 +312,7 @@ bool BaseMatrixT<T>::convn(ccma::algebra::BaseMatrixT<T>* kernal,
 
     new_data = new T[conv_row * conv_col];
 
-    kernal->flip180();
+//    kernal->flip180();
     T* kernal_data = kernal->get_data();
 
     for(uint i = 0; i != conv_row; i++){
@@ -331,7 +336,7 @@ bool BaseMatrixT<T>::convn(ccma::algebra::BaseMatrixT<T>* kernal,
         }
     }
     this->set_shallow_data(new_data, conv_row, conv_col);
-    kernal->flip180();
+  //  kernal->flip180();
 
     return true;
 }
