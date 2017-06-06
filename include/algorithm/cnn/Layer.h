@@ -38,7 +38,7 @@ public:
     }
 
     virtual bool initialize(Layer* pre_layer = nullptr) = 0;
-    virtual void feed_forward(Layer* pre_layer = nullptr) = 0;
+    virtual void feed_forward(Layer* pre_layer = nullptr, bool debug = false) = 0;
     virtual void back_propagation(Layer* pre_layer, Layer* back_layer = nullptr) = 0;
 
     inline void set_rows(uint rows){_rows = rows;}
@@ -76,13 +76,13 @@ public:
     }
 
     //weight size equal out_map_size * in_map_size
-    inline void set_weight(uint out_map_id,
-                           uint in_map_id,
+    inline void set_weight(uint in_map_id,
+                           uint out_map_id,
                            ccma::algebra::BaseMatrixT<real>* weight){
-        set_vec_mat(&_weights, out_map_id * this->_in_map_size + in_map_id, weight);
+        set_vec_mat(&_weights, in_map_id * this->_out_map_size + out_map_id, weight);
     }
-    inline ccma::algebra::BaseMatrixT<real>* get_weight(uint out_map_id, uint in_map_id){
-        return _weights[out_map_id * this->_in_map_size + in_map_id];
+    inline ccma::algebra::BaseMatrixT<real>* get_weight(uint in_map_id, uint out_map_id){
+        return _weights[in_map_id * this->_out_map_size + out_map_id];
     }
 
     inline void set_bias(ccma::algebra::BaseMatrixT<real>* bias){
@@ -135,7 +135,7 @@ public:
         _x = nullptr; //out pointer,no delete
     }
     bool initialize(Layer* pre_layer = nullptr);
-    void feed_forward(Layer* pre_layer = nullptr);
+    void feed_forward(Layer* pre_layer = nullptr, bool debug = false);
     void back_propagation(Layer* pre_layer, Layer* back_layer = nullptr);
 
     bool set_x(ccma::algebra::BaseMatrixT<real>* x){
@@ -156,7 +156,7 @@ public:
         _scale = scale;
     }
     bool initialize(Layer* pre_layer = nullptr);
-    void feed_forward(Layer* pre_layer = nullptr);
+    void feed_forward(Layer* pre_layer = nullptr, bool debug = false);
     void back_propagation(Layer* pre_layer, Layer* back_layer = nullptr);
 
     uint get_scale(){return _scale;}
@@ -174,7 +174,7 @@ public:
     inline uint get_stride()const {return _stride;}
 
     bool initialize(Layer* pre_layer = nullptr);
-    void feed_forward(Layer* pre_layer = nullptr);
+    void feed_forward(Layer* pre_layer = nullptr, bool debug = false);
     void back_propagation(Layer* pre_layer, Layer* back_layer = nullptr);
 
 protected:
@@ -198,7 +198,7 @@ public:
         _y = nullptr;//out pointer, not delete data.
     }
     bool initialize(Layer* pre_layer = nullptr);
-    void feed_forward(Layer* pre_layer = nullptr);
+    void feed_forward(Layer* pre_layer = nullptr, bool debug = false);
     void back_propagation(Layer* pre_layer, Layer* back_layer = nullptr);
 
     bool set_y(ccma::algebra::BaseMatrixT<real>* y){
