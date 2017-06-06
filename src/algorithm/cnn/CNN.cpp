@@ -65,12 +65,12 @@ void CNN::train(ccma::algebra::BaseMatrixT<real>* train_data,
             back_propagation(mini_batch_label);
 
             if(j % 100 == 0){
-                printf("Epoch[%d][%d/%d]training...\r", i, j, num_train_data);
+//                printf("Epoch[%d][%d/%d]training...\r", i, j, num_train_data);
             }
         }//end per epoch
 
         auto training_time = now();
-        printf("Epoch %d training run time: %lld ms\n", i, std::chrono::duration_cast<std::chrono::milliseconds>(training_time - start_time).count());
+//        printf("Epoch %d training run time: %lld ms\n", i, std::chrono::duration_cast<std::chrono::milliseconds>(training_time - start_time).count());
 
         int cnt = 0;
         for(int k = 0; k != num_test_data; k++){
@@ -82,16 +82,14 @@ void CNN::train(ccma::algebra::BaseMatrixT<real>* train_data,
         }
 
         printf("Epoch %d %d/%d\n", i, cnt, num_test_data);
-        printf("Epoch %d predict run time: %lld ms\n", i, std::chrono::duration_cast<std::chrono::milliseconds>(now() - training_time).count());
+//        printf("Epoch %d predict run time: %lld ms\n", i, std::chrono::duration_cast<std::chrono::milliseconds>(now() - training_time).count());
     }//end all epoch
-
-    test_label->display();
 
     delete mini_batch_data;
     delete mini_batch_label;
 }
 
-void CNN::feed_forward(ccma::algebra::BaseMatrixT<real>* mat){
+void CNN::feed_forward(ccma::algebra::BaseMatrixT<real>* mat, bool debug){
     int layer_size = _layers.size();
     for(uint k = 0; k < layer_size; k++){
         auto layer = _layers[k];
@@ -102,7 +100,7 @@ void CNN::feed_forward(ccma::algebra::BaseMatrixT<real>* mat){
         }else{
             pre_layer = _layers[k - 1];
         }
-        layer->feed_forward(pre_layer);
+        layer->feed_forward(pre_layer, debug);
     }//end feed_forward
 }
 
@@ -127,7 +125,7 @@ void CNN::back_propagation(ccma::algebra::BaseMatrixT<real>* mat){
 }
 
 bool CNN::evaluate(ccma::algebra::BaseMatrixT<real>* data, ccma::algebra::BaseMatrixT<real>* label){
-    feed_forward(data);
+    feed_forward(data, true);
     auto layer = _layers[_layers.size() - 1];
     auto predict_mat = layer->get_activation(0);
     real max_value = 0;
@@ -142,13 +140,9 @@ bool CNN::evaluate(ccma::algebra::BaseMatrixT<real>* data, ccma::algebra::BaseMa
         }
     }
 
-    //printf("[%d][%f]\n", max_idx, max_value);
     predict_mat->transpose();
     predict_mat->display();
-
-    if(max_idx != label->get_data(0)){
-        printf("[%d][%f]\n", max_idx, label->get_data(0));
-    }
+    predict_mat->transpose();
 
     return max_idx == label->get_data(0);
 }
