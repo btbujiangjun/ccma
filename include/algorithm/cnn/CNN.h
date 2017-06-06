@@ -31,7 +31,9 @@ public:
                uint epoch = 1,
                ccma::algebra::BaseMatrixT<real>* test_data = nullptr,
                ccma::algebra::BaseMatrixT<real>* test_label = nullptr);
-    void feed_forward(ccma::algebra::BaseMatrixT<real>* mat);
+    //void predict(ccma::algebra::BaseMatrixT<real>* predict_data);
+protected:
+    void feed_forward(ccma::algebra::BaseMatrixT<real>* mat, bool debug = false);
     void back_propagation(ccma::algebra::BaseMatrixT<real>* mat);
 
 private:
