@@ -16,15 +16,48 @@ namespace ccma{
 namespace algorithm{
 namespace cnn{
 
+class Pooling{
+public:
+    virtual void pool(ccma::algebra::BaseMatrixT<real>* mat,
+                      uint rows,
+                      uint cols,
+                      uint scale,
+                      ccma::algebra::BaseMatrixT<real>* pooling_mat) = 0;
+};//class Pooling
+class MeanPooling : public Pooling{
+public:
+    void pool(ccma::algebra::BaseMatrixT<real>* mat,
+              uint rows,
+              uint cols,
+              uint scale,
+              ccma::algebra::BaseMatrixT<real>* pooling_mat);
+};//class MeanPooling
+class MaxPooling : public Pooling{
+public:
+    void pool(ccma::algebra::BaseMatrixT<real>* mat,
+              uint rows,
+              uint cols,
+              uint scale,
+              ccma::algebra::BaseMatrixT<real>* pooling_mat);
+};//class MaxPooling
+class L2Pooling : public Pooling{
+public:
+    void pool(ccma::algebra::BaseMatrixT<real>* mat,
+              uint rows,
+              uint cols,
+              uint scale,
+              ccma::algebra::BaseMatrixT<real>* pooling_mat);
+};//class L2Pooling
+
 class Layer{
 public:
     Layer(uint rows,
           uint cols,
-          uint in_map_size,
-          uint out_map_size) : _rows(rows), 
-        _cols(cols), 
-        _in_map_size(in_map_size),
-        _out_map_size(out_map_size){}
+          uint in_channel_size,
+          uint out_channel_size) : _rows(rows),
+        _cols(cols),
+        _in_channel_size(in_channel_size),
+        _out_channel_size(out_channel_size){}
 
     ~Layer(){
         if(_bias != nullptr){
@@ -48,41 +81,41 @@ public:
     inline uint get_cols(){return _cols;}
 
     /*
-     * pre_layer feature map size
+     * pre_layer feature channel size
      */
-    inline void set_in_map_size(uint in_map_size){_in_map_size = in_map_size;}
-    inline uint get_in_map_size(){return _in_map_size;}
+    inline void set_in_channel_size(uint in_channel_size){_in_channel_size = in_channel_size;}
+    inline uint get_in_channel_size(){return _in_channel_size;}
 
     /*
-     * current_layer feature map size
+     * current_layer feature channel size
      */
-    inline void set_out_map_size(uint out_map_size){_out_map_size = out_map_size;}
-    inline uint get_out_map_size(){return _out_map_size;}
+    inline void set_out_channel_size(uint out_channel_size){_out_channel_size = out_channel_size;}
+    inline uint get_out_channel_size(){return _out_channel_size;}
 
-    //activation size equal out_map_size
-    inline void set_activation(uint out_map_id, ccma::algebra::BaseMatrixT<real>* activation){
-        set_vec_mat(&_activations, out_map_id, activation);
+    //activation size equal out_channel_size
+    inline void set_activation(uint out_channel_id, ccma::algebra::BaseMatrixT<real>* activation){
+        set_vec_mat(&_activations, out_channel_id, activation);
     }
-    inline ccma::algebra::BaseMatrixT<real>* get_activation(uint out_map_id){
-        return _activations[out_map_id];
-    }
-
-    //delta size equal out_map_size
-    inline void set_delta(uint out_map_id, ccma::algebra::BaseMatrixT<real>* delta){
-        set_vec_mat(&_deltas, out_map_id, delta);
-    }
-    inline ccma::algebra::BaseMatrixT<real>* get_delta(uint out_map_id){
-        return _deltas[out_map_id];
+    inline ccma::algebra::BaseMatrixT<real>* get_activation(uint out_channel_id){
+        return _activations[out_channel_id];
     }
 
-    //weight size equal out_map_size * in_map_size
-    inline void set_weight(uint in_map_id,
-                           uint out_map_id,
+    //delta size equal out_channel_size
+    inline void set_delta(uint out_channel_id, ccma::algebra::BaseMatrixT<real>* delta){
+        set_vec_mat(&_deltas, out_channel_id, delta);
+    }
+    inline ccma::algebra::BaseMatrixT<real>* get_delta(uint out_channel_id){
+        return _deltas[out_channel_id];
+    }
+
+    //weight size equal in_channel_size * out_channel_size
+    inline void set_weight(uint in_channel_id,
+                           uint out_channel_id,
                            ccma::algebra::BaseMatrixT<real>* weight){
-        set_vec_mat(&_weights, in_map_id * this->_out_map_size + out_map_id, weight);
+        set_vec_mat(&_weights, in_channel_id * this->_out_channel_size + out_channel_id, weight);
     }
-    inline ccma::algebra::BaseMatrixT<real>* get_weight(uint in_map_id, uint out_map_id){
-        return _weights[in_map_id * this->_out_map_size + out_map_id];
+    inline ccma::algebra::BaseMatrixT<real>* get_weight(uint in_channel_id, uint out_channel_id){
+        return _weights[in_channel_id * this->_out_channel_size + out_channel_id];
     }
 
     inline void set_bias(ccma::algebra::BaseMatrixT<real>* bias){
@@ -117,10 +150,10 @@ private:
 protected:
     uint _rows;
     uint _cols;
-    /*pre_layer feature map size*/
-    uint _in_map_size;
-    /* current_layer feature map size*/
-    uint _out_map_size;
+    /*pre_layer feature channel size*/
+    uint _in_channel_size;
+    /* current_layer feature channel size*/
+    uint _out_channel_size;
     std::vector<ccma::algebra::BaseMatrixT<real>*> _weights;
     ccma::algebra::BaseMatrixT<real>* _bias;
 private:
@@ -152,8 +185,12 @@ private:
 
 class SubSamplingLayer:public Layer{
 public:
-    SubSamplingLayer(uint scale):Layer(0, 0, 0, 0){
+    SubSamplingLayer(uint scale, Pooling* pooling):Layer(0, 0, 0, 0){
         _scale = scale;
+        _pooling = pooling;
+    }
+    ~SubSamplingLayer(){
+        delete _pooling;
     }
     bool initialize(Layer* pre_layer = nullptr);
     void feed_forward(Layer* pre_layer = nullptr, bool debug = false);
@@ -163,11 +200,14 @@ public:
 
 protected:
     uint _scale;
+private:
+    Pooling* _pooling;
 };//class SubsamplingLayer
+
 
 class ConvolutionLayer:public Layer{
 public:
-     ConvolutionLayer(uint kernal_size, uint stride, uint out_map_size):Layer(0, 0, 1, out_map_size){
+     ConvolutionLayer(uint kernal_size, uint stride, uint out_channel_size):Layer(0, 0, 1, out_channel_size){
         _kernal_size = kernal_size;
         _stride = stride;
     }
@@ -176,7 +216,6 @@ public:
     bool initialize(Layer* pre_layer = nullptr);
     void feed_forward(Layer* pre_layer = nullptr, bool debug = false);
     void back_propagation(Layer* pre_layer, Layer* back_layer = nullptr);
-
 protected:
     uint _stride;
     uint _kernal_size;
@@ -222,7 +261,6 @@ private:
     ccma::algebra::BaseMatrixT<real>* _error;
     real _loss;
 };//class FullConnectionLayer
-
 
 }//namespace cnn
 }//namespace algorithm
