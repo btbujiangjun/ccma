@@ -26,7 +26,8 @@ bool CNN::add_layer(Layer* layer){
         }
     }
 
-    if(layer->initialize(_layers[_layers.size() - 1])){
+    auto pre_layer = _layers[_layers.size() - 1];
+    if(layer->initialize(pre_layer)){
         _layers.push_back(layer);
         return true;
     }else{
@@ -65,12 +66,12 @@ void CNN::train(ccma::algebra::BaseMatrixT<real>* train_data,
             back_propagation(mini_batch_label);
 
             if(j % 100 == 0){
-//                printf("Epoch[%d][%d/%d]training...\r", i, j, num_train_data);
+                printf("Epoch[%d][%d/%d]training...\r", i, j, num_train_data);
             }
         }//end per epoch
 
         auto training_time = now();
-//        printf("Epoch %d training run time: %lld ms\n", i, std::chrono::duration_cast<std::chrono::milliseconds>(training_time - start_time).count());
+        printf("Epoch %d training run time: %lld ms\n", i, std::chrono::duration_cast<std::chrono::milliseconds>(training_time - start_time).count());
 
         int cnt = 0;
         for(int k = 0; k != num_test_data; k++){
@@ -82,7 +83,7 @@ void CNN::train(ccma::algebra::BaseMatrixT<real>* train_data,
         }
 
         printf("Epoch %d %d/%d\n", i, cnt, num_test_data);
-//        printf("Epoch %d predict run time: %lld ms\n", i, std::chrono::duration_cast<std::chrono::milliseconds>(now() - training_time).count());
+        printf("Epoch %d predict run time: %lld ms\n", i, std::chrono::duration_cast<std::chrono::milliseconds>(now() - training_time).count());
     }//end all epoch
 
     delete mini_batch_data;
@@ -141,7 +142,7 @@ bool CNN::evaluate(ccma::algebra::BaseMatrixT<real>* data, ccma::algebra::BaseMa
     }
 
     predict_mat->transpose();
-    predict_mat->display();
+    predict_mat->display("|");
     predict_mat->transpose();
 
     return max_idx == label->get_data(0);
