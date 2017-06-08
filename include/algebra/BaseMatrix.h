@@ -319,7 +319,7 @@ template<class T>
 class DenseRandomMatrixT :public DenseMatrixT<T>{
 public:
     DenseRandomMatrixT(uint rows, uint cols, const T mean_value, const T stddev) : DenseMatrixT<T>(rows, cols){
-        std::default_random_engine engine(time(0));
+        std::default_random_engine engine(std::chrono::system_clock::now().time_since_epoch().count());
         std::normal_distribution<T> distribution(mean_value, stddev);
         uint size = rows * cols;
         for(uint i = 0; i != size; i++){
