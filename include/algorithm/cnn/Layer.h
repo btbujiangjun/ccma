@@ -18,6 +18,7 @@ namespace cnn{
 
 class Pooling{
 public:
+    ~Pooling(){}
     virtual void pool(ccma::algebra::BaseMatrixT<real>* mat,
                       uint rows,
                       uint cols,
