@@ -28,6 +28,7 @@ bool CNN::add_layer(Layer* layer){
 
     auto pre_layer = _layers[_layers.size() - 1];
     if(layer->initialize(pre_layer)){
+	pre_layer->set_is_last_layer();
         _layers.push_back(layer);
         return true;
     }else{
@@ -63,7 +64,7 @@ void CNN::train(ccma::algebra::BaseMatrixT<real>* train_data,
             train_data->get_row_data(j, mini_batch_data);
             train_label->get_row_data(j, mini_batch_label);
             feed_forward(mini_batch_data);
-            back_propagation(mini_batch_label);
+            //back_propagation(mini_batch_label);
 
             if(j % 100 == 0){
                 printf("Epoch[%d][%d/%d]training...\r", i, j, num_train_data);
