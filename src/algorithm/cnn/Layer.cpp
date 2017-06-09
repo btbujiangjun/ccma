@@ -71,7 +71,7 @@ void SubSamplingLayer::back_propagation(Layer* pre_layer, Layer* back_layer){
         delete w;
     }else if(typeid(*back_layer) == typeid(FullConnectionLayer)){
         real* data = ((FullConnectionLayer*)back_layer)->get_av()->get_data();
-        for(int i = 0; i != this->_out_channel_size; i++){
+        for(uint i = 0; i != this->_out_channel_size; i++){
             auto delta = new ccma::algebra::DenseMatrixT<real>();
             real* d = new real[_rows * _cols];
             memcpy(d, &data[i * this->_rows * this->_cols], sizeof(real) * this->_rows * this->_cols);
@@ -203,11 +203,11 @@ void ConvolutionLayer::back_propagation(Layer* pre_layer, Layer* back_layer){
 
     }else if(typeid(*back_layer) == typeid(FullConnectionLayer)){
         real* data = ((FullConnectionLayer*)back_layer)->get_av()->get_data();
-        for(int i = 0; i != this->_out_channel_size; i++){
+        for(uint i = 0; i != this->_out_channel_size; i++){
             auto delta = new ccma::algebra::DenseMatrixT<real>();
-            real* d = new real[_rows * _cols];
+            real* d = new real[this->_rows * this->_cols];
             memcpy(d, &data[i * this->_rows * this->_cols], sizeof(real) * this->_rows * this->_cols);
-            delta->set_shallow_data(d, _rows, _cols);
+            delta->set_shallow_data(d, this->_rows, this->_cols);
             this->set_delta(i, delta);
         }
     }
@@ -370,7 +370,7 @@ void MaxPooling::pool(ccma::algebra::BaseMatrixT<real>* mat,
             for(uint m = 0; m != scale; m++){
                 for(uint n = 0; n != scale; n++){
                     real value = mat->get_data(j * scale + m, k * scale + n);
-                    if(m == 0 && n == 0 || value > pooling_value){
+                    if((m == 0 && n == 0) || value > pooling_value){
                         pooling_value = value;
                     }
                 }
