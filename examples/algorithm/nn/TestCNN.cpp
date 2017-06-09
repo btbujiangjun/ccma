@@ -12,9 +12,9 @@
 int main(int argc, char** argv){
     auto cnn = new ccma::algorithm::cnn::CNN();
     if(!(cnn->add_layer(new ccma::algorithm::cnn::DataLayer(28, 28)) &&
-        cnn->add_layer(new ccma::algorithm::cnn::ConvolutionLayer(5, 1, 20)) &&
+        cnn->add_layer(new ccma::algorithm::cnn::ConvolutionLayer(5, 1, 3)) &&
         cnn->add_layer(new ccma::algorithm::cnn::SubSamplingLayer(2, new ccma::algorithm::cnn::MeanPooling())) &&
-        cnn->add_layer(new ccma::algorithm::cnn::ConvolutionLayer(3, 1, 10)) &&
+        cnn->add_layer(new ccma::algorithm::cnn::ConvolutionLayer(5, 1, 3)) &&
 //        cnn->add_layer(new ccma::algorithm::cnn::SubSamplingLayer(2, new ccma::algorithm::cnn::MaxPooling())) &&
         cnn->add_layer(new ccma::algorithm::cnn::FullConnectionLayer(10)))){
         delete cnn;
@@ -22,7 +22,7 @@ int main(int argc, char** argv){
     }
 
     ccma::utils::MnistHelper<real> helper;
-    const uint training_cnt = 10000;
+    const uint training_cnt = 1;
     const uint test_cnt = 100;
     auto train_data     = new ccma::algebra::DenseMatrixT<real>();
     helper.read_image("data/mnist/train-images-idx3-ubyte",train_data, training_cnt);
@@ -34,8 +34,8 @@ int main(int argc, char** argv){
 
     auto test_label     = new ccma::algebra::DenseMatrixT<real>();
     helper.read_label("data/mnist/t10k-labels-idx1-ubyte", test_label, test_cnt);
-    cnn->train(train_data, train_label, 40, test_data, test_label);
-    //cnn->train(train_data, train_label, 5);
+//    cnn->train(train_data, train_label, 100, test_data, test_label);
+    cnn->train(train_data, train_label, 1);
 
     delete cnn;
     delete train_data;
