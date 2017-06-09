@@ -58,7 +58,8 @@ public:
           uint out_channel_size) : _rows(rows),
         _cols(cols),
         _in_channel_size(in_channel_size),
-        _out_channel_size(out_channel_size){}
+        _out_channel_size(out_channel_size),
+	_is_last_layer(true){}
 
     ~Layer(){
         if(_bias != nullptr){
@@ -81,6 +82,8 @@ public:
     inline void set_cols(uint cols){_cols = cols;}
     inline uint get_cols(){return _cols;}
 
+    inline void set_is_last_layer(){_is_last_layer = false;}
+    inline bool get_is_last_layer(){return _is_last_layer;}
     /*
      * pre_layer feature channel size
      */
@@ -160,6 +163,8 @@ protected:
 private:
     std::vector<ccma::algebra::BaseMatrixT<real>*> _activations;
     std::vector<ccma::algebra::BaseMatrixT<real>*> _deltas;
+
+    bool _is_last_layer = true;
 };//class Layer
 
 class DataLayer:public Layer{
