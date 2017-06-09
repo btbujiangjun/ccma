@@ -91,7 +91,7 @@ void CNN::train(ccma::algebra::BaseMatrixT<real>* train_data,
 }
 
 void CNN::feed_forward(ccma::algebra::BaseMatrixT<real>* mat, bool debug){
-    int layer_size = _layers.size();
+    uint layer_size = _layers.size();
     for(uint k = 0; k < layer_size; k++){
         auto layer = _layers[k];
         Layer* pre_layer = nullptr;
@@ -118,7 +118,7 @@ void CNN::back_propagation(ccma::algebra::BaseMatrixT<real>* mat){
             back_layer = _layers[k + 1];
         }
         if(typeid(*layer) == typeid(FullConnectionLayer)){
-            mat->transpose();
+            mat->reshape(mat->get_cols(),mat->get_rows());
             ((FullConnectionLayer*)_layers[k])->set_y(mat);
         }
         layer->back_propagation(pre_layer, back_layer);
@@ -133,7 +133,7 @@ bool CNN::evaluate(ccma::algebra::BaseMatrixT<real>* data, ccma::algebra::BaseMa
     int max_idx = 0;
     uint rows = predict_mat->get_rows();
 
-    for(int i = 0; i != rows; i++){
+    for(uint i = 0; i != rows; i++){
         real value = predict_mat->get_data(i);
         if(i == 0 || value > max_value){
             max_value = value;
