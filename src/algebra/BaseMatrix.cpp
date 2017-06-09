@@ -312,7 +312,6 @@ bool BaseMatrixT<T>::convn(ccma::algebra::BaseMatrixT<T>* kernal,
 
     new_data = new T[conv_row * conv_col];
 
-//    kernal->flip180();
     T* kernal_data = kernal->get_data();
 
     for(uint i = 0; i != conv_row; i++){
@@ -336,7 +335,10 @@ bool BaseMatrixT<T>::convn(ccma::algebra::BaseMatrixT<T>* kernal,
         }
     }
     this->set_shallow_data(new_data, conv_row, conv_col);
-  //  kernal->flip180();
+
+    if(shape == "full"){
+	delete[] data;
+    }
 
     return true;
 }
