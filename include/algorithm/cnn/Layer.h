@@ -18,7 +18,7 @@ namespace cnn{
 
 class Pooling{
 public:
-    ~Pooling(){}
+    virtual ~Pooling(){}
     virtual void pool(ccma::algebra::BaseMatrixT<real>* mat,
                       uint rows,
                       uint cols,
@@ -61,7 +61,7 @@ public:
         _out_channel_size(out_channel_size),
 	_is_last_layer(true){}
 
-    ~Layer(){
+    virtual ~Layer(){
         if(_bias != nullptr){
             delete _bias;
             _bias = nullptr;
