@@ -22,7 +22,7 @@ int main(int argc, char** argv){
     }
 
     ccma::utils::MnistHelper<real> helper;
-    const uint training_cnt = 1;
+    const uint training_cnt = 1000;
     const uint test_cnt = 100;
     auto train_data     = new ccma::algebra::DenseMatrixT<real>();
     helper.read_image("data/mnist/train-images-idx3-ubyte",train_data, training_cnt);
@@ -34,8 +34,8 @@ int main(int argc, char** argv){
 
     auto test_label     = new ccma::algebra::DenseMatrixT<real>();
     helper.read_label("data/mnist/t10k-labels-idx1-ubyte", test_label, test_cnt);
-//    cnn->train(train_data, train_label, 100, test_data, test_label);
-    cnn->train(train_data, train_label, 1);
+    cnn->train(train_data, train_label, 400, test_data, test_label);
+//    cnn->train(train_data, train_label, 2);
 
     delete cnn;
     delete train_data;
