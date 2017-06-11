@@ -201,7 +201,8 @@ public:
     }
 
     inline T get_data(const int row, const int col){
-        int r = row, c = col;
+        int r = row;
+		int c = col;
         if(check_range(&r, &c)){
             return _data[r * this->_cols + c];
         }else{
@@ -337,7 +338,7 @@ public:
         this->_data = new T[rows * cols];
 
         //memset only support 0 or -1.
-        if(value == static_cast<T>(0) || value == static_cast<T>(-1)){
+        if(value == 0 || value == -1){
             memset(this->_data, value, sizeof(T) * rows * cols);
         }else{
             for(uint i = 0; i < rows * cols; i++){
