@@ -258,8 +258,14 @@ void ConvolutionLayer::back_propagation(Layer* pre_layer, Layer* back_layer, boo
     	    /*
              * update grad: w -= alpha * derivate_weight
 	         */
+
+			printf("convolutelayer old weight");
+			derivate_weight->display("|");
 	        derivate_weight->multiply(this->_alpha);
+			derivate_weight->display("|");
+            this->get_weight(j, i)->display("|");
             this->get_weight(j, i)->subtract(derivate_weight);
+            this->get_weight(j, i)->display("|");
 
             if(debug){
 	            printf("conv back derivate_weight[%d][%d]", j , i);
@@ -420,9 +426,20 @@ void FullConnectionLayer::back_propagation(Layer* pre_layer, Layer* back_layer, 
      * update weight & bias
      */
     //todo set alpha
-    derivate_weight->multiply(this->_alpha);
-    derivate_bias->multiply(this->_alpha);
-    this->get_weight(0, 0)->subtract(derivate_weight);
+
+	printf("derivate_weight");
+	derivate_weight->display("|");
+	
+	derivate_weight->multiply(this->_alpha);
+	
+	derivate_weight->display("|");
+    
+	derivate_bias->multiply(this->_alpha);
+   
+	printf("old weight");
+	this->get_weight(0, 0)->display("|");
+	this->get_weight(0, 0)->subtract(derivate_weight);
+	this->get_weight(0, 0)->display("|");
     this->get_bias()->subtract(derivate_bias);
 
     if(debug){
