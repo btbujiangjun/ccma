@@ -17,6 +17,7 @@ namespace nn{
 
 class Cost{
 public:
+    virtual ~Cost(){}
     virtual void delta(ccma::algebra::BaseMatrixT<real>* z,
                        ccma::algebra::BaseMatrixT<real>* a,
                        ccma::algebra::BaseMatrixT<real>* y,
