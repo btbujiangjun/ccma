@@ -20,10 +20,19 @@ void DataLayer::feed_forward(Layer* pre_layer, bool debug){
     auto activation = new ccma::algebra::DenseMatrixT<real>();
     _x->clone(activation);
     this->set_activation(0, activation);
-
-	//activation->display("|");
+    if(debug){
+    	printf("DataLayer activation");
+        auto a = new ccma::algebra::DenseMatrixT<int>();
+        int* d = new int[_x->get_rows() * _x->get_cols()];
+        for(uint i = 0; i != _x->get_size(); i++){
+            d[i] = static_cast<int>(_x->get_data(i));
+        }
+        a->set_shallow_data(d, _x->get_rows(), _x->get_cols());
+        a->display("|");
+        delete a;
+    }
 }
-void DataLayer::back_propagation(Layer* pre_layer, Layer* back_layer){
+void DataLayer::back_propagation(Layer* pre_layer, Layer* back_layer, bool debug){
 }
 
 bool SubSamplingLayer::initialize(Layer* pre_layer){
@@ -52,10 +61,14 @@ void SubSamplingLayer::feed_forward(Layer* pre_layer, bool debug){
         auto activation = new ccma::algebra::DenseMatrixT<real>();
         _pooling->pool(a, this->_rows, this->_cols, this->_scale, activation);
         this->set_activation(i, activation);
-		//activation->display("|");
-	 }
+
+	    if(debug){
+	        printf("sub feed[%d]", i);
+	        activation->display("|");
+	    }
+    }
 }
-void SubSamplingLayer::back_propagation(Layer* pre_layer, Layer* back_layer){
+void SubSamplingLayer::back_propagation(Layer* pre_layer, Layer* back_layer, bool debug){
     if(back_layer->get_is_last_layer()){
         real* data = ((FullConnectionLayer*)back_layer)->get_av()->get_data();
         for(uint i = 0; i != this->_out_channel_size; i++){
@@ -65,9 +78,10 @@ void SubSamplingLayer::back_propagation(Layer* pre_layer, Layer* back_layer){
             delta->set_shallow_data(d, this->_rows, this->_cols);
             this->set_delta(i, delta);
 
-			//printf("sub back-full[%d]", i);
-			//delta->display();
-
+            if(debug){
+	        	printf("sub back-full[%d]", i);
+	            delta->display("|");
+            }
         }
     }else if(typeid(*back_layer) == typeid(ConvolutionLayer)){
         uint stride = ((ConvolutionLayer*)back_layer)->get_stride();
@@ -83,9 +97,11 @@ void SubSamplingLayer::back_propagation(Layer* pre_layer, Layer* back_layer){
             }
             this->set_delta(i, delta);
 
-			//printf("sub back-conv[%d]", i);
-			//delta->display();
-
+            if(debug){
+	        	printf("sub back-conv[%d]", i);
+	        	delta->display();
+            }
+	
         }
         delete d;
         delete w;
@@ -108,16 +124,15 @@ bool ConvolutionLayer::initialize(Layer* pre_layer){
 
     for(uint i = 0; i != this->_in_channel_size; i++){
         for(uint j = 0; j != this->_out_channel_size; j++){
-            auto weight = new ccma::algebra::DenseRandomMatrixT<real>(_kernal_size, _kernal_size, 0.0, 1.0);
+            auto weight = new ccma::algebra::DenseRandomMatrixT<real>(_kernal_size, _kernal_size, 0.0, 0.5);
             this->set_weight(i, j, weight);
         }
     }
     for(uint i = 0; i != this->_in_channel_size; i++){
         for(uint j = 0; j != this->_out_channel_size; j++){
-            this->get_weight(i, j)->display();
+            this->get_weight(i, j)->display("|");
         }
     }
-
     /*
      * channel shared the same bias of current layer.
      */
@@ -133,26 +148,40 @@ void ConvolutionLayer::feed_forward(Layer* pre_layer, bool debug){
         auto activation = new ccma::algebra::DenseMatrixT<real>();
         for(uint j = 0; j != pre_layer->get_out_channel_size(); j++){
             pre_layer->get_activation(j)->clone(a);
-			//printf("conv pre activation");
-			//a->display("|");
-			//this->get_weight(j, i)->display("|");
             a->convn(this->get_weight(j, i), _stride, "valid");
             //sum all channels of pre_layer.
             activation->add(a);
+
+            if(debug){
+                printf("ConvolutionLayer convn[%d][%d]", i, j);
+                pre_layer->get_activation(j)->display("|");
+                this->get_weight(j, i)->display("|");
+                a->display("|");
+                activation->display("|");
+            }
         }
         //add shared bias of channel in current layer.
         activation->add(this->get_bias()->get_data(i, 0));
+
+        if(debug){
+            printf("ConvolutionLayer bias [%d][%f]", i, this->get_bias()->get_data(i, 0));
+            activation->display("|");
+        }
+
         //if sigmoid activative function.
         activation->sigmoid();
         this->set_activation(i, activation);
-		//activation->display("|");
+	
+	    if(debug){
+	        printf("conv feed activation[%d]", i);
+	        activation->display("|");
+    	}
+
     }
     delete a;
 }
 
-void ConvolutionLayer::back_propagation(Layer* pre_layer, Layer* back_layer){
-    //todo alpha
-    real alpha = 5;
+void ConvolutionLayer::back_propagation(Layer* pre_layer, Layer* back_layer, bool debug){
     if(back_layer->get_is_last_layer()){
         real* data = ((FullConnectionLayer*)back_layer)->get_av()->get_data();
         for(uint i = 0; i != this->_out_channel_size; i++){
@@ -161,6 +190,11 @@ void ConvolutionLayer::back_propagation(Layer* pre_layer, Layer* back_layer){
             memcpy(d, &data[i * this->_rows * this->_cols], sizeof(real) * this->_rows * this->_cols);
             delta->set_shallow_data(d, this->_rows, this->_cols);
             this->set_delta(i, delta);
+
+            if(debug){
+                printf("ConvolutionLayer-last_layer back_propagation[%d]\n", i);
+                delta->display("|");
+            }
         }
     }else if(typeid(*back_layer) == typeid(SubSamplingLayer)){
 
@@ -178,7 +212,7 @@ void ConvolutionLayer::back_propagation(Layer* pre_layer, Layer* back_layer){
             this->get_activation(i)->clone(a1);
             a1->clone(a2);
 			
-			a2->multiply(-1);
+    	    a2->multiply(-1);
             a2->add(1);
             a1->multiply(a2);
             delete a2;
@@ -202,7 +236,11 @@ void ConvolutionLayer::back_propagation(Layer* pre_layer, Layer* back_layer){
 
             this->set_delta(i, a1);
 
-		}
+            if(debug){
+                printf("ConvolutionLayer-none_last_layer back_propagation[%d]\n", i);
+                a1->display("|");
+            }
+	    }
     }
     /*
      * calc grad and update weight/bias
@@ -212,33 +250,36 @@ void ConvolutionLayer::back_propagation(Layer* pre_layer, Layer* back_layer){
     auto derivate_weight = new ccma::algebra::DenseMatrixT<real>();
     real* derivate_bias_data = new real[this->_out_channel_size];
     for(uint i = 0; i != this->_out_channel_size; i++){
-		for(uint j = 0; j != pre_layer->get_out_channel_size(); j++){
-	    	pre_layer->get_activation(j)->clone(derivate_weight);
-		
-            derivate_weight->convn(this->get_delta(i), _stride, "valid");
-	    	/*
+    	for(uint j = 0; j != pre_layer->get_out_channel_size(); j++){
+	        pre_layer->get_activation(j)->clone(derivate_weight);
+		    derivate_weight->convn(this->get_delta(i), _stride, "valid");
+    	    /*
              * update grad: w -= alpha * derivate_weight
-	     	*/
-	    	derivate_weight->multiply(alpha);
-        	this->get_weight(j, i)->subtract(derivate_weight);
+	         */
+	        derivate_weight->multiply(this->_alpha);
+            this->get_weight(j, i)->subtract(derivate_weight);
 
-			//printf("conv back weight[%d][%d]", j , i);
-			//derivate_weight->display();
-
-		}
-		//update bias
+            if(debug){
+	            printf("conv back derivate_weight[%d][%d]", j , i);
+	            derivate_weight->display("|");
+            }
+    	}
+	    //update bias
         derivate_bias_data[i] = this->get_delta(i)->sum();
     }
     delete derivate_weight;
 
     auto derivate_bias = new ccma::algebra::DenseMatrixT<real>();
     derivate_bias->set_shallow_data(derivate_bias_data, this->_out_channel_size, 1);
-    derivate_bias->multiply(alpha);
+    derivate_bias->multiply(this->_alpha);
     this->get_bias()->subtract(derivate_bias);
-   
-	//derivate_bias->display();
+  
+    if(debug){
+	    printf("conv back derivate_bias");
+        derivate_bias->display("|");
+    }
 
-	delete derivate_bias;
+    delete derivate_bias;
 }
 
 bool FullConnectionLayer::initialize(Layer* pre_layer){
@@ -267,6 +308,7 @@ void FullConnectionLayer::feed_forward(Layer* pre_layer, bool debug){
     }
     _av = av;
 
+
     auto activation = new ccma::algebra::DenseMatrixT<real>();
     this->get_weight(0, 0)->clone(activation);
     activation->dot(_av);
@@ -274,11 +316,15 @@ void FullConnectionLayer::feed_forward(Layer* pre_layer, bool debug){
     //if sigmoid activative function
     activation->sigmoid();
     this->set_activation(0, activation);
-	
-	//activation->display();
+    
+    if(debug){
+        printf("FullConnectionLayer feed_forward activation");
+	    activation->display("|");
+    }
+
 }
 
-void FullConnectionLayer::back_propagation(Layer* pre_layer, Layer* back_layer){
+void FullConnectionLayer::back_propagation(Layer* pre_layer, Layer* back_layer, bool debug){
     if(_error == nullptr){
         _error = new ccma::algebra::DenseMatrixT<real>();
     }
@@ -351,6 +397,7 @@ void FullConnectionLayer::back_propagation(Layer* pre_layer, Layer* back_layer){
     delete derivate_output;
     _av->clone(avt);
 
+
     avt->transpose();
     derivate_weight->dot(avt);
     delete avt;
@@ -359,15 +406,17 @@ void FullConnectionLayer::back_propagation(Layer* pre_layer, Layer* back_layer){
      * update weight & bias
      */
     //todo set alpha
-    real alpha = 5;
-    derivate_weight->multiply(alpha);
-    derivate_bias->multiply(alpha);
+    derivate_weight->multiply(this->_alpha);
+    derivate_bias->multiply(this->_alpha);
     this->get_weight(0, 0)->subtract(derivate_weight);
     this->get_bias()->subtract(derivate_bias);
 
-	//printf("full back");
-	//derivate_weight->display();
-	//derivate_bias->display();
+    if(debug){
+        printf("FullConnectionLayer back_propagation derivate_weight");
+        derivate_weight->display("|");
+        printf("FullConnectionLayer back_propagation derivate_bias");
+        derivate_bias->display("|");
+    }
 
     delete derivate_weight;
     delete derivate_bias;
