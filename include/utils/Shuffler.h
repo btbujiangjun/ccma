@@ -34,7 +34,7 @@ private:
 
 Shuffler::Shuffler(uint size){
     _size = size;
-    for(int i = 0; i != _size; i++){
+    for(uint i = 0; i != _size; i++){
         _shuffler_idx.push_back(i);
     }
 }
@@ -44,7 +44,7 @@ void Shuffler::shuffle(){
     std::random_device rd;
     uint random_idx, value;
 
-    for(int i = _size - 1; i != 0 ; i--){
+    for(uint i = _size - 1; i != 0 ; i--){
         random_idx = rd() % i;
         value =  _shuffler_idx[random_idx];
 
