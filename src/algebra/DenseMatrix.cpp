@@ -258,7 +258,7 @@ template<class T>
 T DenseMatrixT<T>::sum() const{
     T value = static_cast<T>(0);
     uint size = this->_rows * this->_cols;
-    for(uint i = 0; i < size; i++){
+    for(uint i = 0; i != size; i++){
         value += _data[i];
     }
     return value;
