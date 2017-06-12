@@ -28,7 +28,7 @@ void DNN::init_networks_weights(){
     //mean & stddev
     std::normal_distribution<real> distribution(0.0, 1.0);
 
-    int len = _weights.size();
+    uint len = _weights.size();
     for(uint i = 0; i < len; i++){
         uint size = _weights[i]->get_size();
         for(uint j = 0; j < size; j++){
@@ -101,14 +101,14 @@ bool DNN::sgd(ccma::algebra::BaseMatrixT<real>* train_data,
         }
 
         auto training_time = now();
-        printf("Epoch %d train run time: %lld ms\n", i, std::chrono::duration_cast<std::chrono::milliseconds>(training_time - start_time).count());
+        printf("Epoch %d train run time: %ld ms\n", i, std::chrono::duration_cast<std::chrono::milliseconds>(training_time - start_time).count());
 
         if(num_test_data > 0){
             printf("Epoch %d: %d / %d\n", i, evaluate(test_data, test_label), num_test_data);
-            printf("Epoch %d predict run time: %lld ms\n", i, std::chrono::duration_cast<std::chrono::milliseconds>(now() - training_time).count());
+            printf("Epoch %d predict run time: %ld ms\n", i, std::chrono::duration_cast<std::chrono::milliseconds>(now() - training_time).count());
         }
 
-        printf("Epoch %d run time: %lld ms\n", i, std::chrono::duration_cast<std::chrono::milliseconds>(now() - start_time).count());
+        printf("Epoch %d run time: %ld ms\n", i, std::chrono::duration_cast<std::chrono::milliseconds>(now() - start_time).count());
     }
 
     delete row_data;
@@ -363,7 +363,7 @@ void DNN::init_parameter(std::vector<ccma::algebra::BaseMatrixT<real>*>* weight_
     clear_parameter(weight_parameter);
     clear_parameter(bias_parameter);
 
-    for(int i = 1; i < _num_layers; i++){
+    for(uint i = 1; i < _num_layers; i++){
         auto layer = new ccma::algebra::DenseMatrixT<real>(_sizes[i - 1], _sizes[i]);
         weight_parameter->push_back(layer);
 
