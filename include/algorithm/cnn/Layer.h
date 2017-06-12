@@ -161,7 +161,7 @@ protected:
     std::vector<ccma::algebra::BaseMatrixT<real>*> _weights;
     ccma::algebra::BaseMatrixT<real>* _bias;
 
-    real _alpha = 0.2;
+    real _alpha = 0.1;
 private:
     std::vector<ccma::algebra::BaseMatrixT<real>*> _activations;
     std::vector<ccma::algebra::BaseMatrixT<real>*> _deltas;

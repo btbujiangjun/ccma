@@ -38,7 +38,7 @@ protected:
 
 private:
     bool check(uint size);
-    bool evaluate(ccma::algebra::BaseMatrixT<real>* data, ccma::algebra::BaseMatrixT<real>* label);
+    bool evaluate(ccma::algebra::BaseMatrixT<real>* data, ccma::algebra::BaseMatrixT<real>* label, bool debug = false);
 
 private:
     std::vector<Layer*> _layers;
