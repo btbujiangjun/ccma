@@ -297,7 +297,7 @@ bool BaseMatrixT<T>::convn(ccma::algebra::BaseMatrixT<T>* kernal,
             memcpy(&data[(i + kernal_row - 1) * data_col + kernal_col - 1], &src_data[i * _cols], sizeof(T)* _cols);
         }
 
-    }else{//"valid"
+    }else if(shape == "valid"){//"valid"
         data_row = _rows;
         data_col = _cols;
         data     = src_data;
@@ -305,6 +305,9 @@ bool BaseMatrixT<T>::convn(ccma::algebra::BaseMatrixT<T>* kernal,
             printf("Convn error: kernel dim large than mat.\n");
             return false;
         }
+    }else{
+        printf("Convn error: not support shape [%s]\n", shape.c_str());
+        return false;
     }
 
     uint conv_row = (data_row - kernal_row) % stride == 0 ? (data_row - kernal_row) / stride + 1 : (data_row - kernal_row) / stride + 2;
@@ -337,7 +340,7 @@ bool BaseMatrixT<T>::convn(ccma::algebra::BaseMatrixT<T>* kernal,
     this->set_shallow_data(new_data, conv_row, conv_col);
 
     if(shape == "full"){
-	delete[] data;
+    	delete[] data;
     }
 
     return true;
