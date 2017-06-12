@@ -74,7 +74,7 @@ public:
 
     virtual bool initialize(Layer* pre_layer = nullptr) = 0;
     virtual void feed_forward(Layer* pre_layer = nullptr, bool debug = false) = 0;
-    virtual void back_propagation(Layer* pre_layer, Layer* back_layer = nullptr) = 0;
+    virtual void back_propagation(Layer* pre_layer, Layer* back_layer = nullptr, bool debug = false) = 0;
 
     inline void set_rows(uint rows){_rows = rows;}
     inline uint get_rows(){return _rows;}
@@ -160,6 +160,8 @@ protected:
     uint _out_channel_size;
     std::vector<ccma::algebra::BaseMatrixT<real>*> _weights;
     ccma::algebra::BaseMatrixT<real>* _bias;
+
+    real _alpha = 0.2;
 private:
     std::vector<ccma::algebra::BaseMatrixT<real>*> _activations;
     std::vector<ccma::algebra::BaseMatrixT<real>*> _deltas;
@@ -175,7 +177,7 @@ public:
     }
     bool initialize(Layer* pre_layer = nullptr);
     void feed_forward(Layer* pre_layer = nullptr, bool debug = false);
-    void back_propagation(Layer* pre_layer, Layer* back_layer = nullptr);
+    void back_propagation(Layer* pre_layer, Layer* back_layer = nullptr, bool debug = false);
 
     bool set_x(ccma::algebra::BaseMatrixT<real>* x){
         if(x->get_rows() == this->_rows && x->get_cols() == this->_cols){
@@ -200,7 +202,7 @@ public:
     }
     bool initialize(Layer* pre_layer = nullptr);
     void feed_forward(Layer* pre_layer = nullptr, bool debug = false);
-    void back_propagation(Layer* pre_layer, Layer* back_layer = nullptr);
+    void back_propagation(Layer* pre_layer, Layer* back_layer = nullptr, bool debug = false);
 
     uint get_scale(){return _scale;}
 
@@ -221,7 +223,7 @@ public:
 
     bool initialize(Layer* pre_layer = nullptr);
     void feed_forward(Layer* pre_layer = nullptr, bool debug = false);
-    void back_propagation(Layer* pre_layer, Layer* back_layer = nullptr);
+    void back_propagation(Layer* pre_layer, Layer* back_layer = nullptr, bool debug = false);
 protected:
     uint _stride;
     uint _kernal_size;
@@ -244,7 +246,7 @@ public:
     }
     bool initialize(Layer* pre_layer = nullptr);
     void feed_forward(Layer* pre_layer = nullptr, bool debug = false);
-    void back_propagation(Layer* pre_layer, Layer* back_layer = nullptr);
+    void back_propagation(Layer* pre_layer, Layer* back_layer = nullptr, bool debug = false);
 
     bool set_y(ccma::algebra::BaseMatrixT<real>* y){
         if(y->get_rows() == _rows){

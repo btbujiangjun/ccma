@@ -34,7 +34,7 @@ public:
     //void predict(ccma::algebra::BaseMatrixT<real>* predict_data);
 protected:
     void feed_forward(ccma::algebra::BaseMatrixT<real>* mat, bool debug = false);
-    void back_propagation(ccma::algebra::BaseMatrixT<real>* mat);
+    void back_propagation(ccma::algebra::BaseMatrixT<real>* mat, bool debug = false);
 
 private:
     bool check(uint size);
