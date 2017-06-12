@@ -99,7 +99,7 @@ void SubSamplingLayer::back_propagation(Layer* pre_layer, Layer* back_layer, boo
 
             if(debug){
 	        	printf("sub back-conv[%d]", i);
-	        	delta->display();
+	        	delta->display("|");
             }
 	
         }
@@ -184,10 +184,11 @@ void ConvolutionLayer::feed_forward(Layer* pre_layer, bool debug){
 void ConvolutionLayer::back_propagation(Layer* pre_layer, Layer* back_layer, bool debug){
     if(back_layer->get_is_last_layer()){
         real* data = ((FullConnectionLayer*)back_layer)->get_av()->get_data();
+		uint size = this->_rows * this->_cols;
         for(uint i = 0; i != this->_out_channel_size; i++){
             auto delta = new ccma::algebra::DenseMatrixT<real>();
-            real* d = new real[this->_rows * this->_cols];
-            memcpy(d, &data[i * this->_rows * this->_cols], sizeof(real) * this->_rows * this->_cols);
+            real* d = new real[size];
+            memcpy(d, &data[i * size], sizeof(real) * size);
             delta->set_shallow_data(d, this->_rows, this->_cols);
             this->set_delta(i, delta);
 
@@ -207,38 +208,38 @@ void ConvolutionLayer::back_propagation(Layer* pre_layer, Layer* back_layer, boo
              *  sigmoid(z)*(1-sigmoid(z))
              *  a = sigmoid(z)
              */
-            auto a1 = new ccma::algebra::DenseMatrixT<real>();
-            auto a2 = new ccma::algebra::DenseMatrixT<real>();
-            this->get_activation(i)->clone(a1);
-            a1->clone(a2);
-			
-    	    a2->multiply(-1);
-            a2->add(1);
-            a1->multiply(a2);
-            delete a2;
-
             auto delta = new ccma::algebra::DenseMatrixT<real>();
-            back_layer->get_delta(i)->clone(delta);
+            auto d = new ccma::algebra::DenseMatrixT<real>();
+            this->get_activation(i)->clone(delta);
+            delta->clone(d);
+			
+    	    d->multiply(-1);
+            d->add(1);
+            delta->multiply(d);
+            delete d;
+
+            auto back_delta = new ccma::algebra::DenseMatrixT<real>();
+            back_layer->get_delta(i)->clone(back_delta);
 
             /*
              * subsampling layer reduced matrix dim, so recover it by expand function
              */
-            delta->expand(scale, scale);
+            back_delta->expand(scale, scale);
             /*
              * back layer error sharing
              */
-            delta->division(scale*scale);
+            back_delta->division(scale*scale);
             /*
              * delta_l = derivative_sigmoid * delta_l+1(recover dim)
              */
-            a1->multiply(delta);
-            delete delta;
+            delta->multiply(back_delta);
+            delete back_delta;
 
-            this->set_delta(i, a1);
+            this->set_delta(i, delta);
 
             if(debug){
                 printf("ConvolutionLayer-none_last_layer back_propagation[%d]\n", i);
-                a1->display("|");
+                delta->display("|");
             }
 	    }
     }
@@ -251,6 +252,7 @@ void ConvolutionLayer::back_propagation(Layer* pre_layer, Layer* back_layer, boo
     real* derivate_bias_data = new real[this->_out_channel_size];
     for(uint i = 0; i != this->_out_channel_size; i++){
     	for(uint j = 0; j != pre_layer->get_out_channel_size(); j++){
+			//derivate_weight = pre_layer.activation(j).convn(delta[i], 'valid')
 	        pre_layer->get_activation(j)->clone(derivate_weight);
 		    derivate_weight->convn(this->get_delta(i), _stride, "valid");
     	    /*
@@ -266,6 +268,11 @@ void ConvolutionLayer::back_propagation(Layer* pre_layer, Layer* back_layer, boo
     	}
 	    //update bias
         derivate_bias_data[i] = this->get_delta(i)->sum();
+
+		if(debug){
+			printf("ConvolutionLayer delta[%d]", i);
+			this->get_delta(i)->display("|");
+		}
     }
     delete derivate_weight;
 
@@ -287,7 +294,7 @@ bool FullConnectionLayer::initialize(Layer* pre_layer){
     this->_in_channel_size = pre_layer->get_out_channel_size();
 
     this->set_bias(new ccma::algebra::DenseColMatrixT<real>(_rows, 0.0));
-    auto weight = new ccma::algebra::DenseRandomMatrixT<real>(this->_rows, this->_cols, 0.0, 1.0);
+    auto weight = new ccma::algebra::DenseRandomMatrixT<real>(this->_rows, this->_cols, 0.0, 0.5);
     this->set_weight(0, 0, weight);
     return true;
 }
@@ -297,9 +304,10 @@ void FullConnectionLayer::feed_forward(Layer* pre_layer, bool debug){
      */
     auto a = new ccma::algebra::DenseMatrixT<real>();
     auto av = new ccma::algebra::DenseMatrixT<real>();
+	uint size = pre_layer->get_rows() * pre_layer->get_cols();;
     for(uint i = 0; i != this->_in_channel_size; i++){
         pre_layer->get_activation(i)->clone(a);
-        a->reshape(a->get_rows() * a->get_cols(), 1);
+        a->reshape(size, 1);
         av->extend(a, false);
     }
     delete a;
@@ -307,7 +315,6 @@ void FullConnectionLayer::feed_forward(Layer* pre_layer, bool debug){
         delete _av;
     }
     _av = av;
-
 
     auto activation = new ccma::algebra::DenseMatrixT<real>();
     this->get_weight(0, 0)->clone(activation);
@@ -331,6 +338,13 @@ void FullConnectionLayer::back_propagation(Layer* pre_layer, Layer* back_layer, 
     this->get_activation(0)->clone(_error);
     _error->subtract(_y);
 
+	if(debug){
+		printf("FullConnectionLayer back activation");
+		this->get_activation(0)->display("|");
+		printf("FullConnectionLayer back error");
+		_error->display("|");
+	}
+
     /* loss function, mse mean square error
      * 1/2 sum(error*error)/size
      * the size is 1 right here
@@ -345,12 +359,13 @@ void FullConnectionLayer::back_propagation(Layer* pre_layer, Layer* back_layer, 
      * error * derivate_of_output
      * derivate_of_output is activation * (1-activation)
      */
-    auto derivate_output = new ccma::algebra::DenseMatrixT<real>();
-    this->get_activation(0)->clone(derivate_output);
+    auto derivate_output	= new ccma::algebra::DenseMatrixT<real>();
+    auto derivate_output_b 	= new ccma::algebra::DenseMatrixT<real>();
 
-    auto derivate_output_b = new ccma::algebra::DenseMatrixT<real>();
+    this->get_activation(0)->clone(derivate_output);
     derivate_output->clone(derivate_output_b);
-    derivate_output_b->multiply(-1);
+    
+	derivate_output_b->multiply(-1);
     derivate_output_b->add(1);
 
     derivate_output->multiply(derivate_output_b);
@@ -366,7 +381,6 @@ void FullConnectionLayer::back_propagation(Layer* pre_layer, Layer* back_layer, 
     delta->transpose();
     delta->dot(derivate_output);
     this->set_delta(0, delta);
-
     //if pre_layer is ConvolutionLayer, has sigmoid function
     if(typeid(*pre_layer) == typeid(ConvolutionLayer)){
         auto av1 = new ccma::algebra::DenseMatrixT<real>();
@@ -392,11 +406,11 @@ void FullConnectionLayer::back_propagation(Layer* pre_layer, Layer* back_layer, 
     auto derivate_weight = new ccma::algebra::DenseMatrixT<real>();
     auto derivate_bias   = new ccma::algebra::DenseMatrixT<real>();
     auto avt             = new ccma::algebra::DenseMatrixT<real>();
+
     derivate_output->clone(derivate_weight);
     derivate_output->clone(derivate_bias);
     delete derivate_output;
     _av->clone(avt);
-
 
     avt->transpose();
     derivate_weight->dot(avt);
