@@ -103,9 +103,14 @@ template<class T>
 bool DenseMatrixT<T>::get_row_data(const int row, BaseMatrixT<T>* out_mat){
     int r = row, c = 0;
     if(check_range(&r, &c)){
-        T* data = new T[this->_cols];
-        memcpy(data, &_data[r * this->_cols], sizeof(T) * this->_cols);
-        out_mat->set_shallow_data(data, 1, this->_cols);
+        if(out_mat->get_size() == this->_cols){
+            memcpy(out_mat->get_data(), &_data[r * this->_cols], sizeof(T) * this->_cols);
+            out_mat->reshape(1, this->_cols);
+        }else{
+            T* data = new T[this->_cols];
+            memcpy(data, &_data[r * this->_cols], sizeof(T) * this->_cols);
+            out_mat->set_shallow_data(data, 1, this->_cols);
+        }
         return true;
     }
     return false;
