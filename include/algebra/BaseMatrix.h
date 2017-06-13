@@ -68,7 +68,7 @@ public:
     bool subtract(BaseMatrixT<T>* mat);
 
     virtual bool dot(BaseMatrixT<T>* mat) = 0;
-    virtual bool pow(const T exponent) = 0;
+    virtual void pow(const T exponent) = 0;
 
     bool add(const T value);
     bool subtract(const T value);
@@ -234,7 +234,7 @@ public:
 
     bool extend(BaseMatrixT<T>* mat, bool col_dim = true);
 
-    bool pow(const T exponent);
+    void pow(const T exponent);
 
     bool dot(BaseMatrixT<T>* mat);
 
