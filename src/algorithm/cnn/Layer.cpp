@@ -70,7 +70,7 @@ void SubSamplingLayer::feed_forward(Layer* pre_layer, bool debug){
 }
 void SubSamplingLayer::back_propagation(Layer* pre_layer, Layer* back_layer, bool debug){
     if(back_layer->get_is_last_layer()){
-        real* data = ((FullConnectionLayer*)back_layer)->get_av()->get_data();
+        real* data = back_layer->get_delta(0)->get_data();
         for(uint i = 0; i != this->_out_channel_size; i++){
             auto delta = new ccma::algebra::DenseMatrixT<real>();
             real* d = new real[_rows * _cols];
@@ -183,7 +183,7 @@ void ConvolutionLayer::feed_forward(Layer* pre_layer, bool debug){
 
 void ConvolutionLayer::back_propagation(Layer* pre_layer, Layer* back_layer, bool debug){
     if(back_layer->get_is_last_layer()){
-        real* data = ((FullConnectionLayer*)back_layer)->get_av()->get_data();
+        real* data = back_layer->get_delta(0)->get_data();
 		uint size = this->_rows * this->_cols;
         for(uint i = 0; i != this->_out_channel_size; i++){
             auto delta = new ccma::algebra::DenseMatrixT<real>();
@@ -254,20 +254,31 @@ void ConvolutionLayer::back_propagation(Layer* pre_layer, Layer* back_layer, boo
     	for(uint j = 0; j != pre_layer->get_out_channel_size(); j++){
 			//derivate_weight = pre_layer.activation(j).convn(delta[i], 'valid')
 	        pre_layer->get_activation(j)->clone(derivate_weight);
+
+            if(debug){
+    			derivate_weight->display("|");
+	    		this->get_delta(i)->display("|");
+            }
 		    derivate_weight->convn(this->get_delta(i), _stride, "valid");
     	    /*
              * update grad: w -= alpha * derivate_weight
 	         */
-
-			printf("convolutelayer old weight");
-			derivate_weight->display("|");
-	        derivate_weight->multiply(this->_alpha);
-			derivate_weight->display("|");
-            this->get_weight(j, i)->display("|");
-            this->get_weight(j, i)->subtract(derivate_weight);
-            this->get_weight(j, i)->display("|");
-
             if(debug){
+			    printf("convolutelayer old derivate_weight");
+			    derivate_weight->display("|");
+            }
+
+	        derivate_weight->multiply(this->_alpha);
+            
+            if(debug){
+    			derivate_weight->display("|");
+                this->get_weight(j, i)->display("|");
+            }
+
+            this->get_weight(j, i)->subtract(derivate_weight);
+            
+            if(debug){
+                this->get_weight(j, i)->display("|");
 	            printf("conv back derivate_weight[%d][%d]", j , i);
 	            derivate_weight->display("|");
             }
@@ -427,19 +438,30 @@ void FullConnectionLayer::back_propagation(Layer* pre_layer, Layer* back_layer, 
      */
     //todo set alpha
 
-	printf("derivate_weight");
-	derivate_weight->display("|");
-	
+    if(debug){
+    	printf("derivate_weight");
+	    derivate_weight->display("|");
+    }
+
 	derivate_weight->multiply(this->_alpha);
 	
-	derivate_weight->display("|");
-    
+    if(debug){
+    	derivate_weight->display("|");
+    }
+
 	derivate_bias->multiply(this->_alpha);
    
-	printf("old weight");
-	this->get_weight(0, 0)->display("|");
+    if(debug){
+    	printf("old weight");
+	    this->get_weight(0, 0)->display("|");
+    }
+
 	this->get_weight(0, 0)->subtract(derivate_weight);
-	this->get_weight(0, 0)->display("|");
+
+    if(debug){
+	    this->get_weight(0, 0)->display("|");
+    }
+
     this->get_bias()->subtract(derivate_bias);
 
     if(debug){
