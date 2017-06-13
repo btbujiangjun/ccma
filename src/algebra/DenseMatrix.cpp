@@ -68,18 +68,17 @@ template<class T>
 void DenseMatrixT<T>::set_data(const T* data,
                                const uint rows,
                                const uint cols){
-
-    if(_data != nullptr){
-        delete[] _data;
-        _data = nullptr;
-
-        clear_cache();
+    if(rows * cols != this->_rows * this->_cols){
+        if(_data != nullptr){
+            delete[] _data;
+            _data = nullptr;
+        }
+        _data = new T[rows * cols];
     }
-
-    _data = new T[rows * cols];
     memcpy(_data, data, sizeof(T)* rows * cols);
     this->_rows = rows;
     this->_cols = cols;
+    clear_cache();
 }
 
 template<class T>
@@ -243,21 +242,19 @@ bool DenseMatrixT<T>::dot(BaseMatrixT<T>* mat){
 }
 
 template<class T>
-bool DenseMatrixT<T>::pow(const T exponent){
-    uint size = this->_rows * this->_cols;
-    for(uint i = 0; i < size; i++){
-        this->_data[i] = static_cast<T>(std::pow(this->_data[i], exponent));
+void DenseMatrixT<T>::pow(const T exponent){
+    uint size = this->get_size();
+    for(uint i = 0; i != size; i++){
+        this->_data[i] = std::pow(this->_data[i], exponent);
     }
     clear_cache();
-
-    return true;
 }
 
 
 template<class T>
 T DenseMatrixT<T>::sum() const{
     T value = static_cast<T>(0);
-    uint size = this->_rows * this->_cols;
+    uint size = this->get_size();
     for(uint i = 0; i != size; i++){
         value += _data[i];
     }
@@ -275,8 +272,7 @@ bool DenseMatrixT<T>::swap(const uint aa_row,
         return false;
     }
 
-    T value;
-    value = get_data(a_row, a_col);
+    T value = get_data(a_row, a_col);
     set_data(get_data(b_row, b_col),a_row, a_col);
     set_data(value, b_row, b_col);
 
@@ -317,7 +313,7 @@ bool DenseMatrixT<T>::swap_col(const uint a, const uint b){
         return true;
     }
 
-    for(uint i = 0; i < this->_rows; i++){
+    for(uint i = 0; i != this->_rows; i++){
         swap(i, a, i, b);
     }
 
@@ -331,8 +327,8 @@ void DenseMatrixT<T>::transpose(){
     T* data = new T[row * col];
     uint new_data_idx = 0;
 
-    for(uint i = 0; i < col; i++){
-        for(uint j = 0; j < row; j++){
+    for(uint i = 0; i != col; i++){
+        for(uint j = 0; j != row; j++){
             data[new_data_idx++] = _data[j * col + i];
         }
     }
@@ -417,10 +413,10 @@ real DenseMatrixT<T>::mean(){
         return 0.0;
     }
     T sum = 0;
-    for(uint i = 0; i < size; i++){
+    for(uint i = 0; i != size; i++){
         sum += _data[i];
     }
-    return static_cast<real>(sum)/(this->_rows * this->_cols);
+    return static_cast<real>(sum)/size;
 }
 
 template<class T>
@@ -430,8 +426,8 @@ real DenseMatrixT<T>::mean(uint col){
     }
 
     T sum = 0;
-    for(uint i = 0; i < this->_rows; i++){
-        sum += this->get_data(i, col);
+    for(uint i = 0; i != this->_rows; i++){
+        sum += _data[i * this->_cols + col];
     }
 
     return static_cast<real>(sum) / this->_rows;
@@ -451,7 +447,7 @@ real DenseMatrixT<T>::var(){
         var_sum += std::pow(this->_data[i] - mean_value, 2);
     }
 
-    return var_sum / (this->_rows * this->_cols);
+    return var_sum / size;
 }
 template<class T>
 real DenseMatrixT<T>::var(uint col){
@@ -462,7 +458,7 @@ real DenseMatrixT<T>::var(uint col){
     real mean_value = mean(col);
     real var_sum = 0.0;
     for(uint i = 0; i < this->_rows; i++){
-        var_sum += std::pow(this->get_data(i, col) - mean_value, 2);
+        var_sum += std::pow(_data[i * this->_cols + col] - mean_value, 2);
     }
 
     return (var_sum / this->_rows);
@@ -474,71 +470,74 @@ bool DenseMatrixT<T>::inverse(BaseMatrixT<real>* result){
         return false;
     }
 
-    auto extend_mat = new DenseMatrixT<real>();
-    //copy src matrix
     uint size = this->get_size();
-    real* data = new real[size];
-    if(typeid(T).name() == typeid(real).name()){
-        memcpy(data, _data, sizeof(real) * size);
+
+    //copy src matrix
+    auto extend_mat = new DenseMatrixT<real>();
+    auto data = new real[size];
+    if(typeid(T) == typeid(real)){
+        memcpy(data, _data, sizeof(T) * size);
     }else{
-        for(uint i = 0; i < size ; i++){
+        for(uint i = 0; i != size ; i++){
             data[i] = static_cast<real>(_data[i]);
         }
     }
     extend_mat->set_shallow_data(data, this->_rows, this->_cols);
 
     //extend eye matrix
-    DenseEyeMatrixT<real>* eye_mat = new DenseEyeMatrixT<real>(this->_rows);
+    auto eye_mat = new DenseEyeMatrixT<real>(this->_rows);
     extend_mat->extend(eye_mat, true);
     delete eye_mat;
 
     //adjust row
-    for(uint i = 0; i < extend_mat->get_rows(); i++){
-        if(extend_mat->get_data(i, i) == static_cast<T>(0)){
+    uint extend_mat_rows = extend_mat->get_rows();
+    uint extend_mat_cols = extend_mat->get_cols();
+    auto zero = static_cast<T>(0);
+
+    for(uint i = 0; i != extend_mat_rows; i++){
+        if(extend_mat->get_data(i, i) == zero){
             uint j;
-            for(j = 0; j < extend_mat->get_rows(); j++){
-                if(extend_mat->get_data(j, i) != static_cast<T>(0)){
+            for(j = 0; j != extend_mat_rows; j++){
+                if(extend_mat->get_data(j, i) != zero){
                     extend_mat->swap_row(i, j);
                     break;
                 }
             }
-            if(j >= extend_mat->get_rows()){//every element is zero in col i, cannot be inverse.
+            if(j >= extend_mat_rows){//every element is zero in col i, cannot be inverse.
                 return false;
             }
         }
     }
 
     //calc extend matrix
-    for(uint i = 0; i < extend_mat->get_rows(); i++){
+    for(uint i = 0; i != extend_mat_rows; i++){
 
         //all element div the first element,to make diagonal elemnt is 1
         real diagonal_element = extend_mat->get_data(i, i);
-        for(uint j = 0; j < extend_mat->get_cols(); j++){
+        for(uint j = 0; j < extend_mat_cols; j++){
             extend_mat->set_data(extend_mat->get_data(i, j)/diagonal_element, i, j);
         }
 
         //to make the element of other rows in col i is 0
-        for(uint m = 0; m < extend_mat->get_rows(); m++){
-            if(m != i){//skip itself
-                real element = extend_mat->get_data(m, i);
-                for(uint n = 0; n < extend_mat->get_cols(); n++){
-                    extend_mat->set_data(extend_mat->get_data(m, n) - extend_mat->get_data(i, n) * element, m, n);
-                }
+        for(uint m = 0; m != extend_mat_rows; m++){
+            if(m == i){//skip itself
+                continue;
+            }
+            real element = extend_mat->get_data(m, i);
+            for(uint n = 0; n != extend_mat_cols; n++){
+                extend_mat->set_data(extend_mat->get_data(m, n) - extend_mat->get_data(i, n) * element, m, n);
             }
         }
     }
 
     //calc inverse matrix
-    data = new real[this->_rows * this->_cols];
-    uint new_data_idx = 0;
-    for(uint i = 0; i < extend_mat->get_rows(); i++){
-        for(uint j = this->_cols; j < extend_mat->get_cols(); j++){
-            data[new_data_idx++] = extend_mat->get_data(i, j);
-        }
+    auto new_data = new real[size];
+    auto extend_data = extend_mat->get_data();
+    for(uint i = 0; i != extend_mat_rows; i++){
+        memcpy(&new_data[i * this->_cols], &extend_data[i * extend_mat_cols + this->_cols], sizeof(real)*this->_cols);
     }
-
-    result->set_shallow_data(data, this->_rows, this->_cols);
     delete extend_mat;
+    result->set_shallow_data(new_data, this->_rows, this->_cols);
 
     return true;
 }
@@ -547,7 +546,7 @@ template<class T>
 bool DenseMatrixT<T>::operator==(BaseMatrixT<T>* mat) const{
     if(this->_rows == mat->get_rows() && this->_cols == mat->get_cols()){
         uint size = this->get_size();
-        for(uint i = 0; i < size; i++){
+        for(uint i = 0; i != size; i++){
             if(_data[i] != mat->get_data(i)){
                 return false;
             }
