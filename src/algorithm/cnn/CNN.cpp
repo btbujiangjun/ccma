@@ -68,7 +68,7 @@ void CNN::train(ccma::algebra::BaseMatrixT<real>* train_data,
             back_propagation(mini_batch_label, debug);
 
             if(j % 100 == 0){
-//                printf("Epoch[%d][%d/%d]training...\r", i, j, num_train_data);
+                printf("Epoch[%d][%d/%d]training...\r", i, j, num_train_data);
             }
         }//end per epoch
 
