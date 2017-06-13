@@ -146,11 +146,13 @@ bool CNN::evaluate(ccma::algebra::BaseMatrixT<real>* data, ccma::algebra::BaseMa
         }
     }
 
-    predict_mat->transpose();
-    predict_mat->display("|");
-    predict_mat->transpose();
-    if(max_idx != label->get_data(0)){
-        printf("[%d][%d]\n", max_idx, static_cast<int>(label->get_data(0)));
+    if(debug){
+        predict_mat->transpose();
+        predict_mat->display("|");
+        predict_mat->transpose();
+        if(max_idx != label->get_data(0)){
+            printf("[%d][%d]\n", max_idx, static_cast<int>(label->get_data(0)));
+        }
     }
 
     return max_idx == label->get_data(0);
