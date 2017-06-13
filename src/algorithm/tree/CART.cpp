@@ -130,9 +130,9 @@ bool ClassificationAndRegressionTree::linear_regression(ccma::algebra::LabeledDe
     T det = 0;
     if(!xTx->det(&det) || det == static_cast<T>(0)){
         delete x;
-	delete y;
-	delete xT;
-	delete xTx;
+	    delete y;
+    	delete xT;
+	    delete xTx;
         return false;
     }
 
@@ -149,7 +149,7 @@ bool ClassificationAndRegressionTree::linear_regression(ccma::algebra::LabeledDe
 
 template<class T>
 bool ClassificationAndRegressionTree::model_error(ccma::algebra::LabeledDenseMatrixT<T>* mat, real* error){
-    ccma::algebra::DenseColMatrixT<real>* weights = new ccma::algebra::DenseColMatrixT<real>(mat->get_cols(), 1.0);
+    auto weights = new ccma::algebra::DenseColMatrixT<real>(mat->get_cols(), 1.0);
     if(linear_regression(mat, weights)){
         auto x = new ccma::algebra::DenseMatrixT<T>();
         mat->get_data_matrix(x);
@@ -157,10 +157,10 @@ bool ClassificationAndRegressionTree::model_error(ccma::algebra::LabeledDenseMat
         auto y = new ccma::algebra::DenseMatrixT<T>();
         mat->get_labels(y);
 
-        ccma::algebra::DenseMatrixT<real>* y_predict = new ccma::algebra::DenseMatrixT<real>();
+        auto y_predict = new ccma::algebra::DenseMatrixT<real>();
         _helper->dot(x, weights, y_predict);
 
-        ccma::algebra::DenseMatrixT<real>* y_diff = new ccma::algebra::DenseMatrixT<real>();
+        auto y_diff = new ccma::algebra::DenseMatrixT<real>();
         _helper->subtract(y, y_predict, y_diff);
 
         y_diff->pow(2);
@@ -168,10 +168,10 @@ bool ClassificationAndRegressionTree::model_error(ccma::algebra::LabeledDenseMat
         *error = y_diff->sum();
 
         delete weights;
-	delete x;
-	delete y;
-	delete y_predict;
-	delete y_diff;
+	    delete x;
+    	delete y;
+	    delete y_predict;
+    	delete y_diff;
 
         return true;
     }
