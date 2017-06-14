@@ -34,7 +34,7 @@ int main(int argc, char** argv){
 
     auto test_label     = new ccma::algebra::DenseMatrixT<real>();
     helper.read_label("data/mnist/t10k-labels-idx1-ubyte", test_label, test_cnt);
-    cnn->train(train_data, train_label, 50, test_data, test_label);
+    cnn->train(train_data, train_label, 500, test_data, test_label);
 //    cnn->train(train_data, train_label, 1);
 
     delete cnn;
