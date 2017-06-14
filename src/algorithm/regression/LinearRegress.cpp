@@ -38,8 +38,7 @@ bool LinearRegression::standard_regression(ccma::algebra::LabeledDenseMatrixT<T>
         train_data->get_labels(y);
 
         xT->dot(y);//xTy
-        xTxI->dot(xT);//xTxI .* xTy
-        xTxI->clone(weights);
+		_helper->dot(xTxI, xT, weights);
         
         delete y;
 
