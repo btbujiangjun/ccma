@@ -24,9 +24,12 @@ void DataLayer::feed_forward(Layer* pre_layer, bool debug){
     	printf("DataLayer activation");
         auto a = new ccma::algebra::DenseMatrixT<int>();
         int* d = new int[_x->get_rows() * _x->get_cols()];
-        for(uint i = 0; i != _x->get_size(); i++){
+		uint size = _x->get_size();
+
+        for(uint i = 0; i != size; i++){
             d[i] = static_cast<int>(_x->get_data(i));
         }
+
         a->set_shallow_data(d, _x->get_rows(), _x->get_cols());
         a->display("|");
         delete a;

@@ -224,6 +224,27 @@ void BaseMatrixT<T>::derivative_sigmoid(){
     delete clone_mat;
 }
 
+/*
+ * softmax
+ */
+template<class T>
+void BaseMatrixT<T>::softmax(){
+	T e_sum = 0;
+	uint size = get_size();
+	T* data = new T[size];
+	T* src_data = this->get_data();
+	for(uint i = 0; i != size; i++){
+		data[i] = std::exp(src_data[i]);
+		e_sum += data[i];
+	}
+	for(uint i = 0; i != size; i++){
+		data[i] /= e_sum;
+	}
+
+	this->set_shallow_data(data, _rows, _cols);
+}
+
+
 template<class T>
 void BaseMatrixT<T>::x_sum(){
     if(_rows > 1){

@@ -79,6 +79,8 @@ public:
     void sigmoid();
     void derivative_sigmoid();
 
+	void softmax();
+
     virtual T sum() const = 0;
     void x_sum();
     void y_sum();

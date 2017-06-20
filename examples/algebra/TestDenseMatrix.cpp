@@ -19,6 +19,11 @@ int main(int argc, char** argv){
     d1->display();
     d1->extend(d1);
     d1->display();
+
+	d1->softmax();
+	printf("softmax");
+	d1->display();
+
     delete d1;
 	delete dm;
 
