@@ -68,6 +68,7 @@ public:
     bool subtract(BaseMatrixT<T>* mat);
 
     virtual bool dot(BaseMatrixT<T>* mat) = 0;
+    bool outer(BaseMatrixT<T>* mat);
     virtual void pow(const T exponent) = 0;
 
     bool add(const T value);
