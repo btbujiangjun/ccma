@@ -124,6 +124,23 @@ bool BaseMatrixT<T>::subtract(BaseMatrixT<T>* mat){
 }
 
 template<class T>
+void BaseMatrixT<T>::outer(BaseMatrixT<T>* mat){
+	uint size1= get_size();
+	uint size2 = mat->get_size();
+	T* data1 = this->get_data();
+	T* data2 = mat->get_data();
+
+	int k = 0;
+	T* data = new T[size1 * size2];
+	for(uint i = 0; i != size1; i++){
+		for(uint j = 0; j != size2; j++){
+			data[k++] = data1[i] * data2[j];
+		}
+	}
+	this->set_shallow_data(data, size1, size2);
+}
+
+template<class T>
 bool BaseMatrixT<T>::multiply(const T value){
     uint size = get_size();
     T* data = get_data();
