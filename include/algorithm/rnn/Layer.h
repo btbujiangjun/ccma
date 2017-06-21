@@ -9,7 +9,7 @@
 #ifndef _CCMA_ALGORITHM_RNN_LAYER_H
 #define _CCMA_ALGORITHM_RNN_LAYER_H_
 
-#include "algebra/BaseMatrix.h"
+#include <vector>
 
 namespace ccma{
 namespace algorithm{
@@ -17,88 +17,34 @@ namespace rnn{
 
 class Layer{
 public:
-	Layer(uint dim){
-		_dim = dim;	
+	Layer(ccma::algebra::BaseMatrixT<real>* weight,
+		  ccma::algebra::BaseMatrixT<real>* pre_weight,
+		  ccma::algebra::BaseMatrixT<real>* act_weight){
+		  _weight = weight;
+		  _pre_weight = pre_weight;
+		  _act_weight = act_weight;
 	}
 
 	~Layer(){
-		if(_store != nullptr){
-			delete _store;
-		}
-		if(_activation != nullptr){
-			delete _activation;
-		}
-		if(_weight != nullptr){
-			delete _weight;
-		}
-		if(_pre_weight != nullptr){
-			delete _pre_weight;
-		}
+		initialize();
 	}
 
-	inline uint get_dim(){return _dim;}
-	inline ccma::algebra::BaseMatrix<real>* get_store(){return _store;}
-
-
-	virtual bool initialize(Layer* pre_layer = nullptr) = 0;
-	virtual void feed_farward(Layer* pre_layer = nullptr, debug = false) = 0;
-	virtual void back_propagation(Layer* pre_layer,
-								  Layer* back_layer = nullptr, 
-								  bool debug = false);
+	void feed_farward(ccma::algebra::BaseMatrixT<real>* train_seq_data, bool debug = false);
+	void back_propagation(ccma::algebra::BaseMatrixT<real>* train_seq_data,
+						  ccma::algebra::BaseMatrixT<real>* train_seq_label,
+						  bool debug = false);
 
 private:
-	uint _dim;
+	void initialize();
+private:
 
-	ccma::algebra::BaseMatrix<real>* _store;
-	ccma::algebra::BaseMatrix<real>* _activation;
+	std::vector<ccma::algebra::BaseMatrixT<real>*> _store;
+	std::vector<ccma::algebra::BaseMatrixT<real>*> _activation;
 
-	ccma::algebra::BaseMatrix<real>* _weight;
-	ccma::algebra::BaseMatrix<real>* _pre_weight;
+	ccma::algebra::BaseMatrixT<real>* _weight;
+	ccma::algebra::BaseMatrixT<real>* _pre_weight;
+	ccma::algebra::BaseMatrixT<real>* _act_weight;
 };//class Layer
-
-
-class DataLayer:public Layer{
-public:
-	DataLayer(uint dim):Layer(dim){}
-
-	void set_x(ccma::algebra::BaseMatrix<real>* x){_x = x;}
-
-	bool initialize(Layer* pre_layer = nullptr);
-	void feed_farward(Layer* pre_layer = nullptr, bool debug = false);
-	void back_propagation(Layer* pre_layer,
-						  Layer* back_layer = nullptr,
-						  bool debug = false);
-
-private:
-	ccma::algebra::BaseMatrix<real>* _x;
-};//class DataLayer
-
-class RNNLayer : public Layer{
-public:
-	RNNLayer(uint dim):Layer(dim){}
-	bool initialize(Layer* pre_layer = nullptr);
-	void feed_farward(Layer* pre_layer = nullptr, bool debug = false);
-	void back_propagation(Layer* pre_layer,
-						  Layer* back_layer = nullptr,
-						  bool debug = false);
-};//class RNNLayer
-
-class FullConnetionLayer:public Layer{
-public:
-	FullConnetionLayer(dim dim):Layer(dim){}
-
-	void set_y(ccma::algebra::BaseMatrix<real>* y){_y = y;}
-
-
-	bool initialize(Layer* pre_layer = nullptr);
-	void feed_farward(Layer* pre_layer = nullptr, bool debug = false);
-	void back_propagation(Layer* pre_layer,
-						  Layer* back_layer = nullptr,
-						  bool debug = false);
-
-private:
-	ccma::algebra::BaseMatrix<real>* _y;
-};//class FullConnetionLayer
 
 }//namespace rnn
 }//namespace algorithm
