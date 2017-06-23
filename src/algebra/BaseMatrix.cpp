@@ -255,12 +255,20 @@ void BaseMatrixT<T>::softmax(){
 		e_sum += data[i];
 	}
 	for(uint i = 0; i != size; i++){
-		data[i] /= e_sum;
+		src_data[i] = data[i] / e_sum;
 	}
-
-	this->set_shallow_data(data, _rows, _cols);
+    delete[] data;
 }
 
+
+template<class T>
+void BaseMatrixT<T>::tanh(){
+	uint size = get_size();
+	T* data = this->get_data();
+    for(uint i = 0; i != size; i++){
+        data[i] = std::tanh(data[i]);
+    }
+}
 
 template<class T>
 void BaseMatrixT<T>::x_sum(){
