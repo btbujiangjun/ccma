@@ -40,11 +40,12 @@ index_to_word = [x[0] for x in vocab]
 index_to_word.append(unknown_token)
 word_to_index = dict([(w,i) for i,w in enumerate(index_to_word)])
 
-with open("../../../data/word_to_index", 'w+') as csv_file:  
-    csv_file.write(codecs.BOM_UTF8)
-    writer = csv.writer(csv_file)
-    for i, w in enumerate(index_to_word):
-        writer.writerow([w.encode('utf8'), i])
+file_writer = open("../../../data/word_to_index", 'w')
+for i, w in enumerate(index_to_word):
+    str_word = w.encode("utf8") + '\t'+ str(i) + '\n'
+    file_writer.write(str_word)
+file_writer.close()
+
 print "Using vocabulary size %d." % vocabulary_size
 print "The least frequent word in our vocabulary is '%s' and appeared %d times." % (vocab[-1][0], vocab[-1][1])
  
@@ -59,14 +60,12 @@ print "\nExample sentence after Pre-processing: '%s'" % tokenized_sentences[0]
 X_train = np.asarray([[word_to_index[w] for w in sent[:-1]] for sent in tokenized_sentences])
 y_train = np.asarray([[word_to_index[w] for w in sent[1:]] for sent in tokenized_sentences])
 
-with open("../../../data/train_seq_data", 'w+') as csv_file:  
-    csv_file.write(codecs.BOM_UTF8)
-    writer = csv.writer(csv_file)
-    for x in X_train:
-        writer.writerow(x)
+file_writer = open("../../../data/train_seq_data", 'w')
+for x in X_train:
+    file_writer.write("\t".join(str(x_int) for x_int in x) + '\n')
+file_writer.close()
 
-with open("../../../data/train_seq_label", 'w+') as csv_file:  
-    csv_file.write(codecs.BOM_UTF8)
-    writer = csv.writer(csv_file)
-    for x in y_train:
-        writer.writerow(x)
+file_writer = open("../../../data/train_seq_label", 'w')
+for y in y_train:
+    file_writer.write("\t".join(str(y_int) for y_int in y) + '\n')
+file_writer.close()
