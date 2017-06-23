@@ -5,8 +5,7 @@
 * Filename: TestMnistHelper.cpp
 * Description: 
 **********************************************/
-#include "MnistHelper.h"
-#include <memory>
+#include "utils/MnistHelper.h"
 
 int main(int argc, char** argv){
     ccma::utils::MnistHelper<int> helper;
