@@ -60,7 +60,8 @@ public:
                           const int col) = 0;
 
     virtual bool get_row_data(const int row, BaseMatrixT<T>* out_mat) = 0;
-    virtual bool set_row_data(BaseMatrixT<T>* mat, const int row) = 0;
+    virtual bool set_row_data(BaseMatrixT<T>* mat, const uint row) = 0;
+    virtual bool insert_row_data(BaseMatrixT<T>* mat, const int row) = 0;
 
     virtual bool extend(BaseMatrixT<T>* mat, bool col_dim = true) = 0;
 
@@ -68,7 +69,7 @@ public:
     bool subtract(BaseMatrixT<T>* mat);
 
     virtual bool dot(BaseMatrixT<T>* mat) = 0;
-    bool outer(BaseMatrixT<T>* mat);
+    void outer(BaseMatrixT<T>* mat);
     virtual void pow(const T exponent) = 0;
 
     bool add(const T value);
@@ -81,6 +82,7 @@ public:
     void derivative_sigmoid();
 
 	void softmax();
+	void tanh();
 
     virtual T sum() const = 0;
     void x_sum();
@@ -233,7 +235,8 @@ public:
 
 
     bool get_row_data(const int row, BaseMatrixT<T>* out_mat);
-    bool set_row_data(BaseMatrixT<T>* mat, int row);
+    bool set_row_data(BaseMatrixT<T>* mat, const uint row);
+    bool insert_row_data(BaseMatrixT<T>* mat, const int row);
 
     bool extend(BaseMatrixT<T>* mat, bool col_dim = true);
 
