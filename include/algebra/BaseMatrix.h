@@ -83,6 +83,7 @@ public:
 
 	void softmax();
 	void tanh();
+	void relu();
 
     virtual T sum() const = 0;
     void x_sum();
