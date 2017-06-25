@@ -270,6 +270,18 @@ void BaseMatrixT<T>::tanh(){
     }
 }
 
+
+template<class T>
+void BaseMatrixT<T>::relu(){
+	uint size = get_size();
+	T* data = this->get_data();
+	for(uint i = 0; i != size; i++){
+		if(data[i] < 0){
+			data[i] = 0;
+		}
+	}
+}
+
 template<class T>
 void BaseMatrixT<T>::x_sum(){
     if(_rows > 1){
