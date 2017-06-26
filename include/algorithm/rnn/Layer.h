@@ -6,7 +6,7 @@
  * Description   : RNN network Layer 
  **********************************************/
 
-#ifndef _CCMA_ALGORITHM_RNN_LAYER_H
+#ifndef _CCMA_ALGORITHM_RNN_LAYER_H_
 #define _CCMA_ALGORITHM_RNN_LAYER_H_
 
 #include <vector>
