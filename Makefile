@@ -20,3 +20,4 @@ clean:
 	rm -rf regression_tree_test* &
 	rm -rf DNN_test* &
 	rm -rf CNN_test* &
+	rm -rf RNN_test* &
