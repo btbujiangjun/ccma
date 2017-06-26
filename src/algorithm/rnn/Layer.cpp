@@ -40,20 +40,24 @@ void Layer::feed_farward(ccma::algebra::BaseMatrixT<real>* train_seq_data, bool 
         //o[t] = softmax(V* s[t])
 		train_seq_data->get_row_data(t, seq_time_data);
 		_weight->clone(store);
+        seq_time_data->transpose();
 		store->dot(seq_time_data);
 
+        store->transpose();
 		if(t > 0){
 			_pre_weight->clone(pre_weight);
-            store->get_row_data(t-1, pre_store);
+            _store->get_row_data(t-1, pre_store);
 
+            pre_store->transpose();
 			pre_weight->dot(pre_store);
-
-			store->add(pre_weight);
+            store->add(pre_weight);
 		}
-        _store->set_row_data(store, t);
 
+        _store->set_row_data(store, t);
+        
 		_act_weight->clone(activation);
-		activation->dot(store);
+		store->transpose();
+        activation->dot(store);
 		activation->tanh();
 		_activation->set_row_data(activation, t);
 	}
@@ -140,6 +144,11 @@ void Layer::back_propagation(ccma::algebra::BaseMatrixT<real>* train_seq_data,
     delete derivate_t;
     delete derivate_pre_weight_t;
     delete derivate_weight_t;
+    delete derivate_store_t;
+	
+	delete derivate_weight;
+	delete derivate_pre_weight;
+	delete derivate_act_weight;
 }
 
 
