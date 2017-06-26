@@ -23,11 +23,16 @@ public:
           ccma::algebra::BaseMatrixT<real>* weight,
           ccma::algebra::BaseMatrixT<real>* pre_weight,
           ccma::algebra::BaseMatrixT<real>* act_weight){
+
 	    _hidden_dim = hidden_dim;
         _bptt_truncate = bptt_truncate;
+
 		_weight = weight;
 		_pre_weight = pre_weight;
 		_act_weight = act_weight;
+
+        _store = new ccma::algebra::DenseMatrixT<real>();
+        _activation = new ccma::algebra::DenseMatrixT<real>();
 	}
 
 	~Layer(){
@@ -50,12 +55,13 @@ private:
 private:
 	uint _hidden_dim;
     uint _bptt_truncate;
-	ccma::algebra::BaseMatrixT<real>* _weight;
-	ccma::algebra::BaseMatrixT<real>* _pre_weight;
-	ccma::algebra::BaseMatrixT<real>* _act_weight;
 
 	ccma::algebra::BaseMatrixT<real>* _store;
 	ccma::algebra::BaseMatrixT<real>* _activation;
+
+	ccma::algebra::BaseMatrixT<real>* _weight;
+	ccma::algebra::BaseMatrixT<real>* _pre_weight;
+	ccma::algebra::BaseMatrixT<real>* _act_weight;
 };//class Layer
 
 }//namespace rnn
