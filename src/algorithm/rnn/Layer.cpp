@@ -105,8 +105,8 @@ void Layer::back_propagation(ccma::algebra::BaseMatrixT<real>* train_seq_data,
         derivate_t->multiply(derivate_output_t);
 
         //back_propagation steps
-        for(uint step = 0; step < _bptt_truncate && step <= t; step++){
-            uint bptt_step = t - step;
+        for(int step = 0; step < _bptt_truncate && step <= t; step++){
+            int bptt_step = t - step;
             printf("Backpropagation step t=%d bptt step=%d\n", t, bptt_step);
             if(bptt_step > 0){
                 _store->get_row_data(bptt_step -1, derivate_store_t);
