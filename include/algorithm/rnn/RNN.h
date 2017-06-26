@@ -21,12 +21,13 @@ public:
     RNN(uint feature_dim,
         uint hidden_dim,
         uint bptt_truncate = 4){
+
         _feature_dim = feature_dim;
         _hidden_dim = hidden_dim;
 
         _U = new ccma::algebra::DenseRandomMatrixT<real>(hidden_dim, feature_dim, 0, 0.5);
-        _V = new ccma::algebra::DenseRandomMatrixT<real>(feature_dim, hidden_dim, 0, 0.5);
         _W = new ccma::algebra::DenseRandomMatrixT<real>(hidden_dim, hidden_dim, 0, 0.5);
+        _V = new ccma::algebra::DenseRandomMatrixT<real>(feature_dim, hidden_dim, 0, 0.5);
 
         _layer = new ccma::algorithm::rnn::Layer(hidden_dim, bptt_truncate, _U, _W, _V);
     }
@@ -34,11 +35,11 @@ public:
         if(_U != nullptr){
             delete _U;
         }
-        if(_V != nullptr){
-            delete _V;
-        }
         if(_W != nullptr){
             delete _W;
+        }
+        if(_V != nullptr){
+            delete _V;
         }
         delete _layer;
     }
@@ -53,11 +54,12 @@ private:
     uint _hidden_dim;
 
     ccma::algebra::DenseRandomMatrixT<real>* _U;
-    ccma::algebra::DenseRandomMatrixT<real>* _V;
     ccma::algebra::DenseRandomMatrixT<real>* _W;
+    ccma::algebra::DenseRandomMatrixT<real>* _V;
 
     Layer* _layer;
 };//class RNN 
+
 }//namespace rnn
 }//namespace algorithm
 }//namespace ccma
