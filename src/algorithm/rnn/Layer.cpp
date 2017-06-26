@@ -51,7 +51,7 @@ void Layer::feed_farward(ccma::algebra::BaseMatrixT<real>* train_seq_data, bool 
             pre_store->transpose();
 
 			pre_weight->dot(pre_store);
-
+            pre_weight->transpose();
             store->add(pre_weight);
 		}
 
