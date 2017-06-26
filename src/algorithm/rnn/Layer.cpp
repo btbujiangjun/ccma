@@ -41,21 +41,24 @@ void Layer::feed_farward(ccma::algebra::BaseMatrixT<real>* train_seq_data, bool 
 		train_seq_data->get_row_data(t, seq_time_data);
 		_weight->clone(store);
         seq_time_data->transpose();
-		store->dot(seq_time_data);
 
+		store->dot(seq_time_data);
         store->transpose();
+
 		if(t > 0){
 			_pre_weight->clone(pre_weight);
             _store->get_row_data(t-1, pre_store);
-
             pre_store->transpose();
+
 			pre_weight->dot(pre_store);
+
             store->add(pre_weight);
 		}
 
         _store->set_row_data(store, t);
         
 		_act_weight->clone(activation);
+
 		store->transpose();
         activation->dot(store);
 		activation->tanh();
