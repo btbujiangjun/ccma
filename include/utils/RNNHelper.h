@@ -1,4 +1,13 @@
 
+/***********************************************
+ * Author: Jun Jiang - jiangjun4@sina.com
+ * Create: 2017-06-23 15:40
+ * Last modified : 2017-06-23 15:40
+ * Filename      : RNNHelper.h
+ * Description   : Read & generate one-hot 
+                   word vector 
+ **********************************************/
+
 #ifndef _CCMA_UTILS_RNNHELPLER_H_
 #define _CCMA_UTILS_RNNHELPLER_H_
 
@@ -25,9 +34,9 @@ public:
 	void read_seqdata(const std::string& data_file,
 					  std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data,
 					  const std::string& label_file,
-					  std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_label)
+					  std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_label);
 private:
-	void read_data(const std::string& data_file, std::vector<ccma::algebra::BaseMatrixT<real>*>* mat)
+	void read_data(const std::string& data_file, std::vector<ccma::algebra::BaseMatrixT<real>*>* mat);
 
 private:
 	uint _feature_dim;
@@ -37,7 +46,6 @@ private:
 	
 void RNNHelper::read_word2index(const std::string& data_file, std::map<std::string, uint> dict){
 	std::ifstream in_file(data_file.data());;
-	//in_file.open(data_file.data());
 	if(!in_file.is_open()){
 		printf("Open file:%s failed.\n", data_file.c_str());
 	}else{
@@ -81,8 +89,8 @@ void RNNHelper::read_data(const std::string& data_file, std::vector<ccma::algebr
 		}
 	
 		in_file.seekg(0, std::ios::beg);
-		while(getline(in_file, data){
-			auto mat = new 
+		while(getline(in_file, data)){
+//			auto mat = new 
 		}
 
 		in_file.close();
