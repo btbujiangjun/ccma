@@ -19,13 +19,17 @@ void RNN::sgd(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data,
 	auto seq_data = new ccma::algebra::DenseMatrixT<real>();
 	auto seq_label = new ccma::algebra::DenseMatrixT<real>();
 	
-	uint train_data_size = train_seq_data->size();
-	bool debug = (train_data_size <= 5);
+	uint num_train_data = train_seq_data->size();
+	bool debug = (num_train_data <= 5);
 	for(uint i = 0; i != epoch; i++){
-		for(uint j = 0; j != train_data_size; j++){
+		for(uint j = 0; j != num_train_data; j++){
 			train_seq_data->at(j)->clone(seq_data);
 			train_seq_label->at(j)->clone(seq_label);
 			_layer->back_propagation(seq_data, seq_label, debug);
+
+			if(j % 100 == 0){
+                printf("Epoch[%d][%d/%d]training...\r", i, j, num_train_data);
+			}
 		}
 	}
 	delete seq_data;
