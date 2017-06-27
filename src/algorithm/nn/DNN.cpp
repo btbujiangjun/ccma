@@ -87,10 +87,10 @@ bool DNN::sgd(ccma::algebra::BaseMatrixT<real>* train_data,
             }
 
             train_data->get_row_data(shuffler->get_row(j), row_data);
-            mini_batch_data->set_row_data(row_data, j % mini_batch_size);
+            mini_batch_data->set_row_data(j % mini_batch_size, row_data);
 
             train_label->get_row_data(shuffler->get_row(j), row_label);
-            mini_batch_label->set_row_data(row_label, j % mini_batch_size);
+            mini_batch_label->set_row_data(j % mini_batch_size, row_label);
 
             if( j % mini_batch_size == mini_batch_size - 1 || j == (num_train_data - 1) ){
                 mini_batch_update(mini_batch_data, mini_batch_label, eta, lamda, num_train_data);
