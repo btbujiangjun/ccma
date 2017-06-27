@@ -15,7 +15,7 @@ int main(int argc, char** argv){
     dm->clone(d1);
 
     d1->display();
-    d1->set_row_data(d1, 1);
+    d1->set_row_data(1,d1);
     d1->display();
     d1->extend(d1);
     d1->display();
