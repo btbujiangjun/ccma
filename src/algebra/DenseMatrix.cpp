@@ -116,7 +116,7 @@ bool DenseMatrixT<T>::get_row_data(const int row, BaseMatrixT<T>* out_mat){
 }
 
 template<class T>
-bool DenseMatrixT<T>::set_row_data(BaseMatrixT<T>* mat, const uint row_id){
+bool DenseMatrixT<T>::set_row_data(const uint row_id, BaseMatrixT<T>* mat){
 	if(this->_cols == mat->get_cols() && this->_rows >= (row_id + mat->get_rows())){
 		memcpy(&_data[row_id * this->_cols], mat->get_data(), sizeof(T) * mat->get_size());
 		return true;
@@ -125,7 +125,7 @@ bool DenseMatrixT<T>::set_row_data(BaseMatrixT<T>* mat, const uint row_id){
 }
 
 template<class T>
-bool DenseMatrixT<T>::insert_row_data(BaseMatrixT<T>* mat, const int row_id){
+bool DenseMatrixT<T>::insert_row_data(const int row_id, BaseMatrixT<T>* mat){
     int r = row_id;
     if(this->_rows > 0 && this->_cols != mat->get_cols()){
         return false;
@@ -729,7 +729,7 @@ void LabeledDenseMatrixT<T>::set_row_data(LabeledDenseMatrixT<T>* mat, const int
 
     auto data_mat = new DenseMatrixT<T>();
     mat->get_data_matrix(data_mat);
-    DenseMatrixT<T>::set_row_data(data_mat, id);
+    DenseMatrixT<T>::set_row_data(id, data_mat);
     delete data_mat;
 
     auto label_mat = new DenseMatrixT<T>();
