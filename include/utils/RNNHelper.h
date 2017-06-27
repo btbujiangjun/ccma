@@ -94,7 +94,7 @@ void RNNHelper::read_data(const std::string& data_file,
                 mat_data->set_data(1, i, helper.str2int(line_data[i]));
             }
             mat->push_back(mat_data);
-            if(limit > 0 && mat->size() >= limit){
+            if(limit > 0 && (int)mat->size() >= limit){
                 break;
             }
 		}
