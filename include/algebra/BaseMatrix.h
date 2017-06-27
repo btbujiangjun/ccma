@@ -59,10 +59,13 @@ public:
                           const int row,
                           const int col) = 0;
 
-    virtual bool get_row_data(const int row, BaseMatrixT<T>* out_mat) = 0;
-    virtual bool set_row_data(BaseMatrixT<T>* mat, const uint row) = 0;
-    virtual bool insert_row_data(BaseMatrixT<T>* mat, const int row) = 0;
+    virtual bool get_row_data(const int row_id, BaseMatrixT<T>* out_mat) = 0;
+    virtual bool set_row_data(const uint row_id, BaseMatrixT<T>* mat) = 0;
+    virtual bool insert_row_data(const int row_id, BaseMatrixT<T>* mat) = 0;
 
+    bool get_col_data(const uint col_id, BaseMatrixT<T>* out_mat);
+    bool set_col_data(const uint col_id, BaseMatrixT<T>* mat);
+    
     virtual bool extend(BaseMatrixT<T>* mat, bool col_dim = true) = 0;
 
     bool add(BaseMatrixT<T>* mat);
@@ -235,9 +238,9 @@ public:
                           const uint cols);
 
 
-    bool get_row_data(const int row, BaseMatrixT<T>* out_mat);
-    bool set_row_data(BaseMatrixT<T>* mat, const uint row);
-    bool insert_row_data(BaseMatrixT<T>* mat, const int row);
+    bool get_row_data(const int row_id, BaseMatrixT<T>* out_mat);
+    bool set_row_data(const uint row_id, BaseMatrixT<T>* mat);
+    bool insert_row_data(const int row_id, BaseMatrixT<T>* mat);
 
     bool extend(BaseMatrixT<T>* mat, bool col_dim = true);
 
