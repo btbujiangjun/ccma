@@ -135,7 +135,6 @@ void Layer::back_propagation(ccma::algebra::BaseMatrixT<real>* train_seq_data,
                 derivate_store_t->add(1);
 
                 derivate_pre_weight_t->dot(derivate_t);
-                derivate_store_t->transpose();
 
                 derivate_pre_weight_t->multiply(derivate_store_t);
                 derivate_pre_weight_t->clone(derivate_t);
