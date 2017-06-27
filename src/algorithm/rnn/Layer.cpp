@@ -102,6 +102,7 @@ void Layer::back_propagation(ccma::algebra::BaseMatrixT<real>* train_seq_data,
         derivate_output->get_col_data(t, derivate_output_t);
         _act_weight->clone(derivate_t);
 
+        derivate_t->transpose();
         derivate_t->dot(derivate_output_t);
 
         derivate_t->multiply(derivate_store_t);
@@ -111,11 +112,11 @@ void Layer::back_propagation(ccma::algebra::BaseMatrixT<real>* train_seq_data,
             int bptt_step = t - step;
             printf("Backpropagation step t=%d bptt step=%d\n", t, bptt_step);
             if(bptt_step > 0){
-                _store->get_row_data(bptt_step -1, derivate_store_t);
+                _store->get_col_data(bptt_step -1, derivate_store_t);
             }else{
-                real* data = new real[_store->get_cols()];
-                memset(data, 0, sizeof(real)*_store->get_cols());
-                derivate_store_t->set_shallow_data(data, 1, _store->get_cols());
+                real* data = new real[_store->get_rows()];
+                memset(data, 0, sizeof(real)*_store->get_rows());
+                derivate_store_t->set_shallow_data(data, _store->get_rows(), 1);
             }
             derivate_t->clone(derivate_pre_weight_t);
             derivate_pre_weight_t->outer(derivate_store_t);
@@ -125,7 +126,6 @@ void Layer::back_propagation(ccma::algebra::BaseMatrixT<real>* train_seq_data,
             train_data_t->transpose();
 
             derivate_weight->dot(train_data_t);
-            derivate_weight->transpose();
             derivate_weight->add(derivate_t);
 
             //update delta
@@ -133,9 +133,6 @@ void Layer::back_propagation(ccma::algebra::BaseMatrixT<real>* train_seq_data,
                 derivate_store_t->multiply(derivate_store_t);
                 derivate_store_t->multiply(-1);
                 derivate_store_t->add(1);
-
-                derivate_pre_weight_t->transpose();
-                derivate_t->transpose();
 
                 derivate_pre_weight_t->dot(derivate_t);
                 derivate_store_t->transpose();
