@@ -130,7 +130,7 @@ void BaseMatrixT<T>::outer(BaseMatrixT<T>* mat){
 	T* data1 = this->get_data();
 	T* data2 = mat->get_data();
 
-	int k = 0;
+	uint k = 0;
 	T* data = new T[size1 * size2];
 	for(uint i = 0; i != size1; i++){
 		for(uint j = 0; j != size2; j++){
@@ -450,6 +450,35 @@ void BaseMatrixT<T>::flip180(){
         }
     }
     this->set_shallow_data(data, _rows, _cols);
+}
+
+
+template<class T>
+bool BaseMatrixT<T>::get_col_data(const uint col_id, BaseMatrixT<T>* out_mat){
+    if(col_id >= 0 && col_id < this->_cols){
+        T* data = new T[this->_rows];
+        T* src_data = this->get_data();
+        for(uint i = 0; i != this->_rows; i++){
+            data[i] = src_data[i * this->_cols + col_id];
+        }
+        out_mat->set_shallow_data(data, this->_rows, 1);
+        return true;
+    }
+    return false;
+}
+
+template<class T>
+bool BaseMatrixT<T>::set_col_data(const uint col_id, BaseMatrixT<T>* mat){
+    uint mat_col = mat->get_cols();
+    T* data = this->get_data();
+    T* mat_data = mat->get_data();
+	if(this->_rows == mat->get_rows() && this->_cols >= (col_id + mat_col)){
+        for(uint i = 0; i != this->_rows; i++){
+		    memcpy(&data[i * this->_cols + col_id], &mat_data[i * mat_col], sizeof(T) * mat_col);
+        }
+		return true;
+	}
+	return false;
 }
 
 
