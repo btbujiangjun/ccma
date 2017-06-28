@@ -73,13 +73,16 @@ public:
 
     virtual bool dot(BaseMatrixT<T>* mat) = 0;
     void outer(BaseMatrixT<T>* mat);
-    virtual void pow(const T exponent) = 0;
 
     bool add(const T value);
     bool subtract(const T value);
     bool multiply(const T value);
     bool multiply(BaseMatrixT<T>* mat);
     bool division(const T value);
+
+    void pow(const T exponent);
+    void log();
+    void exp();
 
     void sigmoid();
     void derivative_sigmoid();
@@ -91,6 +94,8 @@ public:
     virtual T sum() const = 0;
     void x_sum();
     void y_sum();
+
+    uint argmax(const uint id = 0, const uint axis = 0);
 
     virtual bool swap(const uint a_row,
                       const uint a_col,
@@ -243,8 +248,6 @@ public:
     bool insert_row_data(const int row_id, BaseMatrixT<T>* mat);
 
     bool extend(BaseMatrixT<T>* mat, bool col_dim = true);
-
-    void pow(const T exponent);
 
     bool dot(BaseMatrixT<T>* mat);
 
