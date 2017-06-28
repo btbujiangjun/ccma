@@ -49,6 +49,10 @@ public:
 						  ccma::algebra::BaseMatrixT<real>* train_seq_label,
 						  bool debug = false);
 
+    ccma::algebra::BaseMatrixT<real>* get_activation(){
+        return _activation;
+    }
+
 private:
 	void initialize(ccma::algebra::BaseMatrixT<real>* train_seq_data);
 
