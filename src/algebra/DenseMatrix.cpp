@@ -251,16 +251,6 @@ bool DenseMatrixT<T>::dot(BaseMatrixT<T>* mat){
 }
 
 template<class T>
-void DenseMatrixT<T>::pow(const T exponent){
-    uint size = this->get_size();
-    for(uint i = 0; i != size; i++){
-        this->_data[i] = std::pow(this->_data[i], exponent);
-    }
-    clear_cache();
-}
-
-
-template<class T>
 T DenseMatrixT<T>::sum() const{
     T value = static_cast<T>(0);
     uint size = this->get_size();
