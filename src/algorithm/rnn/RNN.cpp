@@ -27,7 +27,7 @@ void RNN::sgd(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data,
 			train_seq_label->at(j)->clone(seq_label);
 			_layer->back_propagation(seq_data, seq_label, debug);
 
-			if(j % 10 == 0){
+			if(j % 1 == 0){
                 printf("Epoch[%d][%d/%d]training...\r", i, j, num_train_data);
 			}
 		}
