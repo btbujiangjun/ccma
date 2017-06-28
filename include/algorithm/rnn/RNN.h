@@ -49,6 +49,9 @@ public:
              uint epoch = 5, 
              real alpha = 0.1);
 
+    real loss(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data,
+              std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data);
+
 private:
     uint _feature_dim;
     uint _hidden_dim;
