@@ -39,6 +39,27 @@ void RNN::sgd(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data,
 	delete seq_label;
 }
 
+
+real RNN::loss(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data,
+               std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data){
+	real l = 0;
+	
+	auto seq_data = new ccma::algebra::DenseMatrixT<real>();
+	auto seq_label = new ccma::algebra::DenseMatrixT<real>();
+	
+	uint num_train_data = train_seq_data->size();
+	for(uint j = 0; j != num_train_data; j++){
+		train_seq_data->at(j)->clone(seq_data);
+		train_seq_label->at(j)->clone(seq_label);
+		_layer->feed_farward(seq_data, seq_label, false);
+	}
+
+    delete seq_data;
+	delete seq_label;
+
+	return l;
+}
+
 }//namespace rnn
 }//namespace algorithm
 }//namespace ccma
