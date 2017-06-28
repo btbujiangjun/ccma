@@ -192,6 +192,37 @@ bool BaseMatrixT<T>::division(const T value){
 }
 
 template<class T>
+void BaseMatrixT<T>::pow(const T exponent){
+    uint size   = get_size();
+    T* data     = get_data();
+
+    for(uint i = 0; i != size; i++){
+        data[i] = std::pow(data[i], exponent);
+    }
+}
+
+template<class T>
+void BaseMatrixT<T>::log(){
+    uint size   = get_size();
+    T* data     = get_data();
+
+    for(uint i = 0; i != size; i++){
+        data[i] =  std::log(data[i]);
+    }
+}
+
+
+template<class T>
+void BaseMatrixT<T>::exp(){
+    uint size   = get_size();
+    T* data     = get_data();
+
+    for(uint i = 0; i != size; i++){
+        data[i] =  std::exp(data[i]);
+    }
+}
+
+template<class T>
 void BaseMatrixT<T>::sigmoid(){
 
     uint size   = get_size();
@@ -311,6 +342,23 @@ void BaseMatrixT<T>::y_sum(){
         }
         set_shallow_data(new_data, _rows, 1);
     }
+}
+
+template<class T>
+uint BaseMatrixT<T>::argmax(const uint id, const uint axis){
+	T max_value;
+	uint max_idx = 0;
+	T* data = this->get_data();
+
+	uint end_idx = (axis == 0) ? _cols : _rows;
+	for(uint i = 0; i != end_idx; i++){
+		T value = (axis == 0) ? data[id * _cols + 1] : data[i * _rows + id];
+		if( i == 0 || value > max_value){
+			max_value = value;
+			max_idx = i;
+		}
+	}
+	return max_idx;
 }
 
 template<class T>
