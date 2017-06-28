@@ -33,6 +33,10 @@ public:
 
         _store = new ccma::algebra::DenseMatrixT<real>();
         _activation = new ccma::algebra::DenseMatrixT<real>();
+	
+		_derivate_weight = new ccma::algebra::DenseMatrixT<real>(_weight->get_rows(), _weight->get_cols());
+		_derivate_pre_weight = new ccma::algebra::DenseMatrixT<real>(_pre_weight->get_rows(), _pre_weight->get_cols());
+		_derivate_act_weight = new ccma::algebra::DenseMatrixT<real>(_act_weight->get_rows(), _act_weight->get_cols());
 	}
 
 	~Layer(){
@@ -53,6 +57,15 @@ public:
         return _activation;
     }
 
+    ccma::algebra::BaseMatrixT<real>* get_derivate_weight(){
+        return _derivate_weight;
+    }
+    ccma::algebra::BaseMatrixT<real>* get_derivate_pre_weight(){
+        return _derivate_pre_weight;
+    }
+    ccma::algebra::BaseMatrixT<real>* get_derivate_act_weight(){
+        return _derivate_act_weight;
+    }
 private:
 	void initialize(ccma::algebra::BaseMatrixT<real>* train_seq_data);
 
@@ -66,6 +79,11 @@ private:
 	ccma::algebra::BaseMatrixT<real>* _weight;
 	ccma::algebra::BaseMatrixT<real>* _pre_weight;
 	ccma::algebra::BaseMatrixT<real>* _act_weight;
+	
+	ccma::algebra::BaseMatrixT<real>* _derivate_weight;
+	ccma::algebra::BaseMatrixT<real>* _derivate_pre_weight;
+	ccma::algebra::BaseMatrixT<real>* _derivate_act_weight;
+	
 };//class Layer
 
 }//namespace rnn
