@@ -344,6 +344,37 @@ void BaseMatrixT<T>::y_sum(){
     }
 }
 
+
+template<class T>
+BaseMatrixT<int>* BaseMatrixT<T>::argmax(const uint axis){
+    T* data = this->get_data();
+    uint size = (axis == 0)? _rows : _cols;
+    int* idx_data = new int[size];
+    for(uint i = 0; i != size; i++){
+        T max_value = 0;
+        uint max_idx = 0;
+	
+        uint end_idx = (axis == 0) ? _cols : _rows;
+        for(int j = 0; j != end_idx; j++){
+            T value = (axis == 0) ? data[i * _cols + j] : data[j * _cols + i];
+            if( j == 0 || value > max_value){
+                max_value = value;
+                max_idx = j;
+            }
+        }
+        idx_data[i] = max_idx;
+    }
+
+    uint rows = (axis == 0) ? size : 1;
+    uint cols = (axis == 0) ? 1 : size;
+
+    auto mat = new DenseMatrixT<int>();
+    mat->set_shallow_data(idx_data, rows, cols);
+
+    return mat;
+}
+
+
 template<class T>
 uint BaseMatrixT<T>::argmax(const uint id, const uint axis){
 	T max_value = 0;
@@ -352,7 +383,7 @@ uint BaseMatrixT<T>::argmax(const uint id, const uint axis){
 
 	uint end_idx = (axis == 0) ? _cols : _rows;
 	for(uint i = 0; i != end_idx; i++){
-		T value = (axis == 0) ? data[id * _cols + 1] : data[i * _rows + id];
+		T value = (axis == 0) ? data[id * _cols + i] : data[i * _rows + id];
 		if( i == 0 || value > max_value){
 			max_value = value;
 			max_idx = i;
@@ -518,9 +549,10 @@ bool BaseMatrixT<T>::get_col_data(const uint col_id, BaseMatrixT<T>* out_mat){
 template<class T>
 bool BaseMatrixT<T>::set_col_data(const uint col_id, BaseMatrixT<T>* mat){
     uint mat_col = mat->get_cols();
-    T* data = this->get_data();
-    T* mat_data = mat->get_data();
 	if(this->_rows == mat->get_rows() && this->_cols >= (col_id + mat_col)){
+        T* data = this->get_data();
+        T* mat_data = mat->get_data();
+
         for(uint i = 0; i != this->_rows; i++){
 		    memcpy(&data[i * this->_cols + col_id], &mat_data[i * mat_col], sizeof(T) * mat_col);
         }
@@ -529,6 +561,19 @@ bool BaseMatrixT<T>::set_col_data(const uint col_id, BaseMatrixT<T>* mat){
 	return false;
 }
 
+
+template<class T>
+void BaseMatrixT<T>::reset(T value){
+    T* data = this->get_data();
+    uint size = get_size();
+    if(value == (T)0 || value == (T)-1){
+       memset(data, value, sizeof(T) * size); 
+    }else{
+        for(uint i = 0; i != size; i++){
+            data[i] =  value;
+        }
+    }
+}
 
 template class BaseMatrixT<int>;
 template class BaseMatrixT<real>;
