@@ -52,8 +52,8 @@ public:
 private:
 	void sgd_step(ccma::algebra::BaseMatrixT<real>* train_seq_data,
               	  ccma::algebra::BaseMatrixT<real>* train_seq_label, 
-              	  bool debug,
-			  	  real alpha);
+			  	  real alpha,
+                  bool debug);
 
     real loss(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data,
               std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_label);
