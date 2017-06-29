@@ -66,6 +66,8 @@ public:
     bool get_col_data(const uint col_id, BaseMatrixT<T>* out_mat);
     bool set_col_data(const uint col_id, BaseMatrixT<T>* mat);
     
+    void reset(T value = 0);
+
     virtual bool extend(BaseMatrixT<T>* mat, bool col_dim = true) = 0;
 
     bool add(BaseMatrixT<T>* mat);
@@ -95,7 +97,8 @@ public:
     void x_sum();
     void y_sum();
 
-    uint argmax(const uint id = 0, const uint axis = 0);
+    BaseMatrixT<int>* argmax(const uint axis);
+    uint argmax(const uint id, const uint axis);
 
     virtual bool swap(const uint a_row,
                       const uint a_col,
