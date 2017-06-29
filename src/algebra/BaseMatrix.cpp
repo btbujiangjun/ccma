@@ -346,7 +346,7 @@ void BaseMatrixT<T>::y_sum(){
 
 template<class T>
 uint BaseMatrixT<T>::argmax(const uint id, const uint axis){
-	T max_value;
+	T max_value = 0;
 	uint max_idx = 0;
 	T* data = this->get_data();
 
