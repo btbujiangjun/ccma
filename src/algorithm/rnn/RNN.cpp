@@ -16,7 +16,8 @@ void RNN::sgd(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data,
               std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_label, 
               uint epoch, 
               real alpha){
-	auto seq_data = new ccma::algebra::DenseMatrixT<real>();
+
+    auto seq_data  = new ccma::algebra::DenseMatrixT<real>();
 	auto seq_label = new ccma::algebra::DenseMatrixT<real>();
 	
 	uint num_train_data = train_seq_data->size();
@@ -33,7 +34,7 @@ void RNN::sgd(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data,
 				continue;
 			}
 
-			sgd_step(seq_data, seq_label, debug,alpha);
+			sgd_step(seq_data, seq_label, alpha, debug);
 
 //			if(j % 1 == 0){
                 printf("Epoch[%d][%d/%d]training, loss[%f]...\n", i, j, num_train_data, loss(train_seq_data, train_seq_label));
@@ -49,46 +50,67 @@ void RNN::sgd(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data,
 
 void RNN::sgd_step(ccma::algebra::BaseMatrixT<real>* train_seq_data,
               ccma::algebra::BaseMatrixT<real>* train_seq_label, 
-              bool debug,
-			  real alpha){
-	_layer->back_propagation(train_seq_data, train_seq_label, debug);
+			  real alpha,
+              bool debug){
+
+    auto derivate_weight     = new ccma::algebra::DenseMatrixT<real>();
+    auto derivate_pre_weight = new ccma::algebra::DenseMatrixT<real>();
+    auto derivate_act_weight = new ccma::algebra::DenseMatrixT<real>();
+
+	_layer->back_propagation(train_seq_data, train_seq_label, _U, _W, _V, derivate_weight, derivate_pre_weight, derivate_act_weight, debug);
 	
-	auto u = _layer->get_derivate_weight();
-	u->multiply(alpha);
-	_U->subtract(u);
+	derivate_weight->multiply(alpha);
+	_U->subtract(derivate_weight);
 
-	auto w = _layer->get_derivate_pre_weight();
-	w->multiply(alpha);
-	_W->subtract(w);
+	derivate_pre_weight->multiply(alpha);
+	_W->subtract(derivate_pre_weight);
 
-	auto v = _layer->get_derivate_act_weight();
-	v->multiply(alpha);
-	_V->subtract(v);
+	derivate_act_weight->multiply(alpha);
+	_V->subtract(derivate_act_weight);
+
+    delete derivate_weight;
+    delete derivate_pre_weight;
+    delete derivate_act_weight;
 }
+
 real RNN::loss(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data,
                std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_label){
 	real l = 0;
 	
-	auto seq_data = new ccma::algebra::DenseMatrixT<real>();
+	auto seq_data  = new ccma::algebra::DenseMatrixT<real>();
 	auto seq_label = new ccma::algebra::DenseMatrixT<real>();
-	auto predict_mat = new ccma::algebra::DenseMatrixT<real>();
 	
-	uint num_train_data = train_seq_data->size();
+	auto store      = new ccma::algebra::DenseMatrixT<real>();
+	auto activation = new ccma::algebra::DenseMatrixT<real>();
+	
+    uint num_train_data = train_seq_data->size();
 	for(uint j = 0; j != num_train_data; j++){
+        printf("start loss1 %d:[%f]\n", j, l);
+
 		train_seq_data->at(j)->clone(seq_data);
 		train_seq_label->at(j)->clone(seq_label);
-		_layer->feed_farward(seq_data, seq_label);
+		_layer->feed_farward(seq_data, seq_label, _U, _W, _V, store, activation, debug);
 
-		_layer->get_activation()->clone(predict_mat);
-		predict_mat->dot(seq_label);
+		auto mat_label = seq_label->argmax(0);
+       
+        mat_label->display("|");
 
-		predict_mat->log();
-		l -= predict_mat->sum();
+        printf("start loss3 %d:[%f]\n", j, l);
+
+        uint rows = mat_label->get_rows();
+
+        for(uint row = 0; row != rows; row++){
+            l -= std::log(activation->get_data(mat_label->get_data(row, 0), row)); 
+        }
+
+        printf("loss %d:[%f]\n", j, l);
 	}
 
     delete seq_data;
 	delete seq_label;
-	delete predict_mat;
+
+    delete store;
+    delete activation;
 
 	l /= num_train_data;
 
