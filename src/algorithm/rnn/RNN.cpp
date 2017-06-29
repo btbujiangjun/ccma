@@ -25,18 +25,19 @@ void RNN::sgd(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data,
 		for(uint j = 0; j != num_train_data; j++){
 			train_seq_data->at(j)->clone(seq_data);
 			train_seq_label->at(j)->clone(seq_label);
-			
+
+            printf("starting [%d][%d].\n", i, j);
 
 			if(seq_data->get_rows() != seq_label->get_rows()){
 				printf("Data Error[%d][%d-%d].\n", j, seq_data->get_rows(), seq_label->get_rows());
-				break;
+				continue;
 			}
 
 			sgd_step(seq_data, seq_label, debug,alpha);
 
-			if(j % 1 == 0){
-                printf("Epoch[%d][%d/%d]training, loss[%f]...\r", i, j, num_train_data, loss(train_seq_data, train_seq_label));
-			}
+//			if(j % 1 == 0){
+                printf("Epoch[%d][%d/%d]training, loss[%f]...\n", i, j, num_train_data, loss(train_seq_data, train_seq_label));
+//			}
 		}
 	}
 
