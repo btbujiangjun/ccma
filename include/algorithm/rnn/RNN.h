@@ -58,6 +58,9 @@ private:
     real loss(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data,
               std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_label);
 
+    real total_loss(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data,
+                    std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_label);
+
 private:
     uint _feature_dim;
     uint _hidden_dim;
