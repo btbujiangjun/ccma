@@ -121,6 +121,7 @@ bool DenseMatrixT<T>::set_row_data(const uint row_id, BaseMatrixT<T>* mat){
 		memcpy(&_data[row_id * this->_cols], mat->get_data(), sizeof(T) * mat->get_size());
 		return true;
 	}
+	printf("set_row_data error:[%d-%d][%d-%d]\n", this->_cols, mat->get_cols(), this->_rows, row_id + mat->get_rows());
 	return false;
 }
 
