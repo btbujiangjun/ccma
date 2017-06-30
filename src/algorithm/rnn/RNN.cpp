@@ -27,8 +27,6 @@ void RNN::sgd(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data,
 			train_seq_data->at(j)->clone(seq_data);
 			train_seq_label->at(j)->clone(seq_label);
 
-            printf("starting [%d][%d].\n", i, j);
-
 			if(seq_data->get_rows() != seq_label->get_rows()){
 				printf("Data Error[%d][%d-%d].\n", j, seq_data->get_rows(), seq_label->get_rows());
 				continue;
@@ -36,10 +34,11 @@ void RNN::sgd(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data,
 
 			sgd_step(seq_data, seq_label, alpha, debug);
 
-//			if(j % 1 == 0){
+		//	if(j % 1 == 0){
                 printf("Epoch[%d][%d/%d]training, loss[%f]...\n", i, j, num_train_data, loss(train_seq_data, train_seq_label));
-//			}
+		//	}
 		}
+        printf("Epoch[%d][%d]training, loss[%f]...\n", i, num_train_data, loss(train_seq_data, train_seq_label));
 	}
 
 	printf("training finished.\n");
@@ -73,37 +72,33 @@ void RNN::sgd_step(ccma::algebra::BaseMatrixT<real>* train_seq_data,
     delete derivate_act_weight;
 }
 
-real RNN::loss(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data,
-               std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_label){
-	real l = 0;
+real RNN::total_loss(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data,
+                     std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_label){
+
+	real loss_value = 0;
 	
-	auto seq_data  = new ccma::algebra::DenseMatrixT<real>();
-	auto seq_label = new ccma::algebra::DenseMatrixT<real>();
+	auto seq_data   = new ccma::algebra::DenseMatrixT<real>();
+	auto seq_label  = new ccma::algebra::DenseMatrixT<real>();
 	
-	auto store      = new ccma::algebra::DenseMatrixT<real>();
+    auto store      = new ccma::algebra::DenseMatrixT<real>();
 	auto activation = new ccma::algebra::DenseMatrixT<real>();
 	
     uint num_train_data = train_seq_data->size();
 	for(uint j = 0; j != num_train_data; j++){
-        printf("start loss1 %d:[%f]\n", j, l);
 
 		train_seq_data->at(j)->clone(seq_data);
 		train_seq_label->at(j)->clone(seq_label);
-		_layer->feed_farward(seq_data, seq_label, _U, _W, _V, store, activation, debug);
+
+		_layer->feed_farward(seq_data, _U, _W, _V, store, activation, false);
 
 		auto mat_label = seq_label->argmax(0);
-       
-        mat_label->display("|");
-
-        printf("start loss3 %d:[%f]\n", j, l);
-
         uint rows = mat_label->get_rows();
 
         for(uint row = 0; row != rows; row++){
-            l -= std::log(activation->get_data(mat_label->get_data(row, 0), row)); 
+            loss_value -= std::log(activation->get_data(mat_label->get_data(row, 0), row)); 
         }
+        delete mat_label;
 
-        printf("loss %d:[%f]\n", j, l);
 	}
 
     delete seq_data;
@@ -112,9 +107,21 @@ real RNN::loss(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data,
     delete store;
     delete activation;
 
-	l /= num_train_data;
+	return loss_value;
+}
 
-	return l;
+real RNN::loss(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data,
+               std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_label){
+
+    real loss_value = total_loss(train_seq_data, train_seq_label);
+    uint N = 0;
+    
+    uint size = train_seq_label->size();
+    for(uint i = 0; i != size; i++){
+        N += train_seq_label->at(i)->get_rows();
+    }
+
+    return loss_value / N;
 }
 
 }//namespace rnn
