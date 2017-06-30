@@ -320,7 +320,7 @@ bool DenseMatrixT<T>::swap_col(const uint a, const uint b){
 }
 
 template<class T>
-void DenseMatrixT<T>::transpose(){
+BaseMatrixT<T>* DenseMatrixT<T>::transpose(){
     uint row = this->_rows;
     uint col = this->_cols;
     T* data = new T[row * col];
@@ -333,6 +333,8 @@ void DenseMatrixT<T>::transpose(){
     }
 
     set_shallow_data(data, col, row);
+
+    return this;
 }
 
 template<class T>
