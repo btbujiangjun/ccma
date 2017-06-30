@@ -22,7 +22,13 @@ void RNN::sgd(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data,
 	
 	uint num_train_data = train_seq_data->size();
 	bool debug = (num_train_data <= 5);
+    
+	auto now = []{return std::chrono::system_clock::now();};
+
 	for(uint i = 0; i != epoch; i++){
+	
+		auto start_time = now();
+		
 		for(uint j = 0; j != num_train_data; j++){
 			train_seq_data->at(j)->clone(seq_data);
 			train_seq_label->at(j)->clone(seq_label);
@@ -35,10 +41,12 @@ void RNN::sgd(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data,
 			sgd_step(seq_data, seq_label, alpha, debug);
 
 		//	if(j % 1 == 0){
-                printf("Epoch[%d][%d/%d]training, loss[%f]...\n", i, j, num_train_data, loss(train_seq_data, train_seq_label));
+        //        printf("Epoch[%d][%d/%d]training, loss[%f]...\n", i, j, num_train_data, loss(train_seq_data, train_seq_label));
 		//	}
 		}
-        printf("Epoch[%d][%d]training, loss[%f]...\n", i, num_train_data, loss(train_seq_data, train_seq_label));
+
+        auto training_time = now();
+        printf("Epoch[%d] training run time: %ld ms, loss[%f]\n", i, std::chrono::duration_cast<std::chrono::milliseconds>(training_time - start_time).count(), loss(train_seq_data, train_seq_label));
 	}
 
 	printf("training finished.\n");
@@ -95,7 +103,7 @@ real RNN::total_loss(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_d
         uint rows = mat_label->get_rows();
 
         for(uint row = 0; row != rows; row++){
-            loss_value -= std::log(activation->get_data(mat_label->get_data(row, 0), row)); 
+            loss_value -= std::log(activation->get_data(row, mat_label->get_data(row, 0))); 
         }
         delete mat_label;
 
