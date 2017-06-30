@@ -323,17 +323,21 @@ template<class T>
 BaseMatrixT<T>* DenseMatrixT<T>::transpose(){
     uint row = this->_rows;
     uint col = this->_cols;
-    T* data = new T[row * col];
-    uint new_data_idx = 0;
+    if(row == 1 || col == 1){
+        this->_rows = col;
+        this->_cols = row;
+    }else{
+        T* data = new T[row * col];
+        uint new_data_idx = 0;
 
-    for(uint i = 0; i != col; i++){
-        for(uint j = 0; j != row; j++){
-            data[new_data_idx++] = _data[j * col + i];
+        for(uint i = 0; i != col; i++){
+            for(uint j = 0; j != row; j++){
+                data[new_data_idx++] = _data[j * col + i];
+            }
         }
+
+        set_shallow_data(data, col, row);
     }
-
-    set_shallow_data(data, col, row);
-
     return this;
 }
 
