@@ -383,7 +383,7 @@ uint BaseMatrixT<T>::argmax(const uint id, const uint axis){
 
 	uint end_idx = (axis == 0) ? _cols : _rows;
 	for(uint i = 0; i != end_idx; i++){
-		T value = (axis == 0) ? data[id * _cols + i] : data[i * _rows + id];
+		T value = (axis == 0) ? data[id * _cols + i] : data[i * _cols + id];
 		if( i == 0 || value > max_value){
 			max_value = value;
 			max_idx = i;
@@ -558,6 +558,7 @@ bool BaseMatrixT<T>::set_col_data(const uint col_id, BaseMatrixT<T>* mat){
         }
 		return true;
 	}
+	printf("set_col_data error:[%d-%d][%d-%d]\n", this->_rows, mat->get_rows(), this->_cols, col_id + mat_col);
 	return false;
 }
 
