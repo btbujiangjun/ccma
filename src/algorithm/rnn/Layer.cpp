@@ -23,13 +23,8 @@ void Layer::feed_farward(ccma::algebra::BaseMatrixT<real>* train_seq_data,
 	uint seq_rows = train_seq_data->get_rows();
 	uint seq_cols = train_seq_data->get_cols();
 	
-	real* store_data = new real[_hidden_dim * seq_rows];
-	memset(store_data, 0, sizeof(real) * _hidden_dim * seq_rows);	
-	store->set_shallow_data(store_data, _hidden_dim, seq_rows);
-
-	real* activation_data = new real[seq_cols * seq_cols];
-	memset(activation_data, 0, sizeof(real) * seq_cols * seq_rows);
-	activation->set_shallow_data(activation_data, seq_cols, seq_rows);
+	store->reset(0, _hidden_dim, seq_rows);
+	activation->reset(0, seq_cols, seq_rows);
 
 	auto store_t = new ccma::algebra::DenseMatrixT<real>();
 	auto activation_t = new ccma::algebra::DenseMatrixT<real>();
@@ -41,10 +36,9 @@ void Layer::feed_farward(ccma::algebra::BaseMatrixT<real>* train_seq_data,
 		//s[t] = tanh(U*x[t] + W*s[t-1])
 		//o[t] = softmax(V* s[t])
 		train_seq_data->get_row_data(t, seq_time_data);
-		seq_time_data->transpose();
-
 		weight->clone(store_t);
-		store_t->dot(seq_time_data);
+		store_t->dot(seq_time_data->transpose());
+
 		if(t > 0){
 			pre_weight->clone(pre_weight_t);
 			store->get_col_data(t-1, pre_store_t);
@@ -52,13 +46,12 @@ void Layer::feed_farward(ccma::algebra::BaseMatrixT<real>* train_seq_data,
 			pre_weight_t->dot(pre_store_t);
 			store_t->add(pre_weight_t);
 		}
+        store_t->tanh();
 		store->set_col_data(t, store_t);
 	
-        store_t->display();
-
 		act_weight->clone(activation_t);
 		activation_t->dot(store_t);
-		activation_t->tanh();
+		activation_t->softmax();
 		activation->set_col_data(t, activation_t);
 	}
 
@@ -82,44 +75,45 @@ void Layer::back_propagation(ccma::algebra::BaseMatrixT<real>* train_seq_data,
 	auto store		= new ccma::algebra::DenseMatrixT<real>();
 	auto activation = new ccma::algebra::DenseMatrixT<real>();
 
-	derivate_weight->reset();
-	derivate_pre_weight->reset();
-	derivate_act_weight->reset();
+	derivate_weight->reset(0, weight->get_rows(), weight->get_cols());
+	derivate_pre_weight->reset(0, pre_weight->get_rows(), pre_weight->get_cols());
+	derivate_act_weight->reset(0, act_weight->get_rows(), act_weight->get_cols());
 
 	feed_farward(train_seq_data, weight, pre_weight, act_weight, store, activation, debug);
 
 	auto derivate_output = new ccma::algebra::DenseMatrixT<real>();
 	activation->clone(derivate_output);
 
-	train_seq_label->transpose();
-	derivate_output->subtract(train_seq_label);
+	derivate_output->subtract(train_seq_label->transpose());
 
-	auto derivate_pre_weight_t = new ccma::algebra::DenseMatrixT<real>();
-	auto derivate_output_t = new ccma::algebra::DenseMatrixT<real>();
-	auto derivate_weight_t = new ccma::algebra::DenseMatrixT<real>();
-	auto derivate_store_t = new ccma::algebra::DenseMatrixT<real>();
-	auto derivate_t = new ccma::algebra::DenseMatrixT<real>();
-	auto train_data_t = new ccma::algebra::DenseMatrixT<real>();
+	auto derivate_pre_weight_t  = new ccma::algebra::DenseMatrixT<real>();
+	auto derivate_output_t      = new ccma::algebra::DenseMatrixT<real>();
+	auto derivate_weight_t      = new ccma::algebra::DenseMatrixT<real>();
+	auto derivate_weight_t_c    = new ccma::algebra::DenseMatrixT<real>();
+	auto derivate_store_t       = new ccma::algebra::DenseMatrixT<real>();
+	auto derivate_t             = new ccma::algebra::DenseMatrixT<real>();
+	auto train_data_t           = new ccma::algebra::DenseMatrixT<real>();
 
 	uint seq_size = train_seq_data->get_rows();
 
 	for(int t = seq_size - 1; t >= 0 ; t--){
+        //update derivate_act_weight
 		derivate_output->get_col_data(t, derivate_output_t);
 		store->get_col_data(t, derivate_store_t);
 
 		derivate_output_t->outer(derivate_store_t);
 		derivate_act_weight->add(derivate_output_t);
 
+        //calc derivate_t
 		store->get_col_data(t, derivate_store_t);
 		derivate_store_t->multiply(derivate_store_t);
 		derivate_store_t->multiply(-1);
 		derivate_store_t->add(1);
 
-		derivate_output->get_col_data(t, derivate_output_t);
+		activation->get_col_data(t, derivate_output_t);
 		act_weight->clone(derivate_t);
 
-		derivate_t->transpose();
-		derivate_t->dot(derivate_output_t);
+		derivate_t->transpose()->dot(derivate_output_t);
 
 		derivate_t->multiply(derivate_store_t);
 
@@ -134,26 +128,25 @@ void Layer::back_propagation(ccma::algebra::BaseMatrixT<real>* train_seq_data,
 			if(bptt_step > 0){
 				store->get_col_data(bptt_step -1, derivate_store_t);
 			}else{
-				real* data = new real[store->get_rows()];
-				memset(data, 0, sizeof(real)*store->get_rows());
-				derivate_store_t->set_shallow_data(data, store->get_rows(), 1);
+				derivate_store_t->reset(0, store->get_rows(), 1);
 			}
 
+            //update derivate_pre_weight
 			derivate_t->clone(derivate_pre_weight_t);
 			derivate_pre_weight_t->outer(derivate_store_t);
 			derivate_pre_weight->add(derivate_pre_weight_t);
 
+            //update derivate_weight
 			train_seq_data->get_row_data(bptt_step, train_data_t);
-			train_data_t->transpose();
-
             derivate_weight->clone(derivate_weight_t);
-			derivate_weight_t->dot(train_data_t);
+
+			derivate_weight_t->dot(train_data_t->transpose());
 			derivate_weight_t->add(derivate_t);
 
-            uint idx = train_data_t->argmax(0, 0);
-            for(uint i = 0; i != derivate_weight_t->get_rows(); i++){
-                derivate_weight->set_data(i, idx, derivate_weight_t->get_data(i, 0));
-            }
+            uint idx = train_data_t->argmax(bptt_step, 0);
+            derivate_weight->get_col_data(idx, derivate_weight_t_c);
+            derivate_weight_t_c->add(derivate_weight_t);
+            derivate_weight->set_col_data(idx, derivate_weight_t_c);
 
 			//update delta
 			if(bptt_step > 0){
@@ -161,8 +154,7 @@ void Layer::back_propagation(ccma::algebra::BaseMatrixT<real>* train_seq_data,
 				derivate_store_t->multiply(-1);
 				derivate_store_t->add(1);
 
-				derivate_pre_weight_t->dot(derivate_t);
-
+				derivate_pre_weight_t->transpose()->dot(derivate_t);
 				derivate_pre_weight_t->multiply(derivate_store_t);
 				derivate_pre_weight_t->clone(derivate_t);
 			}
@@ -171,6 +163,7 @@ void Layer::back_propagation(ccma::algebra::BaseMatrixT<real>* train_seq_data,
 	delete derivate_output;
 	delete derivate_output_t;
     delete derivate_weight_t;
+    delete derivate_weight_t_c;
 	delete derivate_t;
 	delete derivate_pre_weight_t;
 	delete derivate_store_t;
