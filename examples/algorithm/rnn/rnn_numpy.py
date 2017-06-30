@@ -1,3 +1,5 @@
+import pdb
+
 import csv
 import itertools
 import operator
@@ -37,6 +39,7 @@ def forward_propagation(self, x):
     # The outputs at each time step. Again, we save them for later.
     o = np.zeros((T, self.word_dim))
     # For each time step...
+
     for t in np.arange(T):
         # Note that we are indxing U by x[t]. This is the same as multiplying U with a one-hot vector.
         s[t] = np.tanh(self.U[:,x[t]] + self.W.dot(s[t-1]))
@@ -198,7 +201,7 @@ def generate_sentence(model):
 RNNNumpy.generate_sentence = generate_sentence
 
 def preprocess(model):
-    with open('data/reddit-comments-2015-08.csv.10', 'rb') as f:
+    with open('../../../data/reddit-comments-2015-08_100.csv', 'rb') as f:
         reader = csv.reader(f, skipinitialspace=True)
         reader.next()
         sentences = itertools.chain(*[nltk.sent_tokenize(x[0].decode('utf-8').lower()) for x in reader])
@@ -236,3 +239,7 @@ for i in range(num_sentences):
         sent = generate_sentence(model)
     print " ".join(sent)
 '''
+
+model = RNNNumpy(8000)
+x, y = preprocess(model)
+train_with_sgd(model, x, y)
