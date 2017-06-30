@@ -563,7 +563,7 @@ bool BaseMatrixT<T>::set_col_data(const uint col_id, BaseMatrixT<T>* mat){
 
 
 template<class T>
-void BaseMatrixT<T>::reset(T value){
+void BaseMatrixT<T>::reset(const T value){
     T* data = this->get_data();
     uint size = get_size();
     if(value == (T)0 || value == (T)-1){
@@ -572,6 +572,27 @@ void BaseMatrixT<T>::reset(T value){
         for(uint i = 0; i != size; i++){
             data[i] =  value;
         }
+    }
+}
+
+template<class T>
+void BaseMatrixT<T>::reset(const T value,
+                           uint rows,
+                           uint cols){
+    uint size = rows * cols;
+    if(get_size() == size){
+        reset(value);
+        reshape(rows, cols);
+    }else{
+        T* data = new T[size];
+        if(value == (T)0 || value == (T)-1){
+           memset(data, value, sizeof(T) * size); 
+        }else{
+            for(uint i = 0; i != size; i++){
+                data[i] =  value;
+            }
+        }
+        this->set_shallow_data(data, rows, cols);
     }
 }
 
