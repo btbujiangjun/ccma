@@ -66,7 +66,10 @@ public:
     bool get_col_data(const uint col_id, BaseMatrixT<T>* out_mat);
     bool set_col_data(const uint col_id, BaseMatrixT<T>* mat);
     
-    void reset(T value = 0);
+    void reset(const T value = 0);
+    void reset(const T value,
+               uint rows,
+               uint cols);
 
     virtual bool extend(BaseMatrixT<T>* mat, bool col_dim = true) = 0;
 
@@ -107,7 +110,7 @@ public:
     virtual bool swap_row(const uint a, const uint b) = 0;
     virtual bool swap_col(const uint a, const uint b) = 0;
 
-    virtual void transpose() = 0;
+    virtual BaseMatrixT<T>* transpose() = 0;
 
     bool reshape(uint row, uint col){
         if(row * col == _rows * _cols){
@@ -263,7 +266,7 @@ public:
     bool swap_row(const uint a, const uint b);
     bool swap_col(const uint a, const uint b);
 
-    void transpose();
+    BaseMatrixT<T>* transpose();
 
     void add_x0();
     void add_x0(BaseMatrixT<T>* result);
