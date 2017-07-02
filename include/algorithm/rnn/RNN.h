@@ -29,6 +29,16 @@ public:
         _W = new ccma::algebra::DenseRandomMatrixT<real>(hidden_dim, hidden_dim, 0, 0.5);
         _V = new ccma::algebra::DenseRandomMatrixT<real>(feature_dim, hidden_dim, 0, 0.5);
 
+
+		printf("U");
+		_U->display();
+
+		printf("W");
+		_W->display();
+
+		printf("V");
+		_V->display();
+
         _layer = new ccma::algorithm::rnn::Layer(hidden_dim, bptt_truncate, _U, _W, _V);
     }
     ~RNN(){
@@ -53,14 +63,17 @@ private:
 	void sgd_step(ccma::algebra::BaseMatrixT<real>* train_seq_data,
               	  ccma::algebra::BaseMatrixT<real>* train_seq_label, 
 			  	  real alpha,
-                  bool debug);
+                  bool debug,
+				  int j);
 
     real loss(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data,
               std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_label);
 
     real total_loss(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data,
                     std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_label);
-
+    
+	bool check_data(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data,
+             		std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_label); 
 private:
     uint _feature_dim;
     uint _hidden_dim;
