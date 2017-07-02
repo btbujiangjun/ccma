@@ -56,7 +56,7 @@ void RNNHelper::read_word2index(const std::string& data_file, std::map<std::stri
         ccma::utils::StringHelper helper;
 		std::string data;
 		while(getline(in_file, data)){
-            auto line_data = helper.split(data, '\t');
+            auto line_data = helper.split(data, "\t");
             if(line_data.size() == 2){
 				uint value = helper.str2int(line_data[1]);
 				if(value < _feature_dim){
@@ -87,7 +87,7 @@ void RNNHelper::read_data(const std::string& data_file,
 		std::string data;
         ccma::utils::StringHelper helper;
 		while(getline(in_file, data)){
-            auto line_data = helper.split(data, '\t');
+            auto line_data = helper.split(data, "\t");
             uint rows = line_data.size();
             auto mat_data = new ccma::algebra::DenseMatrixT<real>(rows, _feature_dim);
             for(uint i = 0; i != rows ; i++){
