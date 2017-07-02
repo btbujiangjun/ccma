@@ -20,12 +20,14 @@
 #include <vector>
 #include <sstream>
 #include <algorithm>
+#include <regex>
+#include "utils/TypeDef.h"
 
 namespace ccma{
 namespace utils{
 class StringHelper{
 public:
-    std::vector<std::string> split(std::string& str, const char split);
+    std::vector<std::string> split(const std::string& str, const std::string& split);
 
     std::string int2str(int n);
     std::string real2str(real f);
@@ -55,18 +57,10 @@ public:
  *
  * @return a std::string vector saved all the splited world
  */
-std::vector<std::string> StringHelper::split(std::string& str,const char split){
-    const char* c = &split;
-    char *cstr, *p;
-    std::vector<std::string> res;
-    cstr = new char[str.size()+1];
-    strcpy(cstr,str.c_str());
-    p = strtok(cstr,c);
-    while(p!=NULL){
-        res.push_back(p);
-        p = strtok(NULL,c);
-    }
-    return res;
+std::vector<std::string> StringHelper::split(const std::string& str, const std::string& split){
+	std::regex re(split);
+	std::sregex_token_iterator first{str.begin(), str.end(), re, -1}, last;
+	return {first, last};
 }
 
 /**
