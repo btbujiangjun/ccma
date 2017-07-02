@@ -103,6 +103,8 @@ public:
     BaseMatrixT<int>* argmax(const uint axis);
     uint argmax(const uint id, const uint axis);
 
+	int isnan();
+
     virtual bool swap(const uint a_row,
                       const uint a_col,
                       const uint b_row,
