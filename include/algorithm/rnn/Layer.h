@@ -27,16 +27,6 @@ public:
 	    _hidden_dim = hidden_dim;
         _bptt_truncate = bptt_truncate;
 
-//		_weight = weight;
-//		_pre_weight = pre_weight;
-//		_act_weight = act_weight;
-
-//        _store = new ccma::algebra::DenseMatrixT<real>();
-//        _activation = new ccma::algebra::DenseMatrixT<real>();
-	
-//		_derivate_weight = new ccma::algebra::DenseMatrixT<real>(_weight->get_rows(), _weight->get_cols());
-//		_derivate_pre_weight = new ccma::algebra::DenseMatrixT<real>(_pre_weight->get_rows(), _pre_weight->get_cols());
-//		_derivate_act_weight = new ccma::algebra::DenseMatrixT<real>(_act_weight->get_rows(), _act_weight->get_cols());
 	}
 
 	~Layer() = default;
@@ -45,7 +35,7 @@ public:
                       ccma::algebra::BaseMatrixT<real>* weight,
                       ccma::algebra::BaseMatrixT<real>* pre_weight,
                       ccma::algebra::BaseMatrixT<real>* act_weight,
-                      ccma::algebra::BaseMatrixT<real>* store,
+                      ccma::algebra::BaseMatrixT<real>* state,
                       ccma::algebra::BaseMatrixT<real>* activation,
                       bool debug = false);
 
@@ -63,7 +53,7 @@ private:
 	uint _hidden_dim;
     uint _bptt_truncate;
 
-//	ccma::algebra::BaseMatrixT<real>* _store;
+//	ccma::algebra::BaseMatrixT<real>* _state;
 //	ccma::algebra::BaseMatrixT<real>* _activation;
 
 //	ccma::algebra::BaseMatrixT<real>* _weight;
