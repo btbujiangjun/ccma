@@ -287,6 +287,10 @@ void BaseMatrixT<T>::softmax(){
 	}
 	for(uint i = 0; i != size; i++){
 		src_data[i] = data[i] / e_sum;
+
+		if(std::isnan(src_data[i])){
+			printf("softmax data[%d/%d] isnan[%f/%f]\n", i, size, data[i], e_sum);
+		}
 	}
     delete[] data;
 }
@@ -567,7 +571,7 @@ template<class T>
 void BaseMatrixT<T>::reset(const T value){
     T* data = this->get_data();
     uint size = get_size();
-    if(value == (T)0 || value == (T)-1){
+    if(value == static_cast<T>(0) || value == static_cast<T>(-1)){
        memset(data, value, sizeof(T) * size); 
     }else{
         for(uint i = 0; i != size; i++){
@@ -586,7 +590,7 @@ void BaseMatrixT<T>::reset(const T value,
         reshape(rows, cols);
     }else{
         T* data = new T[size];
-        if(value == (T)0 || value == (T)-1){
+        if(value == static_cast<T>(0) || value == static_cast<T>(-1)){
            memset(data, value, sizeof(T) * size); 
         }else{
             for(uint i = 0; i != size; i++){
@@ -595,6 +599,19 @@ void BaseMatrixT<T>::reset(const T value,
         }
         this->set_shallow_data(data, rows, cols);
     }
+}
+
+
+template<class T>
+int BaseMatrixT<T>::isnan(){
+	uint size = get_size();
+	T* data = this->get_data();
+	for(uint i = 0; i != size; i++){
+		if(std::isnan(data[i])){
+			return i;
+		}
+	}
+	return -1;
 }
 
 template class BaseMatrixT<int>;
