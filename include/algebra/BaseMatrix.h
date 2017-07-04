@@ -103,7 +103,7 @@ public:
     BaseMatrixT<int>* argmax(const uint axis);
     uint argmax(const uint id, const uint axis);
 
-	int isnan();
+	bool isnan();
 
     virtual bool swap(const uint a_row,
                       const uint a_col,
@@ -311,7 +311,7 @@ protected:
             c += this->_cols;
         }
 
-        if(r >= 0 && r < this->_rows && c >= 0 && c < this->_cols){
+        if(r >= 0 && r < (int)this->_rows && c >= 0 && c < (int)this->_cols){
             if(*row < 0){
                 *row = r;
             }
@@ -340,11 +340,20 @@ private:
 template<class T>
 class DenseRandomMatrixT :public DenseMatrixT<T>{
 public:
-    DenseRandomMatrixT(uint rows, uint cols, const T mean_value, const T stddev) : DenseMatrixT<T>(rows, cols){
+    DenseRandomMatrixT(uint rows,
+                       uint cols,
+                       const T mean_value,
+                       const T stddev,
+                       const T min_value = 0,
+                       const T max_value = 0) : DenseMatrixT<T>(rows, cols){
         std::default_random_engine engine(std::chrono::system_clock::now().time_since_epoch().count());
         std::normal_distribution<T> distribution(mean_value, stddev);
         uint size = rows * cols;
         for(uint i = 0; i != size; i++){
+            T value = static_cast<T>(distribution(engine));
+            while(min_value != max_value && (value < min_value || value > max_value)){
+                value = static_cast<T>(distribution(engine));
+            }
             this->_data[i] = static_cast<T>(distribution(engine));
         }
     }
@@ -471,7 +480,7 @@ public:
         if(index < 0){
             index += this->_rows;
         }
-        if(index >= 0 && index < this->_rows){
+        if(index >= 0 && index < (int)this->_rows){
             return this->_labels[index];
         }else{
             //todo out_of_range exception.
@@ -484,7 +493,7 @@ public:
         if(index < 0){
             index += this->_rows;
         }
-        if(index >= 0 && index < this->_rows){
+        if(index >= 0 && index < (int)this->_rows){
             return this->_feature_names[index];
         }else{
             //todo out_of_range exception.
