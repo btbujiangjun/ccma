@@ -143,7 +143,7 @@ bool DenseMatrixT<T>::insert_row_data(const int row_id, BaseMatrixT<T>* mat){
         r = 0;
     }
 
-    if(r > this->_rows){
+    if(r > (int)this->_rows){
         r = this->_rows;
     }
 
@@ -152,7 +152,7 @@ bool DenseMatrixT<T>::insert_row_data(const int row_id, BaseMatrixT<T>* mat){
         memcpy(data, _data, sizeof(T) * this->_cols * r);
     }
     memcpy(&data[r * this->_cols], mat->get_data(), sizeof(T) * mat->get_rows() * mat->get_cols());
-    if(r < this->_rows){
+    if(r < (int)this->_rows){
         memcpy(&data[(r + mat->get_rows()) * this->_cols], &_data[this->_cols * r], sizeof(T) * (this->_rows - r) * this->_cols);
     }
 
@@ -704,7 +704,7 @@ bool LabeledDenseMatrixT<T>::get_row_data(const int row_id, LabeledDenseMatrixT<
         id += this->_rows;
     }
 
-    if(id < 0 || id >= this->_rows){
+    if(id < 0 || id >= (int)this->_rows){
         return false;
     }
 
@@ -736,7 +736,7 @@ void LabeledDenseMatrixT<T>::set_row_data(LabeledDenseMatrixT<T>* mat, const int
         memcpy(labels, _labels, sizeof(T) * id);
     }
     memcpy(&labels[id], label_mat->get_data(), sizeof(T) * data_mat->get_rows());
-    if(id < this->_rows){
+    if(id < (int)this->_rows){
         memcpy(&labels[id + label_mat->get_rows()], &label_mat->get_data()[id], sizeof(T) * (this->_rows - id));
     }
     delete label_mat;
