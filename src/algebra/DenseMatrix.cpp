@@ -212,6 +212,7 @@ bool DenseMatrixT<T>::extend(BaseMatrixT<T>* mat, bool col_dim){
 /* 
  * A(m,p) * B(p,n) = C(m,n)
  */
+/*
 template<class T>
 bool DenseMatrixT<T>::dot(BaseMatrixT<T>* mat){
 
@@ -250,6 +251,7 @@ bool DenseMatrixT<T>::dot(BaseMatrixT<T>* mat){
 
     return true;
 }
+*/
 
 template<class T>
 T DenseMatrixT<T>::sum() const{

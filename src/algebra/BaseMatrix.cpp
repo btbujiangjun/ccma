@@ -123,6 +123,84 @@ bool BaseMatrixT<T>::subtract(BaseMatrixT<T>* mat){
     return true;
 }
 
+/* 
+ * A(m,p) * B(p,n) = C(m,n)
+ */
+template<class T>
+bool BaseMatrixT<T>::dot(BaseMatrixT<T>* mat){
+
+    uint row_a = this->_rows;
+    uint col_a = this->_cols;
+    uint row_b = mat->get_rows();
+    uint col_b = mat->get_cols();
+
+    if(col_a != row_b){
+        printf("Dot Matrix Dim Error[%d:%d][%d:%d]\n", row_a,col_a, row_b, col_b);
+        return false;
+    }
+
+    T* data = new T[row_a * col_b];
+    T zero = static_cast<T>(0);
+    T value;
+    uint a_init_idx, a_idx, row_cursor = 0;
+    uint j, k;
+    T* data_a = this->get_data();
+    T* data_b = mat->get_data();
+
+    uint size = row_a * col_b * col_a;
+    uint num_thread = get_num_thread(size);
+    if(num_thread == 1){
+	    for(uint i = 0; i != row_a; i++){
+		    a_init_idx = i * col_a;
+			for(j = 0; j != col_b; j++){
+				value = zero;
+	            a_idx = a_init_idx;
+		        for(k = 0; k != col_a; k++){
+			        //a_idx  == i * col_a + k
+				    value += data_a[a_idx++] * data_b[k * col_b + j];
+	            }
+		        data[row_cursor++] = value;
+			}
+	    }
+	}else{
+        uint block_size = row_a / num_thread;
+        if(row_a % num_thread != 0){
+            block_size += 1;
+        }
+
+        std::vector<std::thread> threads(num_thread);
+        for(uint i = 0; i != num_thread; i++){
+            threads[i] = std::thread(
+                    [&data, &data_a, &data_b, &col_a, &col_b](uint start_idx, uint end_idx){
+							for(uint ti = start_idx; ti < end_idx; ti++){
+								uint a_init_idx = ti * col_a;
+								for(uint tj = 0; tj != col_b; tj++){
+									T value = 0;
+									uint a_idx = a_init_idx;
+									for(uint tk = 0; tk != col_a; tk++){
+										value += data_a[a_idx++] * data_b[tk * col_b + tj];
+									}
+									data[ti * col_b + tj] = value;
+								}
+							}
+                        }, i * block_size , std::min(row_a, (i + 1) * block_size)
+                    );
+        }
+
+        for(auto& thread : threads){
+            thread.join();
+        }
+    }
+
+
+
+
+    this->set_shallow_data(data, row_a, col_b);
+
+    return true;
+}
+
+
 template<class T>
 void BaseMatrixT<T>::outer(BaseMatrixT<T>* mat){
 	uint size1= get_size();
