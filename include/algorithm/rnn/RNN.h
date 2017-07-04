@@ -25,19 +25,9 @@ public:
         _feature_dim = feature_dim;
         _hidden_dim = hidden_dim;
 
-        _U = new ccma::algebra::DenseRandomMatrixT<real>(hidden_dim, feature_dim, 0, 0.5);
-        _W = new ccma::algebra::DenseRandomMatrixT<real>(hidden_dim, hidden_dim, 0, 0.5);
-        _V = new ccma::algebra::DenseRandomMatrixT<real>(feature_dim, hidden_dim, 0, 0.5);
-
-
-		printf("U");
-		_U->display();
-
-		printf("W");
-		_W->display();
-
-		printf("V");
-		_V->display();
+        _U = new ccma::algebra::DenseRandomMatrixT<real>(hidden_dim, feature_dim, 0, 1, -std::sqrt(1.0/feature_dim), std::sqrt(1.0/feature_dim));
+        _W = new ccma::algebra::DenseRandomMatrixT<real>(hidden_dim, hidden_dim, 0, 1, -std::sqrt(1.0/hidden_dim), std::sqrt(1.0/hidden_dim));
+        _V = new ccma::algebra::DenseRandomMatrixT<real>(feature_dim, hidden_dim, 0, 1, -std::sqrt(1.0/hidden_dim), std::sqrt(1.0/hidden_dim));
 
         _layer = new ccma::algorithm::rnn::Layer(hidden_dim, bptt_truncate, _U, _W, _V);
     }
@@ -78,9 +68,9 @@ private:
     uint _feature_dim;
     uint _hidden_dim;
 
-    ccma::algebra::DenseRandomMatrixT<real>* _U;
-    ccma::algebra::DenseRandomMatrixT<real>* _W;
-    ccma::algebra::DenseRandomMatrixT<real>* _V;
+    ccma::algebra::BaseMatrixT<real>* _U;
+    ccma::algebra::BaseMatrixT<real>* _W;
+    ccma::algebra::BaseMatrixT<real>* _V;
 
     Layer* _layer;
 };//class RNN 
