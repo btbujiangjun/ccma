@@ -50,7 +50,7 @@ void RNN::sgd(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data,
 		}
 
         auto training_time = now();
-        printf("Epoch[%d] training run time: %lld ms, loss[%f]\n", i, std::chrono::duration_cast<std::chrono::milliseconds>(training_time - start_time).count(), loss(train_seq_data, train_seq_label));
+        printf("Epoch[%d] training run time: %lld ms, loss[%f] base loss[%f]\n", i, (long long int)std::chrono::duration_cast<std::chrono::milliseconds>(training_time - start_time).count(), loss(train_seq_data, train_seq_label), std::log(_feature_dim));
 	}
 
 	printf("training finished.\n");
@@ -69,28 +69,7 @@ void RNN::sgd_step(ccma::algebra::BaseMatrixT<real>* train_seq_data,
     auto derivate_pre_weight = new ccma::algebra::DenseMatrixT<real>();
     auto derivate_act_weight = new ccma::algebra::DenseMatrixT<real>();
 
-		if(std::isnan(_U->get_data(0))){
-			printf("step U nan [%d]\n", j);
-		}
-		if(std::isnan(_W->get_data(0))){
-			printf("step W nan [%d]\n", j);
-		}
-		if(std::isnan(_V->get_data(0))){
-			printf("step V nan [%d]\n", j);
-		}
-
 	_layer->back_propagation(train_seq_data, train_seq_label, _U, _W, _V, derivate_weight, derivate_pre_weight, derivate_act_weight, debug);
-
-	
-		if(std::isnan(derivate_weight->get_data(0))){
-			printf("step dU nan [%d]\n", j);
-		}
-		if(std::isnan(derivate_pre_weight->get_data(0))){
-			printf("step dW nan [%d]\n", j);
-		}
-		if(std::isnan(derivate_act_weight->get_data(0))){
-			printf("step dV nan [%d]\n", j);
-		}
 
 	derivate_weight->multiply(alpha);
 	_U->subtract(derivate_weight);
@@ -123,30 +102,14 @@ real RNN::total_loss(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_d
 		train_seq_data->at(j)->clone(seq_data);
 		train_seq_label->at(j)->clone(seq_label);
 
-		if(std::isnan(_U->get_data(0))){
-			printf("U nan [%d]\n", j);
-		}
-		if(std::isnan(_W->get_data(0))){
-			printf("W nan [%d]\n", j);
-		}
-		if(std::isnan(_V->get_data(0))){
-			printf("V nan [%d]\n", j);
-		}
-
 		_layer->feed_farward(seq_data, _U, _W, _V, state, activation, false);
 
 		auto mat_label = seq_label->argmax(0);
         uint rows = mat_label->get_rows();
-
         for(uint row = 0; row != rows; row++){
-			if(std::isnan(activation->get_data(row, mat_label->get_data(row, 0)))){
-				activation->display();
-			}
             loss_value -= std::log(activation->get_data(row, mat_label->get_data(row, 0)));
-			printf("sample[%d][%d]:[%f][%f][%d][%d]\t\t\t\r", j, row, loss_value, activation->get_data(row, mat_label->get_data(row, 0)), activation->get_size(),  mat_label->get_data(row, 0));	
         }
         delete mat_label;
-
 	}
 
     delete seq_data;
