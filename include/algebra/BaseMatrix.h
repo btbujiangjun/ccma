@@ -76,7 +76,7 @@ public:
     bool add(BaseMatrixT<T>* mat);
     bool subtract(BaseMatrixT<T>* mat);
 
-    virtual bool dot(BaseMatrixT<T>* mat) = 0;
+    bool dot(BaseMatrixT<T>* mat);
     void outer(BaseMatrixT<T>* mat);
 
     bool add(const T value);
@@ -257,7 +257,7 @@ public:
 
     bool extend(BaseMatrixT<T>* mat, bool col_dim = true);
 
-    bool dot(BaseMatrixT<T>* mat);
+    //bool dot(BaseMatrixT<T>* mat);
 
     T sum() const;
 
