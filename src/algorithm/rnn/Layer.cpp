@@ -52,21 +52,40 @@ void Layer::feed_farward(ccma::algebra::BaseMatrixT<real>* train_seq_data,
 		act_weight->clone(activation_t);
 		activation_t->dot(state_t->transpose());
 
-		auto m = new ccma::algebra::DenseMatrixT<real>();
-		activation_t->clone(m);
-		activation_t->softmax();
-		int isnan = activation_t->isnan();
-		if(isnan >= 0){
-			printf("act_weight:[%f][%d]\n", act_weight->get_data(0), act_weight->isnan());
-			printf("state_t:[%f]t[%d][%d]\n", state_t->get_data(0), t, state_t->isnan());
-			printf("before softmax[%f]\n", m->get_data(isnan));
-			printf("state_t");
-			state_t->transpose()->display();
-			state_t->transpose();
-			m->display();
-		}
+        auto m = new ccma::algebra::DenseMatrixT<real>();
+        activation_t->clone(m);
 
-		delete m;
+		activation_t->softmax();
+
+		if(activation_t->isnan()){
+            uint size = activation_t->get_size();
+            uint max_idx = 0;
+            real max_value = 0.0;
+            for(uint i = 0; i != size; i++){
+                if(i == 0 || max_value < activation_t->get_data(i) || std::isnan(activation_t->get_data(i))){
+                    max_value = activation_t->get_data(i);
+                    max_idx = i;
+                }
+            }
+
+            uint rows = max_idx / activation_t->get_cols();
+            uint cols = (max_idx - rows * activation_t->get_cols());
+
+            printf("isnan[%d][%d][%f][%f][%f]\n", rows, cols, act_weight->get_data(rows, cols),m->get_data(rows, cols), max_value);
+
+            auto max_mat = new ccma::algebra::DenseMatrixT<real>();
+            act_weight->get_row_data(rows, max_mat);
+            
+            printf("max_mat");
+            max_mat->display();
+            printf("state_t");
+            state_t->transpose()->display();
+            state_t->transpose();
+
+            delete max_mat;
+        }
+
+        delete m;
 
 		activation->set_row_data(t, activation_t->transpose());
 	}
@@ -135,23 +154,6 @@ void Layer::back_propagation(ccma::algebra::BaseMatrixT<real>* train_seq_data,
 
 		derivate_t->multiply(derivate_state_t);
 
-		if(std::isnan(derivate_t->get_data(0))){
-			printf("t[%d][%f][%f][%f]\n", t, act_weight->get_data(0), derivate_output_t->get_data(0), derivate_state_t->get_data(0));
-			printf("[%d-%d]\t[%d-%d]\t[%d-%d]\n", act_weight->get_rows(), act_weight->get_cols(), derivate_output_t->get_rows(), derivate_output_t->get_cols(), derivate_state_t->get_rows(), derivate_state_t->get_cols());
-			
-			int idx = -1;
-			for(uint k = 0; k != derivate_output_t->get_size(); k++){
-				if(std::isnan(derivate_output_t->get_data(k))){
-					printf("[%f][%f][%f]\n", derivate_output->get_data(t * derivate_output->get_cols() + k),a->get_data(t * derivate_output->get_cols() + k ), train_seq_label->get_data(t * derivate_output->get_cols() + k));
-				}
-			}
-			
-			derivate_state_t->display();
-			derivate_output_t->display();
-			derivate_t->display();
-			act_weight->display();
-		}
-
 		//back_propagation steps
 		for(uint step = 0; step < _bptt_truncate && (int)step <= t; step++){
 			int bptt_step = t - step;
@@ -171,10 +173,6 @@ void Layer::back_propagation(ccma::algebra::BaseMatrixT<real>* train_seq_data,
 			derivate_pre_weight_t->outer(derivate_state_t->transpose());
 			derivate_pre_weight->add(derivate_pre_weight_t);
 			
-			if(std::isnan(derivate_pre_weight->get_data(0))){
-				printf("bptt[%d][%d], [%f][%f]\n", bptt_step, t, derivate_t->get_data(0), derivate_state_t->get_data(0));
-			}
-
             //update derivate_weight
 			train_seq_data->get_row_data(bptt_step, train_data_t);
             derivate_weight->clone(derivate_weight_t);
@@ -197,9 +195,6 @@ void Layer::back_propagation(ccma::algebra::BaseMatrixT<real>* train_seq_data,
 				derivate_pre_weight_t->transpose()->dot(derivate_t);
 				derivate_pre_weight_t->multiply(derivate_state_t);
 				derivate_pre_weight_t->clone(derivate_t);
-			if(std::isnan(derivate_t->get_data(0))){
-				printf("bptt derivate_t [%d], [%f][%f]\n", bptt_step, derivate_pre_weight_t->get_data(0), derivate_state_t->get_data(0));
-			}
 			}
 		}
 	}
