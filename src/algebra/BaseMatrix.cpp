@@ -281,16 +281,21 @@ void BaseMatrixT<T>::softmax(){
 	uint size = get_size();
 	T* data = new T[size];
 	T* src_data = this->get_data();
+
+    //avoid exp function overflow
+    T max_value = 0;
 	for(uint i = 0; i != size; i++){
-		data[i] = std::exp(src_data[i]);
+        if( i == 0 || src_data[i] > max_value){
+            max_value = src_data[i];
+        }
+    }
+
+	for(uint i = 0; i != size; i++){
+        data[i] = std::exp(src_data[i] - max_value);
 		e_sum += data[i];
 	}
 	for(uint i = 0; i != size; i++){
 		src_data[i] = data[i] / e_sum;
-
-		if(std::isnan(src_data[i])){
-			printf("softmax data[%d/%d] isnan[%f/%f]\n", i, size, data[i], e_sum);
-		}
 	}
     delete[] data;
 }
@@ -324,8 +329,8 @@ void BaseMatrixT<T>::x_sum(){
         T* new_data = new T[_cols];
         memset(new_data, 0, sizeof(T)*_cols);
 
-        for(int i = 0; i != _cols; i++){
-            for(int j = 0; j != _rows; j++){
+        for(uint i = 0; i != _cols; i++){
+            for(uint j = 0; j != _rows; j++){
                 new_data[i] += data[j * _cols + i];
             }
         }
@@ -339,8 +344,8 @@ void BaseMatrixT<T>::y_sum(){
         T* new_data = new T[_rows];
         memset(new_data, 0, sizeof(T)*_rows);
 
-        for(int i = 0; i != _rows; i++){
-            for(int j = 0; j != _cols; j++){
+        for(uint i = 0; i != _rows; i++){
+            for(uint j = 0; j != _cols; j++){
                 new_data[i] += data[i * _cols + j];
             }
         }
@@ -359,7 +364,7 @@ BaseMatrixT<int>* BaseMatrixT<T>::argmax(const uint axis){
         uint max_idx = 0;
 	
         uint end_idx = (axis == 0) ? _cols : _rows;
-        for(int j = 0; j != end_idx; j++){
+        for(uint j = 0; j != end_idx; j++){
             T value = (axis == 0) ? data[i * _cols + j] : data[j * _cols + i];
             if( j == 0 || value > max_value){
                 max_value = value;
@@ -603,15 +608,15 @@ void BaseMatrixT<T>::reset(const T value,
 
 
 template<class T>
-int BaseMatrixT<T>::isnan(){
+bool BaseMatrixT<T>::isnan(){
 	uint size = get_size();
 	T* data = this->get_data();
 	for(uint i = 0; i != size; i++){
 		if(std::isnan(data[i])){
-			return i;
+			return true;
 		}
 	}
-	return -1;
+	return false;
 }
 
 template class BaseMatrixT<int>;
