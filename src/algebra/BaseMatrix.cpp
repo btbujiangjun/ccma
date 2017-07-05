@@ -355,25 +355,27 @@ void BaseMatrixT<T>::derivative_sigmoid(){
  */
 template<class T>
 void BaseMatrixT<T>::softmax(){
-	T e_sum = 0;
-	uint size = get_size();
-	T* data = new T[size];
+
+	T e_sum     = 0;
+	uint size   = get_size();
+	T* data     = new T[size];
 	T* src_data = this->get_data();
 
-    //avoid exp function overflow
+    //avoid exp overflow
     T max_value = 0;
-	for(uint i = 0; i != size; i++){
-        if( i == 0 || src_data[i] > max_value){
-            max_value = src_data[i];
+    for(uint i = 0; i != size; i++){
+        if( i == 0 || max_value < data[i]){
+            max_value = data[i];
         }
     }
 
 	for(uint i = 0; i != size; i++){
         data[i] = std::exp(src_data[i] - max_value);
-		e_sum += data[i];
+        e_sum += data[i];
 	}
+
 	for(uint i = 0; i != size; i++){
-		src_data[i] = data[i] / e_sum;
+        src_data[i] = data[i] / e_sum;
 	}
     delete[] data;
 }
@@ -384,7 +386,8 @@ void BaseMatrixT<T>::tanh(){
 	uint size = get_size();
 	T* data = this->get_data();
     for(uint i = 0; i != size; i++){
-        data[i] = std::tanh(data[i]);
+        //data[i] = std::tanh(data[i]);
+        data[i] = 2.0/(1.0 + std::exp(std::min((T)EXP_MAX, -2*data[i]))) - 1.0;
     }
 }
 
