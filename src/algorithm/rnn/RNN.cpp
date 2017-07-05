@@ -44,9 +44,9 @@ void RNN::sgd(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data,
 
 			sgd_step(seq_data, seq_label, alpha, debug, j);
 
-			if(j % 10 == 0){
-//                printf("Epoch[%d][%d/%d]training, loss[%f]...\n", i, j, num_train_data, loss(train_seq_data, train_seq_label));
-			}
+//			if(j % 10 == 0){
+                printf("Epoch[%d][%d/%d]training, loss[%f]...\n", i, j, num_train_data, loss(train_seq_data, train_seq_label));
+//			}
 		}
 
         auto training_time = now();
@@ -108,6 +108,7 @@ real RNN::total_loss(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_d
         uint rows = mat_label->get_rows();
         for(uint row = 0; row != rows; row++){
             loss_value -= std::log(activation->get_data(row, mat_label->get_data(row, 0)));
+            printf("value[%lf]log_value[%lf]\n", activation->get_data(row, mat_label->get_data(row, 0)), std::log(activation->get_data(row, mat_label->get_data(row, 0))));
         }
         delete mat_label;
 	}
@@ -123,6 +124,8 @@ real RNN::total_loss(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_d
 
 real RNN::loss(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data,
                std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_label){
+
+    //L(y, o) = - (1/N)(Sum y_n*log(o_n))
 
     real loss_value = total_loss(train_seq_data, train_seq_label);
     uint N = 0;
