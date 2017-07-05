@@ -21,10 +21,14 @@ namespace utils{
     typedef double real;
     #define MAX_REAL DBL_MAX;
     #define MIN_REAL DBL_MIN;
+    #define EXP_MAX 40.0
+    #define EPS 0.000001
 #else
     typedef float real;
     #define MAX_REAL FLT_MAX;
     #define MIN_REAL FLT_MIN;
+    #define EXP_MAX 40.0
+    #define EPS 0.000001
 #endif
 
 //typedef size_t uint;
