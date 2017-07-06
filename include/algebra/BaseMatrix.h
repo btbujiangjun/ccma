@@ -104,6 +104,7 @@ public:
     uint argmax(const uint id, const uint axis);
 
 	bool isnan();
+	bool isinf();
 
     virtual bool swap(const uint a_row,
                       const uint a_col,
