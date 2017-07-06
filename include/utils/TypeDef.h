@@ -12,28 +12,30 @@
 #include <cstddef>
 #include <typeinfo>
 #include <stdlib.h>
-#include <limits.h>
-#include <float.h>
+#include <limits>
 
 namespace ccma{
 namespace utils{
 #ifdef CCMA_TYPE_DOUBLE
     typedef double real;
-    #define MAX_REAL DBL_MAX;
-    #define MIN_REAL DBL_MIN;
-    #define EXP_MAX 40.0
-    #define EPS 0.000001
+    #define MAX_REAL std::numeric_limits<double>::max()
+    #define MIN_REAL std::numeric_limits<double>::min()
+    #define SOFTMAX_MIN -128.0
 #else
     typedef float real;
-    #define MAX_REAL FLT_MAX;
-    #define MIN_REAL FLT_MIN;
-    #define EXP_MAX 40.0
-    #define EPS 0.000001
+    #define MAX_REAL std::numeric_limits<float>::max()
+    #define MIN_REAL std::numeric_limits<float>::min()
+    #define SOFTMAX_MIN -64.0
 #endif
 
+#define EXP_MAX 40.0
+#define SIGMOID_MIN -13.0
+#define SIGMOID_MAX 40.0
+#define EPS 0.000001
+
 //typedef size_t uint;
-#define MAX_INT INT_MAX;
-#define MIN_INT INT_MIN;
+#define MAX_INT std::numeric_limits<int>::max();
+#define MIN_INT std::numeric_limits<int>::min();
 
 template<class T>
 T type_cast(const char* data){
@@ -54,19 +56,21 @@ bool ccma_type_compare(){
 template<class T>
 T get_max_value(){
     if(typeid(T) == typeid(float)){
-        return static_cast<T>(FLT_MAX);
+        return (T)std::numeric_limits<float>::max();
     }else if(typeid(T) == typeid(double)){
-        return static_cast<T>(DBL_MAX);
+        return (T)std::numeric_limits<double>::max();
     }else{
-        return static_cast<T>(INT_MAX);
+        return (T)std::numeric_limits<int>::max();
     }
 }
 template<class T>
 T get_min_value(){
-    if(typeid(T) == typeid(int)){
-        return MIN_INT;
+    if(typeid(T) == typeid(float)){
+        return (T)std::numeric_limits<float>::min();
+    }else if(typeid(T) == typeid(double)){
+        return (T)std::numeric_limits<double>::min();
     }else{
-        return MIN_REAL;
+        return (T)std::numeric_limits<int>::min();
     }
 }
 
