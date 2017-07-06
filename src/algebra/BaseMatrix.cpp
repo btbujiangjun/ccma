@@ -330,7 +330,7 @@ void BaseMatrixT<T>::sigmoid(){
         for(uint i = 0; i != num_thread; i++){
             threads[i] = std::thread([&data, &one, &sigmoid_max, &sigmoid_min](uint start_idx, uint end_idx){
                                             for(uint ti = start_idx; ti != end_idx; ti++){
-                                                T d = data[i];
+                                                T d = data[ti];
                                                 if(d < sigmoid_min){
                                                     d = sigmoid_min;
                                                 }else if(d > sigmoid_max){
