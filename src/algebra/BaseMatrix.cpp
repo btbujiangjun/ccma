@@ -258,7 +258,6 @@ bool BaseMatrixT<T>::multiply(BaseMatrixT<T>* mat){
 
 template<class T>
 bool BaseMatrixT<T>::division(const T value){
-
     uint size   = get_size();
     T* data     = get_data();
 
@@ -296,7 +295,7 @@ void BaseMatrixT<T>::exp(){
     T* data     = get_data();
 
     for(uint i = 0; i != size; i++){
-        data[i] =  std::exp(data[i]);
+        data[i] =  std::exp(std::min(data[i], (T)EXP_MAX));
     }
 }
 
@@ -310,7 +309,7 @@ void BaseMatrixT<T>::sigmoid(){
     uint num_thread = get_num_thread(size);
     if(num_thread == 1){
         for(uint i = 0; i != size; i++){
-            data[i] = one / (one + std::exp(-data[i]));
+            data[i] = one / (one + std::exp(-std::min(std::max(data[i], (T)SIGMOID_MIN), (T)SIGMOID_MAX)));
         }
     }else{
         uint block_size = (size % num_thread == 0) ? size / num_thread : (size / num_thread + 1);
@@ -321,7 +320,7 @@ void BaseMatrixT<T>::sigmoid(){
         for(uint i = 0; i != num_thread; i++){
             threads[i] = std::thread([&data, &one](uint start_idx, uint end_idx){
                                             for(uint ti = start_idx; ti != end_idx; ti++){
-                                                data[ti] = one / (one + std::exp(-data[ti]));
+                                                data[ti] = one / (one + std::exp(-std::min(std::max(data[ti], (T)SIGMOID_MAX), (T)SIGMOID_MAX)));
                                             }
                                         }, i * block_size, std::min(size, (i + 1) * block_size)
                                     );
@@ -364,15 +363,19 @@ void BaseMatrixT<T>::softmax(){
     //avoid exp overflow
     T max_value = 0;
     for(uint i = 0; i != size; i++){
-        if( i == 0 || max_value < data[i]){
-            max_value = data[i];
+        if( i == 0 || max_value < src_data[i]){
+            max_value = src_data[i];
         }
     }
 
 	for(uint i = 0; i != size; i++){
-        data[i] = std::exp(src_data[i] - max_value);
+        data[i] = std::exp(std::max(src_data[i] - max_value, (T)SOFTMAX_MIN));
         e_sum += data[i];
 	}
+
+    if(std::isinf(e_sum)){
+        e_sum = ccma::utils::get_max_value<T>();
+    }
 
 	for(uint i = 0; i != size; i++){
         src_data[i] = data[i] / e_sum;
@@ -386,7 +389,6 @@ void BaseMatrixT<T>::tanh(){
 	uint size = get_size();
 	T* data = this->get_data();
     for(uint i = 0; i != size; i++){
-        //data[i] = std::tanh(data[i]);
         data[i] = 2.0/(1.0 + std::exp(std::min((T)EXP_MAX, -2*data[i]))) - 1.0;
     }
 }
@@ -694,6 +696,18 @@ bool BaseMatrixT<T>::isnan(){
 	T* data = this->get_data();
 	for(uint i = 0; i != size; i++){
 		if(std::isnan(data[i])){
+			return true;
+		}
+	}
+	return false;
+}
+
+template<class T>
+bool BaseMatrixT<T>::isinf(){
+	uint size = get_size();
+	T* data = this->get_data();
+	for(uint i = 0; i != size; i++){
+		if(std::isinf(data[i])){
 			return true;
 		}
 	}
