@@ -76,8 +76,8 @@ void Layer::feed_farward(ccma::algebra::BaseMatrixT<real>* train_seq_data,
             auto max_mat = new ccma::algebra::DenseMatrixT<real>();
             act_weight->get_row_data(rows, max_mat);
             
-            printf("max_mat");
-            max_mat->display();
+            printf("m_mat");
+            m->display();
             printf("state_t");
             state_t->transpose()->display();
             state_t->transpose();
