@@ -20,10 +20,14 @@ int main(int argc, char** argv){
     ccma::utils::ModelLoader<int> loader;
     const std::string path = "data/test.model";
     loader.write(&m1, path);
-//    loader.write(&m1, path, true);
+    loader.write(&m1, path, true);
 
 
     std::vector<ccma::algebra::BaseMatrixT<int>*> m2;
     loader.read(path, &m2);
     printf("mat_size[%ld]\n", m2.size());
+    if(m2.size()){
+        m2[0]->display("|");
+        delete m2[0];
+    }
 }
