@@ -22,26 +22,29 @@ public:
     uint cols;
 };//class ModelInfo
 
-template<class T>
 class ModelLoader{
 public:
+	template<class T>
     void write(std::vector<ccma::algebra::BaseMatrixT<T>*> models,
                const std::string& path,
                bool is_append = false);
+	template<class T>
     void write(ccma::algebra::BaseMatrixT<T>* model,
                const std::string& path,
                bool is_append = false);
+	template<class T>
     bool read(const std::string& path,
               std::vector<ccma::algebra::BaseMatrixT<T>*>* models);
 private:
+	template<class T>
     void generate_header(std::vector<ccma::algebra::BaseMatrixT<T>*> models,
                          std::vector<ModelInfo>* infos);
 };//class ModelLoader
 
 template<class T>
-void ModelLoader<T>::write(std::vector<ccma::algebra::BaseMatrixT<T>*> models,
-                           const std::string& path,
-                           bool is_append){
+void ModelLoader::write(std::vector<ccma::algebra::BaseMatrixT<T>*> models,
+                        const std::string& path,
+                        bool is_append){
     std::vector<ccma::algebra::BaseMatrixT<T>*> old_models;
     if(is_append){
         read(path, &old_models);
@@ -76,17 +79,17 @@ void ModelLoader<T>::write(std::vector<ccma::algebra::BaseMatrixT<T>*> models,
 
 }
 template<class T>
-void ModelLoader<T>::write(ccma::algebra::BaseMatrixT<T>* model,
-                           const std::string& path,
-                           bool is_append){
+void ModelLoader::write(ccma::algebra::BaseMatrixT<T>* model,
+                        const std::string& path,
+                        bool is_append){
     std::vector<ccma::algebra::BaseMatrixT<T>*> models;
     models.push_back(model);
     write(models, path, is_append);
 }
 
 template<class T>
-bool ModelLoader<T>::read(const std::string& path,
-                          std::vector<ccma::algebra::BaseMatrixT<T>*>* models){
+bool ModelLoader::read(const std::string& path,
+                       std::vector<ccma::algebra::BaseMatrixT<T>*>* models){
     std::ifstream in_file(path, std::ios::binary);
     if(!in_file){
         printf("Can't open Filename:%s\n", path.c_str());
@@ -122,7 +125,7 @@ bool ModelLoader<T>::read(const std::string& path,
 }
 
 template<class T>
-void ModelLoader<T>::generate_header(std::vector<ccma::algebra::BaseMatrixT<T>*> models,
+void ModelLoader::generate_header(std::vector<ccma::algebra::BaseMatrixT<T>*> models,
                                      std::vector<ModelInfo>* infos){
     for(auto&& model : models){
         ModelInfo info;
