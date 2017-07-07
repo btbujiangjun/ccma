@@ -9,22 +9,16 @@
 #include "utils/ModelLoader.h"
 
 int main(int argc, char** argv){
-    ccma::algebra::DenseMatrixT<int> m1;
-    const uint mat_size = 1000;
-    int* d1 = new int[mat_size];
-    for(uint i = 0; i != mat_size; i++){
-        d1[i] = i;
-    }
-    m1.set_shallow_data(d1, 10, 100);
+    ccma::algebra::DenseRandomMatrixT<real> m1(10, 10, 0.0, 1);
 
-    ccma::utils::ModelLoader<int> loader;
+    ccma::utils::ModelLoader loader;
     const std::string path = "data/test.model";
-    loader.write(&m1, path);
-    loader.write(&m1, path, true);
+    loader.write<real>(&m1, path);
+    loader.write<real>(&m1, path, true);
 
 
-    std::vector<ccma::algebra::BaseMatrixT<int>*> m2;
-    loader.read(path, &m2);
+    std::vector<ccma::algebra::BaseMatrixT<real>*> m2;
+    loader.read<real>(path, &m2);
     printf("mat_size[%ld]\n", m2.size());
     if(m2.size()){
         m2[0]->display("|");
