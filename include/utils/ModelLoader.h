@@ -87,7 +87,7 @@ void ModelLoader<T>::write(ccma::algebra::BaseMatrixT<T>* model,
 template<class T>
 bool ModelLoader<T>::read(const std::string& path,
                           std::vector<ccma::algebra::BaseMatrixT<T>*>* models){
-    std::ifstream in_file(path, std::ios::in|std::ios::binary|std::ios::ate);
+    std::ifstream in_file(path, std::ios::binary);
     if(!in_file){
         printf("Can't open Filename:%s\n", path.c_str());
         return false;
