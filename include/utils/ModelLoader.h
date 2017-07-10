@@ -18,6 +18,7 @@ namespace utils{
 
 class ModelInfo{
 public:
+    char type;
     uint rows;
     uint cols;
 };//class ModelInfo
@@ -25,11 +26,11 @@ public:
 class ModelLoader{
 public:
     template<class T>
-    void write(std::vector<ccma::algebra::BaseMatrixT<T>*> models,
+    bool write(std::vector<ccma::algebra::BaseMatrixT<T>*> models,
                const std::string& path,
                bool is_append = false);
     template<class T>
-    void write(ccma::algebra::BaseMatrixT<T>* model,
+    bool write(ccma::algebra::BaseMatrixT<T>* model,
                const std::string& path,
                bool is_append = false);
     template<class T>
@@ -37,12 +38,12 @@ public:
               std::vector<ccma::algebra::BaseMatrixT<T>*>* models);
 private:
     template<class T>
-    void generate_header(std::vector<ccma::algebra::BaseMatrixT<T>*> models,
+    bool generate_header(std::vector<ccma::algebra::BaseMatrixT<T>*> models,
                          std::vector<ModelInfo>* infos);
 };//class ModelLoader
 
 template<class T>
-void ModelLoader::write(std::vector<ccma::algebra::BaseMatrixT<T>*> models,
+bool ModelLoader::write(std::vector<ccma::algebra::BaseMatrixT<T>*> models,
                         const std::string& path,
                         bool is_append){
     std::vector<ccma::algebra::BaseMatrixT<T>*> old_models;
@@ -53,13 +54,15 @@ void ModelLoader::write(std::vector<ccma::algebra::BaseMatrixT<T>*> models,
     uint num_models = models.size() + old_models.size();
     std::vector<ModelInfo> infos;
 
-    generate_header(old_models, &infos);
-    generate_header(models, &infos);
+    if(!generate_header(old_models, &infos) || !generate_header(models, &infos)){
+        return false;
+    }
      
     std::ofstream out_file(path, std::ios::binary);
 
     out_file.write((char*)&num_models, sizeof(uint));
     for(auto&& info : infos){
+        out_file.write(&info.type, sizeof(char));
         out_file.write((char*)&info.rows, sizeof(uint));
         out_file.write((char*)&info.cols, sizeof(uint));
     }
@@ -77,14 +80,15 @@ void ModelLoader::write(std::vector<ccma::algebra::BaseMatrixT<T>*> models,
 
     out_file.close();
 
+    return true;
 }
 template<class T>
-void ModelLoader::write(ccma::algebra::BaseMatrixT<T>* model,
+bool ModelLoader::write(ccma::algebra::BaseMatrixT<T>* model,
                         const std::string& path,
                         bool is_append){
     std::vector<ccma::algebra::BaseMatrixT<T>*> models;
     models.push_back(model);
-    write(models, path, is_append);
+    return write(models, path, is_append);
 }
 
 template<class T>
@@ -96,12 +100,13 @@ bool ModelLoader::read(const std::string& path,
         return false;
     }
 
-    uint num_models = 9;
+    uint num_models = 0;
     in_file.read((char*)(&num_models), sizeof(uint));
 
     std::vector<ModelInfo> infos;
     for(uint i = 0; i != num_models; i++){
         ModelInfo info;
+        in_file.read(&info.type, sizeof(char));
         in_file.read((char*)(&info.rows), sizeof(uint));
         in_file.read((char*)(&info.cols), sizeof(uint));
         infos.push_back(info);
@@ -125,14 +130,25 @@ bool ModelLoader::read(const std::string& path,
 }
 
 template<class T>
-void ModelLoader::generate_header(std::vector<ccma::algebra::BaseMatrixT<T>*> models,
+bool ModelLoader::generate_header(std::vector<ccma::algebra::BaseMatrixT<T>*> models,
                                   std::vector<ModelInfo>* infos){
     for(auto&& model : models){
         ModelInfo info;
         info.rows = model->get_rows();
         info.cols = model->get_cols();
+        if(typeid(T) == typeid(int)){
+            info.type = 'i';
+        }else if(typeid(T) == typeid(float)){
+            info.type = 'f';
+        }else if(typeid(T) == typeid(double)){
+            info.type = 'd';
+        }else{
+            printf("ModelLoader not support data type:[%s]\n", typeid(T).name());
+            return false;
+        }
         infos->push_back(info);
     }
+    return true;
 }
 
 }//namespace utils
