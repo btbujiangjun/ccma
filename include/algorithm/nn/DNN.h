@@ -15,6 +15,7 @@
 #include "Cost.h"
 #include "algebra/BaseMatrix.h"
 #include "utils/MatrixHelper.h"
+#include "utils/ModelLoader.h"
 
 namespace ccma{
 namespace algorithm{
@@ -23,8 +24,9 @@ namespace nn{
 
 class DNN{
 public:
-    DNN(){
+    DNN(const std::string& path = ""){
          _num_layers = 0;
+         _path = path;
          _cost = new CrossEntropyCost();
     }
 
@@ -58,6 +60,9 @@ public:
 
     int evaluate(ccma::algebra::BaseMatrixT<real>* test_data, ccma::algebra::BaseMatrixT<real>* test_label);
 
+    bool load_model(const std::string& path);
+    bool write_model(const std::string& path);
+
 private:
     void mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch_data,
                            ccma::algebra::BaseMatrixT<real>* mini_batch_label,
@@ -71,15 +76,14 @@ private:
                           std::vector<ccma::algebra::BaseMatrixT<real>*>* batch_biases);
 
     void init_parameter(std::vector<ccma::algebra::BaseMatrixT<real>*>* weight_parameter,
-                        real weight_init_value,
-                        std::vector<ccma::algebra::BaseMatrixT<real>*>* biases_parameter,
-                        real bias_init_value);
+                        std::vector<ccma::algebra::BaseMatrixT<real>*>* biases_parameter);
 
     void clear_parameter(std::vector<ccma::algebra::BaseMatrixT<real>*>* parameters);
 
 private:
     uint _num_layers;
     std::vector<uint> _sizes;
+    std::string _path;
     Cost* _cost;
 
     const uint _num_hardware_concurrency = std::thread::hardware_concurrency() == 0 ? 1 : std::thread::hardware_concurrency();
@@ -87,6 +91,7 @@ private:
     std::vector<ccma::algebra::BaseMatrixT<real>*> _weights;
     std::vector<ccma::algebra::BaseMatrixT<real>*> _biases;
 
+    ccma::utils::ModelLoader loader;
     ccma::utils::MatrixHelper helper;
 };//class DNN
 
