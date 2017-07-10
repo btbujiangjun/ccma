@@ -59,7 +59,7 @@ public:
         _cols(cols),
         _in_channel_size(in_channel_size),
         _out_channel_size(out_channel_size),
-	_is_last_layer(true){}
+    	_is_last_layer(true){}
 
     virtual ~Layer(){
         if(_bias != nullptr){
