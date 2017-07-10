@@ -21,24 +21,9 @@ int DNN::add_layer(int neural_size){
 }
 
 void DNN::init_networks_weights(){
-
-    init_parameter(&_weights, 0.0, &_biases, 0.0);
-
-    std::default_random_engine engine(time(0));
-    //mean & stddev
-    std::normal_distribution<real> distribution(0.0, 1.0);
-
-    uint len = _weights.size();
-    for(uint i = 0; i < len; i++){
-        uint size = _weights[i]->get_size();
-        for(uint j = 0; j < size; j++){
-            _weights[i]->set_data(distribution(engine), j);
-        }
-
-        size = _biases[i]->get_size();
-        for(uint j = 0; j < size; j++){
-            _biases[i]->set_data(distribution(engine), j);
-        }
+    for(uint i = 1; i < _num_layers; i++){
+        _weights.push_back(new ccma::algebra::DenseRandomMatrixT<real>(_sizes[i-1], _sizes[i], 0, 0.5));
+        _biases.push_back(new ccma::algebra::DenseRandomMatrixT<real>(1, _sizes[i], 0, 0.5));
     }
 }
 
@@ -61,6 +46,7 @@ bool DNN::sgd(ccma::algebra::BaseMatrixT<real>* train_data,
     if(_num_layers <= 1 || _sizes[0] != train_data->get_cols() 
             || (num_test_data > 0 && _sizes[0] != test_data->get_cols())
             || train_label->get_cols() != _weights[_weights.size() - 1]->get_cols()){
+        printf("DNN structure check failed.\n");
         return false;
     }
 
@@ -87,10 +73,10 @@ bool DNN::sgd(ccma::algebra::BaseMatrixT<real>* train_data,
             }
 
             train_data->get_row_data(shuffler->get_row(j), row_data);
-            mini_batch_data->set_row_data(j % mini_batch_size, row_data);
+            mini_batch_data->insert_row_data(j % mini_batch_size, row_data);
 
             train_label->get_row_data(shuffler->get_row(j), row_label);
-            mini_batch_label->set_row_data(j % mini_batch_size, row_label);
+            mini_batch_label->insert_row_data(j % mini_batch_size, row_label);
 
             if( j % mini_batch_size == mini_batch_size - 1 || j == (num_train_data - 1) ){
                 mini_batch_update(mini_batch_data, mini_batch_label, eta, lamda, num_train_data);
@@ -98,6 +84,10 @@ bool DNN::sgd(ccma::algebra::BaseMatrixT<real>* train_data,
                 mini_batch_data->clear_matrix();
                 mini_batch_label->clear_matrix();
             }
+        }
+
+        if(_path != ""){
+            write_model(_path);
         }
 
         auto training_time = now();
@@ -172,7 +162,7 @@ void DNN::mini_batch_update(ccma::algebra::BaseMatrixT<real>* mini_batch_data,
 
     std::vector<ccma::algebra::BaseMatrixT<real>*> batch_weights;
     std::vector<ccma::algebra::BaseMatrixT<real>*> batch_biases;
-    init_parameter(&batch_weights, 0.0, &batch_biases, 0.0);
+    init_parameter(&batch_weights, &batch_biases);
 
     uint row = mini_batch_data->get_rows();
     uint weight_size = _weights.size();
@@ -251,7 +241,7 @@ void DNN::back_propagation(ccma::algebra::BaseMatrixT<real>* train_data,
 
     std::vector<ccma::algebra::BaseMatrixT<real>*> train_weights;
     std::vector<ccma::algebra::BaseMatrixT<real>*> train_biases;
-    init_parameter(&train_weights, 0.0, &train_biases, 0.0);
+    init_parameter(&train_weights, &train_biases);
 
     std::vector<ccma::algebra::BaseMatrixT<real>*> zs;
     std::vector<ccma::algebra::BaseMatrixT<real>*> activations;
@@ -356,19 +346,14 @@ void DNN::back_propagation(ccma::algebra::BaseMatrixT<real>* train_data,
 }
 
 void DNN::init_parameter(std::vector<ccma::algebra::BaseMatrixT<real>*>* weight_parameter,
-                         real weight_init_value,
-                         std::vector<ccma::algebra::BaseMatrixT<real>*>* bias_parameter,
-                         real bias_init_value){
+                         std::vector<ccma::algebra::BaseMatrixT<real>*>* bias_parameter){
 
     clear_parameter(weight_parameter);
     clear_parameter(bias_parameter);
 
     for(uint i = 1; i < _num_layers; i++){
-        auto layer = new ccma::algebra::DenseMatrixT<real>(_sizes[i - 1], _sizes[i]);
-        weight_parameter->push_back(layer);
-
-        auto bias = new ccma::algebra::DenseMatrixT<real>(1, _sizes[i]);
-        bias_parameter->push_back(bias);
+        weight_parameter->push_back(new ccma::algebra::DenseMatrixT<real>(_sizes[i - 1], _sizes[i]));
+        bias_parameter->push_back(new ccma::algebra::DenseMatrixT<real>(1, _sizes[i]));
     }
 }
 
@@ -379,6 +364,38 @@ void DNN::clear_parameter(std::vector<ccma::algebra::BaseMatrixT<real>*>* parame
     parameters->clear();
 }
 
+bool DNN::load_model(const std::string& path){
+    
+    std::vector<ccma::algebra::BaseMatrixT<real>*> models;
+    if(!loader.read<real>(path, &models, "DNNMODEL")){
+        return false;
+    }
+    
+    _weights.clear();
+    _biases.clear();
+    _sizes.clear();
+    _num_layers = 0;
+
+    for(uint i = 0; i != models.size() / 2; i++){
+        _weights.push_back(models[i*2]);
+        _biases.push_back(models[i*2 + 1]);
+        if(i == 0){
+            add_layer(models[i * 2]->get_rows());
+        }else{
+            add_layer(models[i * 2]->get_cols());
+        }
+    }
+    return true;
+}
+
+bool DNN::write_model(const std::string& path){
+    std::vector<ccma::algebra::BaseMatrixT<real>*> models;
+    for(uint i = 0; i != _weights.size(); i++){
+        models.push_back(_weights[i]);
+        models.push_back(_biases[i]);
+    }
+    return loader.write<real>(models, path, "DNNMODEL");
+}
 
 }//namespace nn
 }//namespace algorithm
