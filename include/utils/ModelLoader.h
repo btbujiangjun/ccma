@@ -28,14 +28,17 @@ public:
     template<class T>
     bool write(std::vector<ccma::algebra::BaseMatrixT<T>*> models,
                const std::string& path,
-               bool is_append = false);
+               bool is_append = false,
+               const std::string& signature = "");
     template<class T>
     bool write(ccma::algebra::BaseMatrixT<T>* model,
                const std::string& path,
-               bool is_append = false);
+               bool is_append = false,
+               const std::string& signature = "");
     template<class T>
     bool read(const std::string& path,
-              std::vector<ccma::algebra::BaseMatrixT<T>*>* models);
+              std::vector<ccma::algebra::BaseMatrixT<T>*>* models,
+              const std::string& signature = "");
 private:
     template<class T>
     bool generate_header(std::vector<ccma::algebra::BaseMatrixT<T>*> models,
@@ -45,10 +48,11 @@ private:
 template<class T>
 bool ModelLoader::write(std::vector<ccma::algebra::BaseMatrixT<T>*> models,
                         const std::string& path,
-                        bool is_append){
+                        bool is_append,
+                        const std::string& signature){
     std::vector<ccma::algebra::BaseMatrixT<T>*> old_models;
     if(is_append){
-        read(path, &old_models);
+        read<T>(path, &old_models, signature);
     }
     
     uint num_models = models.size() + old_models.size();
@@ -60,6 +64,7 @@ bool ModelLoader::write(std::vector<ccma::algebra::BaseMatrixT<T>*> models,
      
     std::ofstream out_file(path, std::ios::binary);
 
+    out_file.write(signature.c_str(), sizeof(char)*signature.size());
     out_file.write((char*)&num_models, sizeof(uint));
     for(auto&& info : infos){
         out_file.write(&info.type, sizeof(char));
@@ -85,15 +90,17 @@ bool ModelLoader::write(std::vector<ccma::algebra::BaseMatrixT<T>*> models,
 template<class T>
 bool ModelLoader::write(ccma::algebra::BaseMatrixT<T>* model,
                         const std::string& path,
-                        bool is_append){
+                        bool is_append,
+                        const std::string& signature){
     std::vector<ccma::algebra::BaseMatrixT<T>*> models;
     models.push_back(model);
-    return write(models, path, is_append);
+    return write(models, path, is_append, signature);
 }
 
 template<class T>
 bool ModelLoader::read(const std::string& path,
-                       std::vector<ccma::algebra::BaseMatrixT<T>*>* models){
+                       std::vector<ccma::algebra::BaseMatrixT<T>*>* models,
+                       const std::string& signature){
     std::ifstream in_file(path, std::ios::binary);
     if(!in_file){
         printf("Can't open Filename:%s\n", path.c_str());
@@ -101,6 +108,14 @@ bool ModelLoader::read(const std::string& path,
     }
 
     uint num_models = 0;
+    std::string read_signature(signature.size(), ' ');
+    in_file.read(&read_signature[0], sizeof(char) * signature.size());
+    if(read_signature != signature){
+        printf("ModelLoader read model error:[signature error]\n");
+        in_file.close();
+        return false;
+    }
+
     in_file.read((char*)(&num_models), sizeof(uint));
 
     std::vector<ModelInfo> infos;
