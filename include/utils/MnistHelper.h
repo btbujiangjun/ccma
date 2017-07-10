@@ -89,7 +89,7 @@ bool MnistHelper<T>::read_label(const std::string& label_file,
         return false;
     }
 
-    if( limit > 0 && limit < count){
+    if( limit > 0 && limit < (int)count){
         count = limit;
     }
 
@@ -118,7 +118,7 @@ bool MnistHelper<T>::read_vec_label(const std::string& label_file,
         return false;
     }
 
-    if( limit > 0 && limit < count){
+    if( limit > 0 && limit < (int)count){
         count = limit;
     }
 
