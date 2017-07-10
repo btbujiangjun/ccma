@@ -49,6 +49,10 @@ void RNN::sgd(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data,
 //			}
 		}
 
+        if(_path != ""){
+            write_model(_path);
+        }
+
         auto training_time = now();
         printf("Epoch[%d] training run time: %lld ms, loss[%f] base loss[%f]\n", i, (long long int)std::chrono::duration_cast<std::chrono::milliseconds>(training_time - start_time).count(), loss(train_seq_data, train_seq_label), std::log(_feature_dim));
 	}
@@ -152,7 +156,51 @@ bool RNN::check_data(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_d
 	}
 	return true;
 }			  
-			  
+
+bool RNN::load_model(const std::string& path){
+    std::vector<ccma::algebra::BaseMatrixT<real>*> models;
+    if(!loader.read<real>(path, &models) || models.size() != 3){
+        for(auto&& model : models){
+            delete model;
+        }
+        return false;
+    }
+    
+    if(_U != nullptr){
+        delete _U;
+    }
+    _U = models[0];
+    if(_W != nullptr){
+        delete _W;
+    }
+    _W = models[1];
+    if(_V != nullptr){
+        delete _V;
+    }
+    _U = models[2];
+
+    _feature_dim    = _U->get_cols();
+    _hidden_dim     = _U->get_rows();
+    _path           = path;
+
+    if(_layer != nullptr){
+        delete _layer;
+    }
+
+    _layer = new ccma::algorithm::rnn::Layer(_hidden_dim, _bptt_truncate, _U, _W, _V);
+
+    return true;
+}
+
+bool RNN::write_model(const std::string& path){
+    std::vector<ccma::algebra::BaseMatrixT<real>*> models;
+    models.push_back(_U);
+    models.push_back(_W);
+    models.push_back(_V);
+
+    return loader.write<real>(models, path);
+}
+
 }//namespace rnn
 }//namespace algorithm
 }//namespace ccma
