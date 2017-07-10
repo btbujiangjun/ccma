@@ -12,7 +12,7 @@
 
 int main(int argc, char** argv){
 
-    ccma::algorithm::nn::DNN* dnn = new ccma::algorithm::nn::DNN();
+    auto dnn = new ccma::algorithm::nn::DNN("data/dnn.model");
     dnn->add_layer(784);
     dnn->add_layer(30);
     dnn->add_layer(10);
