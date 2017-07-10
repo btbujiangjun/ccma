@@ -17,16 +17,16 @@ int main(int argc, char** argv){
     }
     m1.set_shallow_data(d1, 10, 100);
 
-    ccma::algebra::DenseRandomMatrixT<real> m2(10, 10, 0.0, 1);
+    ccma::algebra::DenseRandomMatrixT<real> m2(100, 100, 0.0, 1);
 
     ccma::utils::ModelLoader loader;
     const std::string path = "data/test.model";
-    loader.write<real>(&m1, path);
-    loader.write<real>(&m2, path, true);
+    loader.write<real>(&m1, path, false, "testmode");
+    loader.write<real>(&m2, path, true, "testmode");
 
 
     std::vector<ccma::algebra::BaseMatrixT<real>*> ms;
-    loader.read<real>(path, &ms);
+    loader.read<real>(path, &ms, "testmode");
     for(auto&& m : ms){
         m->display();
         delete m;
