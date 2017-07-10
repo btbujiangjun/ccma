@@ -117,7 +117,7 @@ bool DenseMatrixT<T>::get_row_data(const int row, BaseMatrixT<T>* out_mat){
 
 template<class T>
 bool DenseMatrixT<T>::set_row_data(const uint row_id, BaseMatrixT<T>* mat){
-	if(this->_cols == mat->get_cols() && this->_rows >= (row_id + mat->get_rows())){
+    if(this->_cols == mat->get_cols() && this->_rows >= (row_id + mat->get_rows())){
 		memcpy(&_data[row_id * this->_cols], mat->get_data(), sizeof(T) * mat->get_size());
 		return true;
 	}
