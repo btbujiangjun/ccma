@@ -24,19 +24,19 @@ public:
 
 class ModelLoader{
 public:
-	template<class T>
+    template<class T>
     void write(std::vector<ccma::algebra::BaseMatrixT<T>*> models,
                const std::string& path,
                bool is_append = false);
-	template<class T>
+    template<class T>
     void write(ccma::algebra::BaseMatrixT<T>* model,
                const std::string& path,
                bool is_append = false);
-	template<class T>
+    template<class T>
     bool read(const std::string& path,
               std::vector<ccma::algebra::BaseMatrixT<T>*>* models);
 private:
-	template<class T>
+    template<class T>
     void generate_header(std::vector<ccma::algebra::BaseMatrixT<T>*> models,
                          std::vector<ModelInfo>* infos);
 };//class ModelLoader
@@ -126,7 +126,7 @@ bool ModelLoader::read(const std::string& path,
 
 template<class T>
 void ModelLoader::generate_header(std::vector<ccma::algebra::BaseMatrixT<T>*> models,
-                                     std::vector<ModelInfo>* infos){
+                                  std::vector<ModelInfo>* infos){
     for(auto&& model : models){
         ModelInfo info;
         info.rows = model->get_rows();
