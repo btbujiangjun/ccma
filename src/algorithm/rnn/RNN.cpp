@@ -159,7 +159,7 @@ bool RNN::check_data(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_d
 
 bool RNN::load_model(const std::string& path){
     std::vector<ccma::algebra::BaseMatrixT<real>*> models;
-    if(!loader.read<real>(path, &models) || models.size() != 3){
+    if(!loader.read<real>(path, &models,"RNNMODEL") || models.size() != 3){
         for(auto&& model : models){
             delete model;
         }
@@ -198,7 +198,7 @@ bool RNN::write_model(const std::string& path){
     models.push_back(_W);
     models.push_back(_V);
 
-    return loader.write<real>(models, path);
+    return loader.write<real>(models, path, false, "RNNMODEL");
 }
 
 }//namespace rnn
