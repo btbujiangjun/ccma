@@ -58,7 +58,7 @@ bool MnistHelper<T>::read_image(const std::string& image_file,
         return false;
     }
 
-    if( limit > 0 && limit < count){
+    if( limit > 0 && limit < (int)count){
         count = limit;
     }
 
