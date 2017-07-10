@@ -11,6 +11,7 @@
 
 #include <vector>
 #include "algorithm/rnn/Layer.h"
+#include "utils/ModelLoader.h"
 
 namespace ccma{
 namespace algorithm{
@@ -20,16 +21,30 @@ class RNN{
 public:
     RNN(uint feature_dim,
         uint hidden_dim,
+        std::string path = "",
         uint bptt_truncate = 4){
 
-        _feature_dim = feature_dim;
-        _hidden_dim = hidden_dim;
+        _feature_dim    = feature_dim;
+        _hidden_dim     = hidden_dim;
+        _bptt_truncate  = bptt_truncate;
+        _path           = path;
 
         _U = new ccma::algebra::DenseRandomMatrixT<real>(hidden_dim, feature_dim, 0, 1, -std::sqrt(1.0/feature_dim), std::sqrt(1.0/feature_dim));
         _W = new ccma::algebra::DenseRandomMatrixT<real>(hidden_dim, hidden_dim, 0, 1, -std::sqrt(1.0/hidden_dim), std::sqrt(1.0/hidden_dim));
         _V = new ccma::algebra::DenseRandomMatrixT<real>(feature_dim, hidden_dim, 0, 1, -std::sqrt(1.0/hidden_dim), std::sqrt(1.0/hidden_dim));
 
         _layer = new ccma::algorithm::rnn::Layer(hidden_dim, bptt_truncate, _U, _W, _V);
+    }
+
+    RNN(const std::string& path, uint bptt_truncate = 4){
+        if(load_model(path)){
+            _feature_dim    = _U->get_cols();
+            _hidden_dim     = _U->get_rows();
+            _bptt_truncate  = bptt_truncate;
+            _path           = path;
+            _layer = new ccma::algorithm::rnn::Layer(_hidden_dim, _bptt_truncate, _U, _W, _V);
+        }
+
     }
     ~RNN(){
         if(_U != nullptr){
@@ -49,6 +64,9 @@ public:
              uint epoch = 5, 
              real alpha = 0.1);
 
+    bool load_model(const std::string& path);
+    bool write_model(const std::string& path);
+
 private:
 	void sgd_step(ccma::algebra::BaseMatrixT<real>* train_seq_data,
               	  ccma::algebra::BaseMatrixT<real>* train_seq_label, 
@@ -67,6 +85,10 @@ private:
 private:
     uint _feature_dim;
     uint _hidden_dim;
+    uint _bptt_truncate; 
+
+    ccma::utils::ModelLoader loader;
+    std::string _path;
 
     ccma::algebra::BaseMatrixT<real>* _U;
     ccma::algebra::BaseMatrixT<real>* _W;
