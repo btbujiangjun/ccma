@@ -20,7 +20,6 @@
 #include <vector>
 #include <sstream>
 #include <algorithm>
-#include <regex>
 #include "utils/TypeDef.h"
 
 namespace ccma{
@@ -58,9 +57,27 @@ public:
  * @return a std::string vector saved all the splited world
  */
 std::vector<std::string> StringHelper::split(const std::string& str, const std::string& split){
+    /*
 	std::regex re(split);
 	std::sregex_token_iterator first{str.begin(), str.end(), re, -1}, last;
 	return {first, last};
+    */
+    std::vector<std::string> result;
+    int matched_idx;
+    std::string match_str(str);
+
+    matched_idx = match_str.find(split);
+    while(matched_idx != std::string::npos){
+        if(matched_idx > 0){
+            result.push_back(match_str.substr(0, matched_idx));
+        }
+        match_str = match_str.substr(matched_idx + split.size());
+        matched_idx = match_str.find(split);
+    }
+    if(match_str.size() > 0){
+        result.push_back(match_str);
+    }
+    return result;
 }
 
 /**
