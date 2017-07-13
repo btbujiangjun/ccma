@@ -63,7 +63,7 @@ std::vector<std::string> StringHelper::split(const std::string& str, const std::
 	return {first, last};
     */
     std::vector<std::string> result;
-    int matched_idx;
+    std::size_t matched_idx;
     std::string match_str(str);
 
     matched_idx = match_str.find(split);
