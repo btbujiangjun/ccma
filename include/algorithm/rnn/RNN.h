@@ -10,6 +10,7 @@
 #define _CCMA_ALGORITHM_RNN_RNN_H_
 
 #include <vector>
+#include <thread>
 #include "algorithm/rnn/Layer.h"
 #include "utils/ModelLoader.h"
 
@@ -33,7 +34,7 @@ public:
         _W = new ccma::algebra::DenseRandomMatrixT<real>(hidden_dim, hidden_dim, 0, 1, -std::sqrt(1.0/hidden_dim), std::sqrt(1.0/hidden_dim));
         _V = new ccma::algebra::DenseRandomMatrixT<real>(feature_dim, hidden_dim, 0, 1, -std::sqrt(1.0/hidden_dim), std::sqrt(1.0/hidden_dim));
 
-        _layer = new ccma::algorithm::rnn::Layer(hidden_dim, bptt_truncate, _U, _W, _V);
+        _layer = new ccma::algorithm::rnn::Layer(hidden_dim, bptt_truncate);
     }
 
     RNN(const std::string& path, uint bptt_truncate = 4){
@@ -42,7 +43,7 @@ public:
             _hidden_dim     = _U->get_rows();
             _bptt_truncate  = bptt_truncate;
             _path           = path;
-            _layer = new ccma::algorithm::rnn::Layer(_hidden_dim, _bptt_truncate, _U, _W, _V);
+            _layer          = new ccma::algorithm::rnn::Layer(_hidden_dim, _bptt_truncate);
         }
 
     }
@@ -61,18 +62,19 @@ public:
 
     void sgd(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data,
              std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_label, 
-             uint epoch = 5, 
-             real alpha = 0.1);
+             const uint epoch = 5,
+             const uint mini_batch_size = 1,
+             const real alpha = 0.1);
 
     bool load_model(const std::string& path);
     bool write_model(const std::string& path);
 
 private:
-	void sgd_step(ccma::algebra::BaseMatrixT<real>* train_seq_data,
-              	  ccma::algebra::BaseMatrixT<real>* train_seq_label, 
-			  	  real alpha,
-                  bool debug,
-				  int j);
+    void mini_batch_update(std::vector<ccma::algebra::BaseMatrixT<real>*> train_seq_data,
+                           std::vector<ccma::algebra::BaseMatrixT<real>*> train_seq_label, 
+			  	           const real alpha,
+                           const bool debug,
+				           const int j);
 
     real loss(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data,
               std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_label);
@@ -95,6 +97,7 @@ private:
     ccma::algebra::BaseMatrixT<real>* _V;
 
     Layer* _layer;
+    const uint _num_hardware_concurrency = std::thread::hardware_concurrency() == 0 ? 1 : std::thread::hardware_concurrency();
 };//class RNN 
 
 }//namespace rnn
