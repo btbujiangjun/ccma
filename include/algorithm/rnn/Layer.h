@@ -19,14 +19,9 @@ namespace rnn{
 class Layer{
 public:
 	Layer(uint hidden_dim,
-          uint bptt_truncate,
-          ccma::algebra::BaseMatrixT<real>* weight,
-          ccma::algebra::BaseMatrixT<real>* pre_weight,
-          ccma::algebra::BaseMatrixT<real>* act_weight){
-
+          uint bptt_truncate){
 	    _hidden_dim = hidden_dim;
         _bptt_truncate = bptt_truncate;
-
 	}
 
 	~Layer() = default;
@@ -52,18 +47,6 @@ public:
 private:
 	uint _hidden_dim;
     uint _bptt_truncate;
-
-//	ccma::algebra::BaseMatrixT<real>* _state;
-//	ccma::algebra::BaseMatrixT<real>* _activation;
-
-//	ccma::algebra::BaseMatrixT<real>* _weight;
-//	ccma::algebra::BaseMatrixT<real>* _pre_weight;
-//	ccma::algebra::BaseMatrixT<real>* _act_weight;
-	
-//	ccma::algebra::BaseMatrixT<real>* _derivate_weight;
-//	ccma::algebra::BaseMatrixT<real>* _derivate_pre_weight;
-//	ccma::algebra::BaseMatrixT<real>* _derivate_act_weight;
-	
 };//class Layer
 
 }//namespace rnn
