@@ -350,12 +350,22 @@ public:
         std::default_random_engine engine(std::chrono::system_clock::now().time_since_epoch().count());
         std::normal_distribution<T> distribution(mean_value, stddev);
         uint size = rows * cols;
-        for(uint i = 0; i != size; i++){
-            T value = static_cast<T>(distribution(engine));
-            while(min_value != max_value && (value < min_value || value > max_value)){
-                value = static_cast<T>(distribution(engine));
+
+        if(min_value != max_value){
+            T scale = max_value - min_value;
+            for(uint i = 0; i != size; i++){
+                T value = static_cast<T>(distribution(engine));
+                if(value > max_value){
+                    value -= (int)((value - min_value)/scale) * scale; 
+                }else if(value < min_value){
+                    value =+ (int)((max_value - value))/scale * scale;
+                }
+                this->_data[i] = value;
             }
-            this->_data[i] = static_cast<T>(distribution(engine));
+        }else{
+            for(uint i = 0; i != size; i++){
+                this->_data[i] = static_cast<T>(distribution(engine));
+            }
         }
     }
 };//class DenseRandomMatrixT
