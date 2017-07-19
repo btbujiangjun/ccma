@@ -18,10 +18,13 @@ int main(int argc, char** argv){
 	std::vector<ccma::algebra::BaseMatrixT<real>*> data_seq_label;
 	helper.read_seqdata("data/train_seq_data", &data_seq_data, "data/train_seq_label", &data_seq_label, 100);
 
-    printf("Start training....\n");
+    printf("Load data finished....\n");
 
     auto rnn = new ccma::algorithm::rnn::RNN(8000, 100, "data/rnn.model");
-    rnn->sgd(&data_seq_data, &data_seq_label, 1000, 32, 0.005);
+
+    printf("Start training....\n");
+
+    rnn->sgd(&data_seq_data, &data_seq_label, 1000, 2, 0.005);
     delete rnn;
 
 	for(auto&& d : data_seq_data){
