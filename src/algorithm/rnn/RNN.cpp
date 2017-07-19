@@ -7,6 +7,7 @@
  **********************************************/
 
 #include "algorithm/rnn/RNN.h"
+#include <functional>
 
 namespace ccma{
 namespace algorithm{
@@ -59,8 +60,7 @@ void RNN::sgd(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data,
             write_model(_path);
         }
 
-        auto training_time = now();
-        printf("Epoch[%d] training run time: %lld ms, loss[%f] base loss[%f]\n", i, (long long int)std::chrono::duration_cast<std::chrono::milliseconds>(training_time - start_time).count(), loss(train_seq_data, train_seq_label), std::log(_feature_dim));
+        printf("Epoch[%d] training run time: %lld ms, loss[%f] base loss[%f]\n", i, (long long int)std::chrono::duration_cast<std::chrono::milliseconds>(now() - start_time).count(), loss(train_seq_data, train_seq_label), std::log(_feature_dim));
 	}
 
 	printf("training finished.\n");
@@ -76,39 +76,62 @@ void RNN::mini_batch_update(std::vector<ccma::algebra::BaseMatrixT<real>*> train
                             const int j){
 
     const uint num_train_data   = train_seq_data.size();
-    ccma::algebra::BaseMatrixT<real>* derivate_weight       = new ccma::algebra::DenseMatrixT<real>[num_train_data];
-    ccma::algebra::BaseMatrixT<real>* derivate_pre_weight   = new ccma::algebra::DenseMatrixT<real>[num_train_data];
-    ccma::algebra::BaseMatrixT<real>* derivate_act_weight   = new ccma::algebra::DenseMatrixT<real>[num_train_data];
+    std::vector<ccma::algebra::BaseMatrixT<real>*> derivate_weight (num_train_data, new ccma::algebra::DenseMatrixT<real>(_U->get_rows(), _U->get_cols()));
+    std::vector<ccma::algebra::BaseMatrixT<real>*> derivate_pre_weight (num_train_data, new ccma::algebra::DenseMatrixT<real>(_W->get_rows(), _W->get_cols()));
+    std::vector<ccma::algebra::BaseMatrixT<real>*> derivate_act_weight (num_train_data, new ccma::algebra::DenseMatrixT<real>(_V->get_rows(), _V->get_cols()));
 
     const uint num_thread = std::min(num_train_data, _num_hardware_concurrency);
 
-    std::vector<std::thread> threads(num_thread);
+    std::vector<std::thread> threads;
     for(uint i = 0; i != num_train_data; i++){
-        threads[i % num_thread] = std::thread(std::mem_fun_ref(_layer::back_propagation), this, train_seq_data[i], train_seq_label[i], _U, _W, _V, &derivate_weight[i], &derivate_pre_weight[i], &derivate_act_weight[i], debug);
+        if(i % num_train_data == 0){
+            threads.clear();
+        }
+
+        threads.push_back(
+            std::thread(
+                std::bind(&Layer::back_propagation, *_layer, train_seq_data[i], train_seq_label[i], _U, _W, _V, derivate_weight[i], derivate_pre_weight[i], derivate_act_weight[i], debug)
+            )
+        );
+            //[_layer, train_data, train_label, _U, _W, _V, &d_weight, &d_p_weight, &d_a_weight, debug]()
+//            [&]()
+//            {
+//                _layer->back_propagation(train_seq_data[i], train_seq_label[i], _U, _W, _V, &derivate_weight[i], &derivate_pre_weight[i], &derivate_act_weight[i], debug);
+//            }
+//        );
         if(i == (num_train_data - 1) || i % num_thread == (num_thread - 1) ){
-            for(uint j = i / num_thread * num_thread; j != i; j++){
-                threads[j % num_thread].join();
+            for(auto&& thread : threads){
+                thread.join();
             }
         }
     }
 
     for(uint i = 1; i != num_train_data; i++){
-        derivate_weight[0].add(&derivate_weight[i]);
-        derivate_pre_weight[0].add(&derivate_pre_weight[i]);
-        derivate_act_weight[0].add(&derivate_act_weight[i]);
+        derivate_weight[0]->add(derivate_weight[i]);
+        derivate_pre_weight[0]->add(derivate_pre_weight[i]);
+        derivate_act_weight[0]->add(derivate_act_weight[i]);
     }
 
-    derivate_weight[0].multiply(alpha / num_train_data);
-    derivate_pre_weight[0].multiply(alpha / num_train_data);
-    derivate_act_weight[0].multiply(alpha / num_train_data);
+    derivate_weight[0]->multiply(alpha / num_train_data);
+    derivate_pre_weight[0]->multiply(alpha / num_train_data);
+    derivate_act_weight[0]->multiply(alpha / num_train_data);
 
-    _U->subtract(&derivate_weight[0]);
-    _W->subtract(&derivate_pre_weight[0]);
-    _V->subtract(&derivate_act_weight[0]);
+    _U->subtract(derivate_weight[0]);
+    _W->subtract(derivate_pre_weight[0]);
+    _V->subtract(derivate_act_weight[0]);
 
-    delete[] derivate_weight;
-    delete[] derivate_pre_weight;
-    delete[] derivate_act_weight;
+    for(auto d : derivate_weight){
+        delete d;
+    }
+    derivate_weight.clear();
+    for(auto d : derivate_pre_weight){
+        delete d;
+    }
+    derivate_pre_weight.clear();
+    for(auto d : derivate_act_weight){
+        delete d;
+    }
+    derivate_act_weight.clear();
 }
 
 /*
