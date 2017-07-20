@@ -107,6 +107,8 @@ void Layer::back_propagation(ccma::algebra::BaseMatrixT<real>* train_seq_data,
 							 ccma::algebra::BaseMatrixT<real>* derivate_act_weight,
                              bool debug){
 
+    printf("thread[%lu] starting...\n", std::this_thread::get_id());
+
 	auto state		= new ccma::algebra::DenseMatrixT<real>();
 	auto derivate_output = new ccma::algebra::DenseMatrixT<real>();
 
@@ -209,6 +211,8 @@ void Layer::back_propagation(ccma::algebra::BaseMatrixT<real>* train_seq_data,
 	delete derivate_pre_weight_t;
 	delete derivate_state_t;
 	delete train_data_t;
+
+    printf("thread[%lu] finished.\n", std::this_thread::get_id());
 }
 
 
