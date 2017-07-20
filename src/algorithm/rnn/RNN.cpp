@@ -23,28 +23,20 @@ void RNN::sgd(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data,
         printf("RNN::sgd Data dim Error.\n");
 		return ;
 	}
-
-    auto seq_data  = new ccma::algebra::DenseMatrixT<real>();
-	auto seq_label = new ccma::algebra::DenseMatrixT<real>();
 	
 	uint num_train_data = train_seq_data->size();
 	bool debug = (num_train_data <= 5);
     
 	auto now = []{return std::chrono::system_clock::now();};
 
+    std::vector<ccma::algebra::BaseMatrixT<real>*> mini_batch_data;
+    std::vector<ccma::algebra::BaseMatrixT<real>*> mini_batch_label;
+
 	for(uint i = 0; i != epoch; i++){
 
 		auto start_time = now();
-        std::vector<ccma::algebra::BaseMatrixT<real>*> mini_batch_data;
-        std::vector<ccma::algebra::BaseMatrixT<real>*> mini_batch_label;
 
 		for(uint j = 0; j != num_train_data; j++){
-
-            if(j % mini_batch_size == 0){
-                mini_batch_data.clear();
-                mini_batch_label.clear();
-            }
-            
             mini_batch_data.push_back(train_seq_data->at(j));
             mini_batch_label.push_back(train_seq_label->at(j));
 
@@ -64,9 +56,6 @@ void RNN::sgd(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data,
 	}
 
 	printf("training finished.\n");
-
-    delete seq_data;
-	delete seq_label;
 }
 
 void RNN::mini_batch_update(std::vector<ccma::algebra::BaseMatrixT<real>*> train_seq_data,
@@ -142,30 +131,20 @@ real RNN::total_loss(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_d
 
 	real loss_value = 0;
 	
-	auto seq_data   = new ccma::algebra::DenseMatrixT<real>();
-	auto seq_label  = new ccma::algebra::DenseMatrixT<real>();
-	
     auto state      = new ccma::algebra::DenseMatrixT<real>();
 	auto activation = new ccma::algebra::DenseMatrixT<real>();
 	
     uint num_train_data = train_seq_data->size();
 	for(uint j = 0; j != num_train_data; j++){
+		_layer->feed_farward(train_seq_data->at(j), _U, _W, _V, state, activation, false);
 
-		train_seq_data->at(j)->clone(seq_data);
-		train_seq_label->at(j)->clone(seq_label);
-
-		_layer->feed_farward(seq_data, _U, _W, _V, state, activation, false);
-
-		auto mat_label = seq_label->argmax(0);
+		auto mat_label = train_seq_label->at(j)->argmax(0);
         uint rows = mat_label->get_rows();
         for(uint row = 0; row != rows; row++){
             loss_value -= std::log(activation->get_data(row, mat_label->get_data(row, 0)));
         }
         delete mat_label;
 	}
-
-    delete seq_data;
-	delete seq_label;
 
     delete state;
     delete activation;
