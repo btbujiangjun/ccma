@@ -24,7 +24,7 @@ int main(int argc, char** argv){
 
     printf("Start training....\n");
 
-    rnn->sgd(&data_seq_data, &data_seq_label, 1000, 2, 0.005);
+    rnn->sgd(&data_seq_data, &data_seq_label, 1000, 12, 0.005);
     delete rnn;
 
 	for(auto&& d : data_seq_data){
