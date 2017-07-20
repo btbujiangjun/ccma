@@ -76,33 +76,36 @@ void RNN::mini_batch_update(std::vector<ccma::algebra::BaseMatrixT<real>*> train
                             const int j){
 
     const uint num_train_data   = train_seq_data.size();
-    std::vector<ccma::algebra::BaseMatrixT<real>*> derivate_weight (num_train_data, new ccma::algebra::DenseMatrixT<real>(_U->get_rows(), _U->get_cols()));
-    std::vector<ccma::algebra::BaseMatrixT<real>*> derivate_pre_weight (num_train_data, new ccma::algebra::DenseMatrixT<real>(_W->get_rows(), _W->get_cols()));
-    std::vector<ccma::algebra::BaseMatrixT<real>*> derivate_act_weight (num_train_data, new ccma::algebra::DenseMatrixT<real>(_V->get_rows(), _V->get_cols()));
+    
+    std::vector<ccma::algebra::BaseMatrixT<real>*> derivate_weight;
+    for(uint i = 0 ; i != num_train_data; i++){
+        derivate_weight.push_back(new ccma::algebra::DenseMatrixT<real>(_U->get_rows(), _U->get_cols()));
+    }
+    
+    std::vector<ccma::algebra::BaseMatrixT<real>*> derivate_pre_weight;
+    for(uint i = 0; i != num_train_data; i++){
+        derivate_pre_weight.push_back(new ccma::algebra::DenseMatrixT<real>(_W->get_rows(), _W->get_cols()));
+    }
+
+    std::vector<ccma::algebra::BaseMatrixT<real>*> derivate_act_weight;
+    for(uint i = 0; i != num_train_data; i++){
+        derivate_act_weight.push_back(new ccma::algebra::DenseMatrixT<real>(_V->get_rows(), _V->get_cols()));
+    }
 
     const uint num_thread = std::min(num_train_data, _num_hardware_concurrency);
 
     std::vector<std::thread> threads;
     for(uint i = 0; i != num_train_data; i++){
-        if(i % num_train_data == 0){
-            threads.clear();
-        }
-
         threads.push_back(
             std::thread(
                 std::bind(&Layer::back_propagation, *_layer, train_seq_data[i], train_seq_label[i], _U, _W, _V, derivate_weight[i], derivate_pre_weight[i], derivate_act_weight[i], debug)
             )
         );
-            //[_layer, train_data, train_label, _U, _W, _V, &d_weight, &d_p_weight, &d_a_weight, debug]()
-//            [&]()
-//            {
-//                _layer->back_propagation(train_seq_data[i], train_seq_label[i], _U, _W, _V, &derivate_weight[i], &derivate_pre_weight[i], &derivate_act_weight[i], debug);
-//            }
-//        );
         if(i == (num_train_data - 1) || i % num_thread == (num_thread - 1) ){
             for(auto&& thread : threads){
                 thread.join();
             }
+            threads.clear();
         }
     }
 
@@ -133,33 +136,6 @@ void RNN::mini_batch_update(std::vector<ccma::algebra::BaseMatrixT<real>*> train
     }
     derivate_act_weight.clear();
 }
-
-/*
-void RNN::sgd_step(ccma::algebra::BaseMatrixT<real>* train_seq_data,
-                   ccma::algebra::BaseMatrixT<real>* train_seq_label, 
-			       real alpha,
-                   bool debug){
-
-    auto derivate_weight     = new ccma::algebra::DenseMatrixT<real>();
-    auto derivate_pre_weight = new ccma::algebra::DenseMatrixT<real>();
-    auto derivate_act_weight = new ccma::algebra::DenseMatrixT<real>();
-
-	_layer->back_propagation(train_seq_data, train_seq_label, _U, _W, _V, derivate_weight, derivate_pre_weight, derivate_act_weight, debug);
-
-	derivate_weight->multiply(alpha);
-	_U->subtract(derivate_weight);
-
-	derivate_pre_weight->multiply(alpha);
-	_W->subtract(derivate_pre_weight);
-
-	derivate_act_weight->multiply(alpha);
-	_V->subtract(derivate_act_weight);
-
-    delete derivate_weight;
-    delete derivate_pre_weight;
-    delete derivate_act_weight;
-}
-*/
 
 real RNN::total_loss(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data,
                      std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_label){
