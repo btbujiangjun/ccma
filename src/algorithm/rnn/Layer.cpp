@@ -106,10 +106,11 @@ void Layer::back_propagation(ccma::algebra::BaseMatrixT<real>* train_seq_data,
 							 ccma::algebra::BaseMatrixT<real>* derivate_pre_weight,
 							 ccma::algebra::BaseMatrixT<real>* derivate_act_weight,
                              bool debug){
-	//derivate_weight->reset(0, weight->get_rows(), weight->get_cols());
-	//derivate_pre_weight->reset(0, pre_weight->get_rows(), pre_weight->get_cols());
-	//derivate_act_weight->reset(0, act_weight->get_rows(), act_weight->get_cols());
-	
+
+    auto now = []{return std::chrono::system_clock::now();};
+    auto time = [](long long int cnt){return std::chrono::duration_cast<std::chrono::milliseconds>(cnt).count();};
+    auto start_time = now();
+
     auto state		     = new ccma::algebra::DenseMatrixT<real>();
 	auto derivate_output = new ccma::algebra::DenseMatrixT<real>();
 
@@ -202,6 +203,9 @@ void Layer::back_propagation(ccma::algebra::BaseMatrixT<real>* train_seq_data,
 	delete derivate_pre_weight_t;
 	delete derivate_state_t;
 	delete train_data_t;
+
+    auto end_time = now();
+    printf("thread[%lu][%lld-%lld][%lld].\n", std::this_thread::get_id(), start_time, end_time, time(end_time - start_time));
 }
 
 
