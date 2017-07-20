@@ -46,6 +46,10 @@ void RNN::sgd(std::vector<ccma::algebra::BaseMatrixT<real>*>* train_seq_data,
                 mini_batch_data.clear();
                 mini_batch_label.clear();
             }
+
+            if( j % 5 == 0){
+                printf("Epoch[%d][%d/%d] training...\r", i, j, num_train_data);
+            }
 		}
 
         if(_path != ""){
