@@ -106,21 +106,14 @@ void Layer::back_propagation(ccma::algebra::BaseMatrixT<real>* train_seq_data,
 							 ccma::algebra::BaseMatrixT<real>* derivate_pre_weight,
 							 ccma::algebra::BaseMatrixT<real>* derivate_act_weight,
                              bool debug){
-
-    printf("thread[%lu] starting...\n", std::this_thread::get_id());
-
-	auto state		= new ccma::algebra::DenseMatrixT<real>();
+	//derivate_weight->reset(0, weight->get_rows(), weight->get_cols());
+	//derivate_pre_weight->reset(0, pre_weight->get_rows(), pre_weight->get_cols());
+	//derivate_act_weight->reset(0, act_weight->get_rows(), act_weight->get_cols());
+	
+    auto state		     = new ccma::algebra::DenseMatrixT<real>();
 	auto derivate_output = new ccma::algebra::DenseMatrixT<real>();
 
-	derivate_weight->reset(0, weight->get_rows(), weight->get_cols());
-	derivate_pre_weight->reset(0, pre_weight->get_rows(), pre_weight->get_cols());
-	derivate_act_weight->reset(0, act_weight->get_rows(), act_weight->get_cols());
-
 	feed_farward(train_seq_data, weight, pre_weight, act_weight, state, derivate_output, debug);
-
-
-	auto a = new ccma::algebra::DenseMatrixT<real>();
-	derivate_output->clone(a);
 
 	derivate_output->subtract(train_seq_label);
 
@@ -201,8 +194,6 @@ void Layer::back_propagation(ccma::algebra::BaseMatrixT<real>* train_seq_data,
 		}
 	}
 
-	delete a;
-
 	delete derivate_output;
 	delete derivate_output_t;
     delete derivate_weight_t;
@@ -211,8 +202,6 @@ void Layer::back_propagation(ccma::algebra::BaseMatrixT<real>* train_seq_data,
 	delete derivate_pre_weight_t;
 	delete derivate_state_t;
 	delete train_data_t;
-
-    printf("thread[%lu] finished.\n", std::this_thread::get_id());
 }
 
 
